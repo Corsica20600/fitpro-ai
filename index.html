@@ -1933,10 +1933,20 @@ body {
         return;
       }
 
-      if (data.error) {
-        alert("Erreur IA : " + (data.details || data.message || data.error));
-        return;
-      }
+      if (!res.ok || data.error) {
+  alert("Erreur IA : " + (data.details || data.message || data.error));
+  return;
+}
+
+// Si la fonction renvoie `raw`, c'est du texte non parsé
+if (data.raw) {
+  console.log("Réponse texte brute OpenAI :", data.raw);
+  alert("Réponse IA reçue (voir la console). Le JSON n'était pas parfaitement valide.");
+} else {
+  console.log("Programme IA généré :", data);
+  alert("Programme IA généré (voir la console pour le détail).");
+  // plus tard : state.program = data; updateProgramUI(); etc.
+}
 
       // ✅ Injection du programme IA dans ton moteur existant
       state.program = {
@@ -2106,3 +2116,4 @@ if (btnOpenEditor) {
 </script>
 </body>
 </html>
+
