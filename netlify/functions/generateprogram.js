@@ -60,21 +60,25 @@ Réponds UNIQUEMENT en JSON, sans texte autour :
 }
 `;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          { role: "system", content: "Tu es un coach sportif expert." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7
-      })
-    });
+    model: "gpt-4.1-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "Tu es un coach sportif expert. Tu dois répondre STRICTEMENT en JSON valide, " +
+          "sans phrase autour, sans markdown, sans commentaires."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    temperature: 0.7,
+    // Demande au modèle de renvoyer un JSON pur
+    response_format: { type: "json_object" }
+  })
+
 
     if (!response.ok) {
       const errText = await response.text();
