@@ -1,0 +1,2108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>FitPro – Suivi d'entraînement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --card: #020617;
+      --accent: #7c3aed;
+      --accent-soft: rgba(124, 58, 237, 0.15);
+      --accent-strong: #a855f7;
+      --accent-2: #ec4899;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.9);
+      --shadow-chip: 0 8px 20px rgba(15, 23, 42, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* Fond global + police */
+body {
+  background: radial-gradient(ellipse at top, #0f172a, #020617);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Roboto", sans-serif;
+  color: var(--text);
+}
+
+/* Conteneur "téléphone" CENTRÉ */
+#app {
+  width: 100%;
+  max-width: 430px;          /* largeur max de ta fausse app mobile */
+  margin: 0 auto;            /* ✅ centre horizontalement */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 80px;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Optionnel : bordure/ombre quand écran large */
+@media (min-width: 768px) {
+  #app {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(15, 23, 42, 0.9);
+    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.9);
+  }
+}
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 6px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: conic-gradient(from 160deg, #a855f7, #ec4899, #22c55e, #a855f7);
+      padding: 2px;
+      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.7);
+    }
+
+    .brand-logo-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: radial-gradient(circle at 20% 0, #1f2937, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.06em;
+      color: #e5e7eb;
+    }
+
+    .brand-text-main {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .brand-text-sub {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: var(--shadow-chip);
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .hero-card {
+      border-radius: 24px;
+      padding: 16px 16px 18px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      background: radial-gradient(circle at -20% -20%, #1f2937 0, #020617 55%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-pill span strong {
+      color: #e5e7eb;
+    }
+
+    .hero-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 260px;
+    }
+
+    .hero-metrics {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metric-card {
+      flex: 1;
+      padding: 9px 10px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.93);
+      border: 1px solid rgba(31, 41, 55, 0.95);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .metric-value {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .metric-tag {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .hero-orb {
+      position: absolute;
+      right: -20px;
+      bottom: -10px;
+      width: 130px;
+      height: 130px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 20% 10%, #f97316 0, #a855f7 40%, #0f172a 75%);
+      opacity: 0.8;
+      filter: blur(1px);
+    }
+
+    .hero-orb-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 100% 100%, rgba(15,23,42,0.2) 0, rgba(15,23,42,0.9) 55%);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin: 4px 2px 4px;
+    }
+
+    .card {
+      border-radius: var(--radius-lg);
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid var(--border);
+      padding: 12px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(79, 70, 229, 0.15);
+      border: 1px solid rgba(129, 140, 248, 0.55);
+      color: #e5e7eb;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 3px;
+      display: block;
+    }
+
+    select, input[type="number"] {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      padding: 7px 11px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: rgba(129, 140, 248, 0.9);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.4);
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 9px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #f9fafb;
+      box-shadow: 0 12px 30px rgba(124, 58, 237, 0.7);
+      margin-top: 4px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+      border-radius: 999px;
+      border: 1px solid rgba(30, 64, 175, 0.8);
+      padding: 6px 11px;
+      font-size: 11px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+      opacity: 0.9;
+    }
+
+    .btn[disabled] {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .chip-small {
+      font-size: 10px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: var(--muted);
+    }
+
+    .notice {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .workout-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .workout-muscle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .workout-exo-name {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .workout-meta-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      color: var(--muted);
+    }
+
+    .timer-card {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .timer-main {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .timer-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .timer-value {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+    }
+
+    .timer-status {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .workout-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .workout-footer .btn {
+      flex: 1;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .progress-bar-outer {
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      overflow: hidden;
+      margin-right: 10px;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.2s ease;
+    }
+
+    .progress-label {
+      font-size: 10px;
+      color: var(--muted);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .history-item {
+      border-radius: 14px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 8px 10px;
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-main {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .history-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .history-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .history-tag {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.18);
+      color: #bbf7d0;
+      border: 1px solid rgba(34, 197, 94, 0.6);
+    }
+
+    .empty-state {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .motivation {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .tabs-row {
+      display: flex;
+      gap: 6px;
+      margin: 4px 0 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      border-color: rgba(129, 140, 248, 0.9);
+      color: #e5e7eb;
+      background: rgba(79, 70, 229, 0.25);
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      padding: 0 14px;
+      z-index: 50;
+    }
+
+    .bottom-nav-inner {
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(31, 41, 55, 0.98);
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 8px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 3px 4px;
+      border-radius: 999px;
+    }
+
+    .nav-item span {
+      font-size: 16px;
+    }
+
+    .nav-item.active {
+      color: #e5e7eb;
+      background: radial-gradient(circle at top, rgba(129, 140, 248, 0.2), transparent 65%);
+    }
+
+    .nav-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      margin-top: 1px;
+      background: transparent;
+    }
+
+    .nav-item.active .nav-dot {
+      background: var(--accent-strong);
+      box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.4);
+    }
+
+@media (min-width: 768px) {
+  body {
+    align-items: center;
+  }
+  #app {
+    margin: 24px auto;         /* ✅ 24px haut/bas, centré à gauche/droite */
+    border-radius: 32px;
+    border: 1px solid rgba(15, 23, 42, 0.9);
+    box-shadow: 0 26px 60px rgba(0,0,0,0.9);
+  }
+}
+ </style>
+</head>
+<body>
+<div id="app">
+  <heade r>
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-logo-inner">FP</div>
+      </div>
+      <div>
+        <div class="brand-text-main">FitPro</div>
+        <div class="brand-text-sub">Coach d'entraînement perso</div>
+      </div>
+    </div>
+    <div class="chip">
+      <div class="chip-dot"></div>
+      <div>Plan du jour prêt</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-card">
+      <div class="hero-pill">
+        <span>Objectif&nbsp;<strong id="hero-goal">Force &amp; masse</strong></span>
+      </div>
+      <div class="hero-title" id="hero-title">
+        Ta séance est prête à être atomisée.
+      </div>
+      <div class="hero-subtitle" id="hero-subtitle">
+        Choisis ton objectif, ton niveau et le nombre de jours. FitPro s’occupe de te donner le plan. Toi tu pousses.
+      </div>
+
+      <div class="hero-metrics">
+        <div class="metric-card">
+          <div class="metric-label">Séances cette semaine</div>
+          <div class="metric-value" id="metric-sessions">0</div>
+          <div class="metric-tag">Objectif&nbsp;<span id="metric-target">3</span>&nbsp;séances</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Volume total</div>
+          <div class="metric-value" id="metric-volume">0</div>
+          <div class="metric-tag">Exos complétés</div>
+        </div>
+      </div>
+      <div class="hero-orb"></div>
+      <div class="hero-orb-overlay"></div>
+    </section>
+    <div class="section-title">Programme</div>
+    <section class="card screen active" id="screen-setup">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Créer / modifier ton programme</div>
+          <div class="card-subtitle">Objectif, niveau, fréquence hebdo</div>
+        </div>
+        <div class="badge" id="program-status">Aucun programme</div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label for="goal-select">Objectif</label>
+          <select id="goal-select">
+            <option value="strength">Force / Puissance</option>
+            <option value="hypertrophy" selected>Prise de masse</option>
+            <option value="endurance">Endurance / Sèche</option>
+          </select>
+        </div>
+        <div>
+          <label for="level-select">Niveau</label>
+          <select id="level-select">
+            <option value="beginner">Débutant</option>
+            <option value="intermediate" selected>Intermédiaire</option>
+            <option value="advanced">Avancé</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <label for="days-input">Séances / semaine</label>
+          <input type="number" id="days-input" min="2" max="6" value="3" />
+        </div>
+        <div>
+          <label>Focus spécifique</label>
+          <select id="focus-select">
+            <option value="balanced" selected>Équilibré</option>
+            <option value="upper">Haut du corps</option>
+            <option value="legs">Bas du corps</option>
+            <option value="abs">Full body + Abdos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="chip-row">
+        <div class="chip-small">Repos 60–90s par série</div>
+        <div class="chip-small">Charge progressive</div>
+        <div class="chip-small">Technique avant ego</div>
+      </div>
+
+           <button class="btn btn-primary" id="btn-generate-program">
+        Générer / mettre à jour le programme
+      </button>
+
+          <button class="btn btn-secondary" id="btn-ai-program" style="margin-top:8px;">
+        Générer via l’IA
+      </button>
+
+      <div class="notice" id="program-summary">
+        Aucun programme encore généré. Commence par choisir ton objectif ci-dessus.
+      </div>
+
+      <div class="card" id="editor-card" style="margin-top:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Éditeur de programme</div>
+            <div class="card-subtitle">Ajoute / modifie les exercices de chaque jour</div>
+          </div>
+          <div class="badge">Mode avancé</div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label for="editor-day-select">Jour à éditer</label>
+            <select id="editor-day-select"></select>
+          </div>
+          <div>
+            <label>Info</label>
+            <div class="chip-small">Sauvegardé sur cet appareil</div>
+          </div>
+        </div>
+
+        <div class="notice">Les modifications s’appliquent uniquement à ton programme actuel.</div>
+
+        <div id="editor-exercise-list" style="margin-top:8px;"></div>
+
+        <button class="btn btn-ghost" id="btn-add-exercise" style="margin-top:8px;">
+          + Ajouter un exercice
+        </button>
+
+        <div id="editor-add-panel" style="display:none; margin-top:8px;">
+          <div class="grid-2">
+            <div>
+              <label for="editor-group-select">Groupe musculaire</label>
+              <select id="editor-group-select"></select>
+            </div>
+            <div>
+              <label for="editor-exercise-select">Exercice</label>
+              <select id="editor-exercise-select"></select>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:6px;">
+            <div>
+              <label for="editor-add-sets">Séries</label>
+              <input type="number" id="editor-add-sets" min="1" max="10" value="3" />
+            </div>
+            <div>
+              <label for="editor-add-reps">Reps</label>
+              <input type="text" id="editor-add-reps" value="8–12" />
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:6px;">
+            <div>
+              <label for="editor-add-rest">Repos (s)</label>
+              <input type="number" id="editor-add-rest" min="0" max="300" value="60" />
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="btn-confirm-add" style="margin-top:8px;">
+            Ajouter à la séance
+          </button>
+        </div>
+
+        <button class="btn btn-primary" id="btn-save-editor" style="margin-top:10px;">
+          Enregistrer ce jour
+        </button>
+      </div>
+    </section>
+ 
+    </section>
+
+    <div class="section-title">Séance</div>
+    <section class="card screen" id="screen-workout">
+      <div class="card-header">
+  <div>
+    <div class="card-title" id="workout-day-title">Jour 1 – Haut du corps</div>
+    <div class="card-subtitle" id="workout-day-subtitle">3–5 exos ciblés, format classique.</div>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:4px;">
+    <button class="btn btn-secondary" id="btn-change-day">
+      Changer de jour
+    </button>
+    <button class="btn btn-ghost" id="btn-open-editor" style="font-size:11px; padding:4px 8px;">
+      Éditer ce jour
+    </button>
+  </div>
+</div>
+      <div class="workout-header">
+        <div>
+          <div class="workout-muscle" id="workout-muscle">Pectoraux &amp; triceps</div>
+          <div class="workout-exo-name" id="workout-exo-name">Développé couché barre</div>
+        </div>
+        <div class="chip-small" id="workout-exo-index">Exo 1 / 5</div>
+      </div>
+
+      <div class="workout-meta-row">
+        <div class="pill" id="workout-sets-reps">4 séries x 8–10 reps</div>
+        <div class="pill" id="workout-rest">Repos 90s</div>
+      </div>
+      <div id="weight-card" style="margin-top:8px; padding:10px; border-radius:16px; background:rgba(15,23,42,0.95); border:1px solid rgba(55,65,81,0.9);">
+        <div style="font-size:11px; color:#9ca3af; margin-bottom:4px;">
+          Poids utilisé sur cet exercice (kg)
+        </div>
+        <input
+          type="number"
+          id="weight-input"
+          min="0"
+          step="0.5"
+          style="width:100%; border-radius:999px; border:1px solid #1f2937; background:rgba(15,23,42,0.95); color:#e5e7eb; padding:7px 11px; font-size:13px; outline:none;"
+        />
+        <div id="weight-last" style="font-size:11px; color:#9ca3af; margin-top:4px;">
+          Dernier poids : —
+        </div>
+      </div>
+
+      <div class="timer-card">
+        <div class="timer-main">
+          <div class="timer-label" id="timer-label">Repos en cours</div>
+          <div class="timer-value" id="timer-value">00:00</div>
+          <div class="timer-status" id="timer-status">Appuie sur "Lancer le repos" à la fin de ta série.</div>
+        </div>
+        <button class="btn btn-secondary" id="btn-timer-toggle">
+          Lancer le repos
+        </button>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="progress-bar"></div>
+        </div>
+        <div class="progress-label" id="progress-label">0% complété</div>
+      </div>
+
+      <div class="workout-footer">
+        <button class="btn btn-ghost" id="btn-prev-exo">◀ Exo préc.</button>
+        <button class="btn btn-primary" id="btn-next-exo">Exo suivant ▶</button>
+      </div>
+
+      <div class="motivation" id="motivation-text">
+        Rappelle-toi : la dernière série, c’est celle que les autres ne font pas.
+      </div>
+    </section>
+
+    <div class="section-title">Historique & stats</div>
+    <section class="card screen" id="screen-history">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Historique des séances</div>
+          <div class="card-subtitle">Suivi simple mais efficace.</div>
+        </div>
+        <button class="btn btn-ghost" id="btn-clear-history">
+          Réinitialiser
+        </button>
+      </div>
+
+      <div class="tabs-row">
+        <button class="tab-btn active" data-history-filter="week" id="tab-week">
+          Cette semaine
+        </button>
+        <button class="tab-btn" data-history-filter="all" id="tab-all">
+          Tout
+        </button>
+      </div>
+
+      <div class="history-list" id="history-list"></div>
+      <div class="empty-state" id="history-empty">
+        Aucune séance enregistrée pour l’instant. Quand tu termines une séance, elle s’affiche ici.
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="nav-item active" data-screen="setup">
+      <span>⚙️</span>
+      Programme
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-screen="workout">
+      <span>🏋️</span>
+      Séance
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" data-screen="history">
+      <span>📊</span>
+      Stats
+      <div class="nav-dot"></div>
+    </div>
+  </div>
+</div>
+<script>
+  const LS_PROGRAM_KEY = "fitpro_program_v1";
+  const LS_HISTORY_KEY = "fitpro_history_v1";
+  const LS_WEIGHTS_KEY = "fitpro_weights_v1";
+
+  // === BIBLIOTHÈQUE D’EXOS / MACHINES ÉLARGIE ===
+  const exerciseLibrary = {
+    chest: [
+      { name: "Développé couché barre", sets: 4, reps: "6–8", rest: 120, muscle: "Pectoraux" },
+      { name: "Développé incliné haltères", sets: 4, reps: "8–10", rest: 90, muscle: "Pectoraux" },
+      { name: "Développé couché machine convergente", sets: 4, reps: "8–10", rest: 90, muscle: "Pectoraux (machine)" },
+      { name: "Écartés à la poulie vis-à-vis", sets: 3, reps: "12–15", rest: 60, muscle: "Pectoraux" },
+      { name: "Pec deck (machine)", sets: 3, reps: "12–15", rest: 60, muscle: "Pectoraux (machine)" }
+    ],
+    back: [
+      { name: "Tractions pronation", sets: 4, reps: "6–8", rest: 120, muscle: "Dos" },
+      { name: "Tirage vertical poulie haute", sets: 4, reps: "8–12", rest: 90, muscle: "Dos (poulie)" },
+      { name: "Rowing barre", sets: 4, reps: "8–10", rest: 90, muscle: "Dos" },
+      { name: "Rowing machine convergente", sets: 4, reps: "8–12", rest: 90, muscle: "Dos (machine)" },
+      { name: "Rowing haltères unilatéral", sets: 3, reps: "10–12", rest: 75, muscle: "Dos" }
+    ],
+    legs: [
+      { name: "Squat barre", sets: 4, reps: "6–8", rest: 150, muscle: "Quadriceps" },
+      { name: "Presse à cuisses", sets: 4, reps: "10–12", rest: 120, muscle: "Quadriceps (machine)" },
+      { name: "Soulevé de terre jambes tendues", sets: 3, reps: "10–12", rest: 90, muscle: "Ischios" },
+      { name: "Leg curl allongé", sets: 3, reps: "10–12", rest: 75, muscle: "Ischios (machine)" },
+      { name: "Leg extension", sets: 3, reps: "10–15", rest: 75, muscle: "Quadriceps (machine)" },
+      { name: "Mollets debout machine", sets: 4, reps: "12–15", rest: 60, muscle: "Mollets" }
+    ],
+    shoulders: [
+      { name: "Développé militaire barre", sets: 4, reps: "6–8", rest: 90, muscle: "Épaules" },
+      { name: "Développé épaules machine", sets: 4, reps: "8–10", rest: 90, muscle: "Épaules (machine)" },
+      { name: "Élévations latérales haltères", sets: 3, reps: "12–15", rest: 60, muscle: "Épaules" },
+      { name: "Élévations latérales à la poulie", sets: 3, reps: "12–15", rest: 60, muscle: "Épaules (poulie)" },
+      { name: "Oiseau haltères", sets: 3, reps: "12–15", rest: 60, muscle: "Arrière d'épaule" }
+    ],
+    arms: [
+      { name: "Curl haltères", sets: 3, reps: "8–12", rest: 60, muscle: "Biceps" },
+      { name: "Curl barre EZ", sets: 3, reps: "8–12", rest: 60, muscle: "Biceps" },
+      { name: "Curl pupitre machine", sets: 3, reps: "10–12", rest: 60, muscle: "Biceps (machine)" },
+      { name: "Poulie corde triceps", sets: 3, reps: "10–12", rest: 60, muscle: "Triceps (poulie)" },
+      { name: "Barre au front", sets: 3, reps: "8–12", rest: 60, muscle: "Triceps" },
+      { name: "Dips entre deux bancs", sets: 3, reps: "max", rest: 90, muscle: "Triceps" }
+    ],
+    abs: [
+      { name: "Crunch au sol", sets: 4, reps: "20–25", rest: 45, muscle: "Abdos" },
+      { name: "Crunch inversé", sets: 4, reps: "15–20", rest: 45, muscle: "Abdos" },
+      { name: "Gainage planche", sets: 3, reps: "45–60s", rest: 45, muscle: "Abdos" },
+      { name: "Ab wheel", sets: 3, reps: "8–12", rest: 60, muscle: "Abdos" },
+      { name: "Relevés de jambes suspendu", sets: 3, reps: "10–15", rest: 60, muscle: "Abdos (suspension)" }
+    ],
+    cardio: [
+      { name: "Corde à sauter", sets: 1, reps: "600 tours", rest: 0, muscle: "Cardio" },
+      { name: "Seal jacks", sets: 3, reps: "30–40s", rest: 30, muscle: "Cardio" },
+      { name: "Mountain climbers", sets: 3, reps: "30–40s", rest: 30, muscle: "Cardio" },
+      { name: "Vélo elliptique", sets: 1, reps: "15–20 min", rest: 0, muscle: "Cardio (machine)" },
+      { name: "Tapis de course (incliné)", sets: 1, reps: "15–20 min", rest: 0, muscle: "Cardio (machine)" }
+    ]
+  };
+
+  const motivationMessages = [
+    "Les reps qui piquent un peu, ce sont celles qui changent ton physique.",
+    "Tu peux t’arrêter quand ça brûle… ou quand tu as fini.",
+    "Objectif simple : être plus fort que la semaine dernière.",
+    "Tant que tu avances un peu, tu ne recules pas.",
+    "La régularité bat toujours la motivation."
+  ];
+
+  let state = {
+    program: null,
+    currentDayIndex: 0,
+    currentExerciseIndex: 0,
+    timer: {
+      remaining: 0,
+      running: false,
+      intervalId: null
+    },
+    historyFilter: "week",
+    weights: {},
+    editorDayIndex: 0
+  };
+
+  const el = (id) => document.getElementById(id);
+
+  // HERO / programme
+  const heroGoalEl = el("hero-goal");
+  const heroTitleEl = el("hero-title");
+  const heroSubtitleEl = el("hero-subtitle");
+  const metricSessionsEl = el("metric-sessions");
+  const metricTargetEl = el("metric-target");
+  const metricVolumeEl = el("metric-volume");
+  const programStatusEl = el("program-status");
+  const programSummaryEl = el("program-summary");
+
+  const goalSelect = el("goal-select");
+  const levelSelect = el("level-select");
+  const daysInput = el("days-input");
+  const focusSelect = el("focus-select");
+  const btnGenerateProgram = el("btn-generate-program");
+
+  // Séance
+  const workoutDayTitleEl = el("workout-day-title");
+  const workoutDaySubtitleEl = el("workout-day-subtitle");
+  const workoutMuscleEl = el("workout-muscle");
+  const workoutExoNameEl = el("workout-exo-name");
+  const workoutExoIndexEl = el("workout-exo-index");
+  const workoutSetsRepsEl = el("workout-sets-reps");
+  const workoutRestEl = el("workout-rest");
+  const timerLabelEl = el("timer-label");
+  const timerValueEl = el("timer-value");
+  const timerStatusEl = el("timer-status");
+  const btnTimerToggle = el("btn-timer-toggle");
+  const btnPrevExo = el("btn-prev-exo");
+  const btnNextExo = el("btn-next-exo");
+  const btnChangeDay = el("btn-change-day");
+  const progressBarEl = el("progress-bar");
+  const progressLabelEl = el("progress-label");
+  const motivationTextEl = el("motivation-text");
+
+  const weightInputEl = el("weight-input");
+  const weightLastEl = el("weight-last");
+
+  // Historique
+  const historyListEl = el("history-list");
+  const historyEmptyEl = el("history-empty");
+  const btnClearHistory = el("btn-clear-history");
+  const tabWeekEl = el("tab-week");
+  const tabAllEl = el("tab-all");
+
+  // Éditeur
+  const editorDaySelect = el("editor-day-select");
+  const editorExerciseList = el("editor-exercise-list");
+  const btnAddExercise = el("btn-add-exercise");
+  const editorAddPanel = el("editor-add-panel");
+  const editorGroupSelect = el("editor-group-select");
+  const editorExerciseSelect = el("editor-exercise-select");
+  const editorAddSets = el("editor-add-sets");
+  const editorAddReps = el("editor-add-reps");
+  const editorAddRest = el("editor-add-rest");
+  const btnConfirmAdd = el("btn-confirm-add");
+  const btnSaveEditor = el("btn-save-editor");
+  const btnOpenEditor = el("btn-open-editor");
+
+  const screens = {
+    setup: el("screen-setup"),
+    workout: el("screen-workout"),
+    history: el("screen-history")
+  };
+
+  const navItems = document.querySelectorAll(".nav-item");
+
+  // === LocalStorage ===
+  function loadProgram() {
+    try {
+      const raw = localStorage.getItem(LS_PROGRAM_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn("Erreur de chargement programme:", e);
+      return null;
+    }
+  }
+
+  function saveProgram(program) {
+    try {
+      localStorage.setItem(LS_PROGRAM_KEY, JSON.stringify(program));
+    } catch (e) {
+      console.warn("Erreur de sauvegarde programme:", e);
+    }
+  }
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(LS_HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.warn("Erreur de chargement historique:", e);
+      return [];
+    }
+  }
+
+  function saveHistory(history) {
+    try {
+      localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.warn("Erreur de sauvegarde historique:", e);
+    }
+  }
+
+  function loadWeights() {
+    try {
+      const raw = localStorage.getItem(LS_WEIGHTS_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveWeights(weights) {
+    try {
+      localStorage.setItem(LS_WEIGHTS_KEY, JSON.stringify(weights));
+    } catch (e) {
+      console.warn("Erreur de sauvegarde poids:", e);
+    }
+  }
+
+  function getLastWeight(exName) {
+    if (!exName) return null;
+    return state.weights[exName] ?? null;
+  }
+
+  function setLastWeight(exName, weight) {
+    if (!exName || isNaN(weight) || weight <= 0) return;
+    state.weights[exName] = weight;
+    saveWeights(state.weights);
+  }
+
+  // === Création du programme (avec focus spécial Full body + Abdos + cardio) ===
+  function createProgram({ goal, level, days, focus }) {
+    const dayTemplates = [];
+
+    if (focus === "abs") {
+      // Jour 1 : cardio + haut du corps + abdos
+      dayTemplates.push(["cardio", "chest", "back", "abs"]);
+      // Jour 2 : cardio + jambes + abdos
+      dayTemplates.push(["cardio", "legs", "abs"]);
+      // Jour 3 : cardio + épaules/bras + abdos
+      dayTemplates.push(["cardio", "shoulders", "arms", "abs"]);
+    } else if (focus === "upper") {
+      dayTemplates.push(["chest", "arms"]);
+      dayTemplates.push(["back", "shoulders"]);
+      dayTemplates.push(["chest", "back", "arms"]);
+    } else if (focus === "legs") {
+      dayTemplates.push(["legs", "abs"]);
+      dayTemplates.push(["back", "legs"]);
+      dayTemplates.push(["legs", "shoulders", "abs"]);
+    } else {
+      dayTemplates.push(["chest", "triceps", "abs"]);
+      dayTemplates.push(["back", "biceps"]);
+      dayTemplates.push(["legs", "shoulders", "abs"]);
+    }
+
+    const templateNames = {
+      0: focus === "abs" ? "Jour 1 – Full body + abdos" : "Jour 1 – Haut du corps",
+      1: focus === "abs" ? "Jour 2 – Jambes + abdos" : "Jour 2 – Dos & bras",
+      2: focus === "abs" ? "Jour 3 – Full body + cardio" : "Jour 3 – Jambes & abdos",
+      3: "Jour 4 – Full body",
+      4: "Jour 5 – Volume haut du corps",
+      5: "Jour 6 – Volume bas du corps"
+    };
+
+    const fullDays = [];
+    for (let i = 0; i < days; i++) {
+      const templateIndex = i % dayTemplates.length;
+      const groups = dayTemplates[templateIndex];
+      const dayExercises = [];
+
+      groups.forEach((group) => {
+        if (group === "triceps" || group === "biceps") {
+          exerciseLibrary.arms.forEach(ex => {
+            if (group === "triceps" && ex.muscle.toLowerCase().includes("triceps")) {
+              dayExercises.push({ ...ex });
+            } else if (group === "biceps" && ex.muscle.toLowerCase().includes("biceps")) {
+              dayExercises.push({ ...ex });
+            }
+          });
+        } else if (exerciseLibrary[group]) {
+          exerciseLibrary[group].forEach(ex => dayExercises.push({ ...ex }));
+        }
+      });
+
+      let dayTypeDesc;
+      if (focus === "abs") {
+        if (templateIndex === 0) {
+          dayTypeDesc = "Full body haut du corps + abdos, avec un bloc cardio en entrée.";
+        } else if (templateIndex === 1) {
+          dayTypeDesc = "Jambes lourdes + core pour le bas du dos et le ventre.";
+        } else {
+          dayTypeDesc = "Full body plus léger + cardio pour le gras du ventre.";
+        }
+      } else {
+        if (templateIndex === 0) dayTypeDesc = "Haut du corps / push dominant.";
+        else if (templateIndex === 1) dayTypeDesc = "Dos et bras, tirage dominant.";
+        else if (templateIndex === 2) dayTypeDesc = "Jambes, gainage et stabilité.";
+        else dayTypeDesc = "Full body intelligent.";
+      }
+
+      fullDays.push({
+        name: templateNames[i] || `Jour ${i + 1}`,
+        description: dayTypeDesc,
+        exercises: dayExercises
+      });
+    }
+
+    return {
+      goal,
+      level,
+      days,
+      focus,
+      daysPlan: fullDays,
+      createdAt: Date.now()
+    };
+  }
+
+  function formatGoal(goal) {
+    switch (goal) {
+      case "strength":
+        return "Force / puissance";
+      case "hypertrophy":
+        return "Prise de masse";
+      case "endurance":
+        return "Endurance / sèche";
+      default:
+        return "Objectif perso";
+    }
+  }
+
+  // === HERO & programme ===
+  function updateHeroFromProgram() {
+    const history = loadHistory();
+    const sessionsThisWeek = countSessionsThisWeek(history);
+    const totalVolume = history.reduce((acc, s) => acc + (s.exerciseCount || 0), 0);
+
+    metricSessionsEl.textContent = sessionsThisWeek.toString();
+    metricVolumeEl.textContent = totalVolume.toString();
+
+    if (!state.program) {
+      heroGoalEl.textContent = "Force & masse";
+      heroTitleEl.textContent = "Ta séance est prête à être atomisée.";
+      heroSubtitleEl.textContent = "Choisis ton objectif, ton niveau et le nombre de jours. FitPro s’occupe de te donner le plan. Toi tu pousses.";
+      metricTargetEl.textContent = "3";
+      return;
+    }
+
+    heroGoalEl.textContent = formatGoal(state.program.goal);
+    metricTargetEl.textContent = String(state.program.days || 3);
+
+    if (state.program.focus === "abs") {
+      heroTitleEl.textContent = "Full body + abdos configuré pour toi.";
+      heroSubtitleEl.textContent =
+        `${state.program.days} séances / semaine · focus ventre/poignées + haut/bas du corps équilibré.`;
+    } else {
+      heroTitleEl.textContent = "Programme chargé. Tu n’as plus qu’à t’y coller.";
+      heroSubtitleEl.textContent =
+        `Objectif: ${formatGoal(state.program.goal)} · ${state.program.days} séances / semaine · Niveau ${state.program.level}.`;
+    }
+  }
+
+  function updateProgramUI() {
+    if (!state.program) {
+      programStatusEl.textContent = "Aucun programme";
+      programStatusEl.style.background = "rgba(15,23,42,0.95)";
+      programStatusEl.style.borderColor = "rgba(55,65,81,0.9)";
+      programSummaryEl.textContent = "Aucun programme encore généré. Commence par choisir ton objectif ci-dessus.";
+      if (editorDaySelect) editorDaySelect.innerHTML = "";
+      return;
+    }
+
+    programStatusEl.textContent = "Programme actif";
+    programStatusEl.style.background = "rgba(22,163,74,0.25)";
+    programStatusEl.style.borderColor = "rgba(34,197,94,0.75)";
+
+    const focusLabels = {
+      balanced: "équilibré haut/bas",
+      upper: "accent haut du corps",
+      legs: "accent bas du corps",
+      abs: "full body + abdos"
+    };
+
+    const goalLabel = formatGoal(state.program.goal);
+    const focusLabel = focusLabels[state.program.focus] || "équilibré";
+
+    programSummaryEl.textContent =
+      `${state.program.days} séances / semaine · Focus ${focusLabel} · Objectif ${goalLabel}.`;
+
+    // Remplir la liste des jours dans l’éditeur
+    if (editorDaySelect) {
+      editorDaySelect.innerHTML = "";
+      state.program.daysPlan.forEach((day, idx) => {
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = day.name;
+        editorDaySelect.appendChild(opt);
+      });
+      state.editorDayIndex = 0;
+      editorDaySelect.value = "0";
+      renderEditorDay();
+    }
+  }
+
+  function ensureValidDayAndExercise() {
+    if (!state.program || !state.program.daysPlan.length) return;
+
+    if (state.currentDayIndex < 0) state.currentDayIndex = 0;
+    if (state.currentDayIndex >= state.program.daysPlan.length) {
+      state.currentDayIndex = state.program.daysPlan.length - 1;
+    }
+
+    const day = state.program.daysPlan[state.currentDayIndex];
+    if (!day.exercises.length) {
+      day.exercises.push({
+        name: "Pompes",
+        sets: 3,
+        reps: "max",
+        rest: 60,
+        muscle: "Full body"
+      });
+    }
+
+    if (state.currentExerciseIndex < 0) state.currentExerciseIndex = 0;
+    if (state.currentExerciseIndex >= day.exercises.length) {
+      state.currentExerciseIndex = day.exercises.length - 1;
+    }
+  }
+
+  function updateWorkoutUI() {
+    if (!state.program) {
+      workoutDayTitleEl.textContent = "Aucun programme";
+      workoutDaySubtitleEl.textContent = "Commence par créer un programme dans l’onglet Programme.";
+      workoutMuscleEl.textContent = "—";
+      workoutExoNameEl.textContent = "—";
+      workoutExoIndexEl.textContent = "Exo 0 / 0";
+      workoutSetsRepsEl.textContent = "0 série x 0 rep";
+      workoutRestEl.textContent = "Repos —";
+      progressBarEl.style.width = "0%";
+      progressLabelEl.textContent = "0% complété";
+      btnNextExo.disabled = true;
+      btnPrevExo.disabled = true;
+      btnChangeDay.disabled = true;
+      if (weightInputEl) weightInputEl.value = "";
+      if (weightLastEl) weightLastEl.textContent = "Dernier poids : —";
+      return;
+    }
+
+    btnNextExo.disabled = false;
+    btnPrevExo.disabled = false;
+    btnChangeDay.disabled = false;
+
+    ensureValidDayAndExercise();
+
+    const day = state.program.daysPlan[state.currentDayIndex];
+    const ex = day.exercises[state.currentExerciseIndex];
+
+    workoutDayTitleEl.textContent = day.name;
+    workoutDaySubtitleEl.textContent = day.description;
+
+    workoutMuscleEl.textContent = ex.muscle || "Ciblé";
+    workoutExoNameEl.textContent = ex.name;
+    workoutExoIndexEl.textContent =
+      `Exo ${state.currentExerciseIndex + 1} / ${day.exercises.length}`;
+    workoutSetsRepsEl.textContent = `${ex.sets || 3} séries x ${ex.reps || "8–12"} reps`;
+    workoutRestEl.textContent = `Repos ${ex.rest || 60}s`;
+
+    const progress = ((state.currentExerciseIndex + 1) / day.exercises.length) * 100;
+    progressBarEl.style.width = `${progress.toFixed(0)}%`;
+    progressLabelEl.textContent = `${progress.toFixed(0)}% complété`;
+
+    const msg = motivationMessages[Math.floor(Math.random() * motivationMessages.length)];
+    motivationTextEl.textContent = msg;
+
+    // Poids : afficher dernier poids
+    if (weightInputEl && weightLastEl) {
+      const last = getLastWeight(ex.name);
+      if (last != null) {
+        weightInputEl.value = String(last);
+        weightLastEl.textContent = `Dernier poids : ${last} kg`;
+      } else {
+        weightInputEl.value = "";
+        weightLastEl.textContent = "Dernier poids : —";
+      }
+    }
+  }
+
+  // === Timer repos ===
+  function updateTimerUI() {
+    const t = state.timer;
+
+    const seconds = t.remaining;
+    const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const ss = String(seconds % 60).padStart(2, "0");
+    timerValueEl.textContent = `${mm}:${ss}`;
+
+    if (t.running) {
+      timerLabelEl.textContent = "Repos en cours";
+      btnTimerToggle.textContent = "Arrêter le repos";
+      timerStatusEl.textContent = "Respire, récupère. Mais tu ne poses pas ton téléphone 10 minutes.";
+    } else {
+      if (seconds === 0) {
+        timerLabelEl.textContent = "Repos terminé";
+        timerStatusEl.textContent = "Prochaine série. C’est maintenant que ça compte.";
+      } else {
+        timerLabelEl.textContent = "Repos en pause";
+        timerStatusEl.textContent = "Tu peux reprendre le compte ou passer à la suite.";
+      }
+      btnTimerToggle.textContent = "Lancer le repos";
+    }
+  }
+
+  function startRestTimer() {
+    if (!state.program) return;
+
+    const day = state.program.daysPlan[state.currentDayIndex];
+    const ex = day.exercises[state.currentExerciseIndex];
+
+    const baseRest = ex.rest || 60;
+
+    state.timer.remaining = baseRest;
+    state.timer.running = true;
+    if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+
+    state.timer.intervalId = setInterval(() => {
+      if (state.timer.remaining <= 0) {
+        clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+        state.timer.running = false;
+        state.timer.remaining = 0;
+        updateTimerUI();
+        return;
+      }
+      state.timer.remaining -= 1;
+      updateTimerUI();
+    }, 1000);
+
+    updateTimerUI();
+  }
+
+  function stopRestTimer() {
+    state.timer.running = false;
+    if (state.timer.intervalId) {
+      clearInterval(state.timer.intervalId);
+      state.timer.intervalId = null;
+    }
+    updateTimerUI();
+  }
+
+  function goToNextExercise() {
+    if (!state.program) return;
+    ensureValidDayAndExercise();
+
+    // Sauvegarde du poids de l'exercice courant avant de passer au suivant
+    const day = state.program.daysPlan[state.currentDayIndex];
+    const ex = day.exercises[state.currentExerciseIndex];
+    if (weightInputEl && ex && ex.name) {
+      const val = parseFloat(weightInputEl.value.replace(",", "."));
+      if (!isNaN(val) && val > 0) {
+        setLastWeight(ex.name, val);
+      }
+    }
+
+    if (state.currentExerciseIndex < day.exercises.length - 1) {
+      state.currentExerciseIndex += 1;
+      stopRestTimer();
+      state.timer.remaining = 0;
+      updateWorkoutUI();
+    } else {
+      recordSessionCompletion();
+      stopRestTimer();
+      state.timer.remaining = 0;
+      state.currentExerciseIndex = day.exercises.length - 1;
+      updateWorkoutUI();
+      updateHistoryUI();
+      updateHeroFromProgram();
+      alert("Séance terminée ! Tu peux la refaire ou changer de jour.");
+    }
+  }
+
+  function goToPreviousExercise() {
+    if (!state.program) return;
+    ensureValidDayAndExercise();
+
+    if (state.currentExerciseIndex > 0) {
+      state.currentExerciseIndex -= 1;
+      stopRestTimer();
+      state.timer.remaining = 0;
+      updateWorkoutUI();
+    }
+  }
+
+  function changeDay() {
+    if (!state.program) return;
+    if (!state.program.daysPlan.length) return;
+
+    state.currentDayIndex = (state.currentDayIndex + 1) % state.program.daysPlan.length;
+    state.currentExerciseIndex = 0;
+    stopRestTimer();
+    state.timer.remaining = 0;
+    updateWorkoutUI();
+  }
+
+  // === Historique ===
+  function recordSessionCompletion() {
+    if (!state.program) return;
+    const history = loadHistory();
+    const iso = new Date().toISOString();
+
+    const day = state.program.daysPlan[state.currentDayIndex];
+
+    const session = {
+      id: Date.now(),
+      date: iso,
+      dayName: day.name,
+      goal: state.program.goal,
+      exerciseCount: day.exercises.length
+    };
+
+    history.unshift(session);
+    saveHistory(history);
+  }
+
+  function isSameWeek(dateA, dateB) {
+    const d1 = new Date(dateA);
+    const d2 = new Date(dateB);
+
+    const d1Day = (d1.getDay() + 6) % 7;
+    const d2Day = (d2.getDay() + 6) % 7;
+
+    const d1Monday = new Date(d1);
+    d1Monday.setDate(d1.getDate() - d1Day);
+    d1Monday.setHours(0, 0, 0, 0);
+
+    const d2Monday = new Date(d2);
+    d2Monday.setDate(d2.getDate() - d2Day);
+    d2Monday.setHours(0, 0, 0, 0);
+
+    return d1Monday.getTime() === d2Monday.getTime();
+  }
+
+  function countSessionsThisWeek(history) {
+    const now = new Date();
+    return history.filter((s) => isSameWeek(s.date, now)).length;
+  }
+
+  function updateHistoryUI() {
+    const history = loadHistory();
+    let filtered = history;
+
+    if (state.historyFilter === "week") {
+      filtered = history.filter((s) => isSameWeek(s.date, new Date()));
+    }
+
+    historyListEl.innerHTML = "";
+
+    if (!filtered.length) {
+      historyEmptyEl.style.display = "block";
+      return;
+    }
+
+    historyEmptyEl.style.display = "none";
+
+    filtered.forEach((s) => {
+      const item = document.createElement("div");
+      item.className = "history-item";
+
+      const main = document.createElement("div");
+      main.className = "history-main";
+
+      const title = document.createElement("div");
+      title.className = "history-title";
+      title.textContent = s.dayName;
+
+      const meta = document.createElement("div");
+      meta.className = "history-meta";
+
+      const d = new Date(s.date);
+      const dateStr = d.toLocaleDateString("fr-FR", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit"
+      });
+
+      meta.textContent =
+        `${dateStr} · ${s.exerciseCount} exos · ${formatGoal(s.goal)}`;
+
+      main.appendChild(title);
+      main.appendChild(meta);
+
+      const tag = document.createElement("div");
+      tag.className = "history-tag";
+      tag.textContent = "Complété";
+
+      item.appendChild(main);
+      item.appendChild(tag);
+
+      historyListEl.appendChild(item);
+    });
+  }
+
+  // === ÉDITEUR DE PROGRAMME ===
+
+  function renderEditorDay() {
+    if (!state.program || !editorExerciseList || !editorDaySelect) return;
+    const idx = parseInt(editorDaySelect.value || "0", 10);
+    if (isNaN(idx) || idx < 0 || idx >= state.program.daysPlan.length) return;
+    state.editorDayIndex = idx;
+
+    const day = state.program.daysPlan[idx];
+    editorExerciseList.innerHTML = "";
+
+    if (!day.exercises.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "Aucun exercice pour ce jour. Ajoute-en avec le bouton ci-dessous.";
+      editorExerciseList.appendChild(empty);
+      return;
+    }
+
+    day.exercises.forEach((ex, exIdx) => {
+      const row = document.createElement("div");
+      row.className = "history-item editor-row";
+      row.dataset.index = String(exIdx);
+      row.dataset.name = ex.name;
+
+      const main = document.createElement("div");
+      main.className = "history-main";
+
+      const title = document.createElement("div");
+      title.className = "history-title";
+      title.textContent = ex.name;
+
+      const meta = document.createElement("div");
+      meta.className = "history-meta";
+      meta.textContent = `${ex.muscle || "Ciblé"} · ${ex.sets || 3} séries · ${ex.reps || "8–12"} · repos ${ex.rest || 60}s`;
+
+      main.appendChild(title);
+      main.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.flexDirection = "column";
+      right.style.alignItems = "flex-end";
+      right.style.gap = "4px";
+      right.style.minWidth = "120px";
+
+      const setsInput = document.createElement("input");
+      setsInput.type = "number";
+      setsInput.min = "1";
+      setsInput.max = "10";
+      setsInput.value = ex.sets || 3;
+      setsInput.className = "editor-sets-input";
+      setsInput.style.width = "60px";
+      setsInput.style.fontSize = "11px";
+
+      const repsInput = document.createElement("input");
+      repsInput.type = "text";
+      repsInput.value = ex.reps || "8–12";
+      repsInput.className = "editor-reps-input";
+      repsInput.style.width = "80px";
+      repsInput.style.fontSize = "11px";
+
+      const restInput = document.createElement("input");
+      restInput.type = "number";
+      restInput.min = "0";
+      restInput.max = "300";
+      restInput.value = ex.rest || 60;
+      restInput.className = "editor-rest-input";
+      restInput.style.width = "60px";
+      restInput.style.fontSize = "11px";
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Suppr.";
+      removeBtn.className = "btn btn-ghost editor-remove-btn";
+      removeBtn.style.fontSize = "10px";
+      removeBtn.style.padding = "3px 6px";
+
+      right.appendChild(setsInput);
+      right.appendChild(repsInput);
+      right.appendChild(restInput);
+      right.appendChild(removeBtn);
+
+      row.appendChild(main);
+      row.appendChild(right);
+
+      editorExerciseList.appendChild(row);
+
+      removeBtn.addEventListener("click", () => {
+        day.exercises.splice(exIdx, 1);
+        saveProgram(state.program);
+        renderEditorDay();
+        updateWorkoutUI();
+      });
+    });
+  }
+
+  function initEditorAddPanel() {
+    if (!editorGroupSelect || !editorExerciseSelect) return;
+    editorGroupSelect.innerHTML = "";
+    Object.keys(exerciseLibrary).forEach((groupKey) => {
+      const opt = document.createElement("option");
+      opt.value = groupKey;
+      opt.textContent = groupKey.toUpperCase();
+      editorGroupSelect.appendChild(opt);
+    });
+
+    function refreshExerciseSelect() {
+      const group = editorGroupSelect.value;
+      editorExerciseSelect.innerHTML = "";
+      const list = exerciseLibrary[group] || [];
+      list.forEach((ex, idx) => {
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = ex.name;
+        editorExerciseSelect.appendChild(opt);
+      });
+      const first = list[0];
+      if (first) {
+        editorAddSets.value = first.sets || 3;
+        editorAddReps.value = first.reps || "8–12";
+        editorAddRest.value = first.rest || 60;
+      }
+    }
+
+    editorGroupSelect.addEventListener("change", () => {
+      refreshExerciseSelect();
+    });
+
+    editorExerciseSelect.addEventListener("change", () => {
+      const group = editorGroupSelect.value;
+      const list = exerciseLibrary[group] || [];
+      const idx = parseInt(editorExerciseSelect.value || "0", 10);
+      const ex = list[idx];
+      if (ex) {
+        editorAddSets.value = ex.sets || 3;
+        editorAddReps.value = ex.reps || "8–12";
+        editorAddRest.value = ex.rest || 60;
+      }
+    });
+
+    refreshExerciseSelect();
+  }
+
+  function addExerciseToCurrentEditorDay() {
+    if (!state.program) return;
+    const dayIdx = state.editorDayIndex;
+    if (dayIdx < 0 || dayIdx >= state.program.daysPlan.length) return;
+
+    const group = editorGroupSelect.value;
+    const list = exerciseLibrary[group] || [];
+    const exIdx = parseInt(editorExerciseSelect.value || "0", 10);
+    const base = list[exIdx];
+    if (!base) return;
+
+    const sets = parseInt(editorAddSets.value || "3", 10);
+    const reps = editorAddReps.value || base.reps || "8–12";
+    const rest = parseInt(editorAddRest.value || String(base.rest || 60), 10);
+
+    const newEx = {
+      name: base.name,
+      muscle: base.muscle,
+      sets: isNaN(sets) ? base.sets || 3 : sets,
+      reps,
+      rest: isNaN(rest) ? base.rest || 60 : rest
+    };
+
+    state.program.daysPlan[dayIdx].exercises.push(newEx);
+    saveProgram(state.program);
+    renderEditorDay();
+    updateWorkoutUI();
+  }
+
+  function saveEditorDay() {
+    if (!state.program) return;
+    if (!editorExerciseList) return;
+
+    const dayIdx = state.editorDayIndex;
+    if (dayIdx < 0 || dayIdx >= state.program.daysPlan.length) return;
+    const day = state.program.daysPlan[dayIdx];
+
+    const rows = editorExerciseList.querySelectorAll(".editor-row");
+    const newExercises = [];
+
+    rows.forEach((row) => {
+      const name = row.dataset.name;
+      if (!name) return;
+      const setsInput = row.querySelector(".editor-sets-input");
+      const repsInput = row.querySelector(".editor-reps-input");
+      const restInput = row.querySelector(".editor-rest-input");
+
+      const sets = parseInt(setsInput.value || "3", 10);
+      const reps = repsInput.value || "8–12";
+      const rest = parseInt(restInput.value || "60", 10);
+
+      // Retrouver muscle depuis la lib si possible
+      let muscle = "Ciblé";
+      outer: {
+        for (const groupKey of Object.keys(exerciseLibrary)) {
+          for (const ex of exerciseLibrary[groupKey]) {
+            if (ex.name === name) {
+              muscle = ex.muscle;
+              break outer;
+            }
+          }
+        }
+      }
+
+      newExercises.push({
+        name,
+        muscle,
+        sets: isNaN(sets) ? 3 : sets,
+        reps,
+        rest: isNaN(rest) ? 60 : rest
+      });
+    });
+
+    day.exercises = newExercises;
+    saveProgram(state.program);
+    renderEditorDay();
+    updateWorkoutUI();
+    alert("Jour mis à jour.");
+  }
+
+  // === Navigation ===
+  function showScreen(name) {
+    Object.keys(screens).forEach((k) => {
+      if (k === name) screens[k].classList.add("active");
+      else screens[k].classList.remove("active");
+    });
+
+    navItems.forEach((item) => {
+      const s = item.getAttribute("data-screen");
+      if (s === name) item.classList.add("active");
+      else item.classList.remove("active");
+    });
+
+    if (name === "history") {
+      updateHistoryUI();
+    }
+  }
+
+  // === Évènements ===
+  btnGenerateProgram.addEventListener("click", () => {
+    const goal = goalSelect.value;
+    const level = levelSelect.value;
+    const days = Math.max(2, Math.min(6, parseInt(daysInput.value || "3", 10)));
+    const focus = focusSelect.value;
+
+    const program = createProgram({ goal, level, days, focus });
+    state.program = program;
+    state.currentDayIndex = 0;
+    state.currentExerciseIndex = 0;
+    stopRestTimer();
+    state.timer.remaining = 0;
+
+    saveProgram(program);
+    updateProgramUI();
+    updateWorkoutUI();
+    updateHeroFromProgram();
+    alert("Programme généré / mis à jour. Tu peux lancer ta séance dans l’onglet Séance.");
+  });
+  const btnAIProgram = document.getElementById("btn-ai-program");
+
+  if (btnAIProgram) {
+  btnAIProgram.addEventListener("click", async () => {
+
+    const payload = {
+      gender: "homme",
+      age: 40,
+      weight: 84,
+      goal: goalSelect.value,
+      level: levelSelect.value,
+      sessionsPerWeek: Math.max(2, Math.min(6, parseInt(daysInput.value || "3", 10))),
+      equipment: "salle de sport"
+    };
+
+    btnAIProgram.disabled = true;
+    btnAIProgram.textContent = "Génération IA...";
+
+    try {
+      const res = await fetch("/.netlify/functions/generateprogram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await res.text();   // on lit la réponse brute
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        alert("Erreur serveur brute :\n" + text);
+        return;
+      }
+
+      if (data.error) {
+        alert("Erreur IA : " + (data.details || data.message || data.error));
+        return;
+      }
+
+      // ✅ Injection du programme IA dans ton moteur existant
+      state.program = {
+        goal: data.goal || payload.goal,
+        level: data.level || payload.level,
+        focus: "equilibre",
+        days: data.days.length,
+        daysPlan: data.days.map((d) => ({
+          name: d.name,
+          description: d.description,
+          exercises: d.exercises.map((e) => ({
+            name: e.name,
+            muscle: e.muscle,
+            sets: e.sets,
+            reps: e.reps,
+            rest: e.rest
+          }))
+        })),
+        createdAt: Date.now()
+      };
+
+      state.currentDayIndex = 0;
+      state.currentExerciseIndex = 0;
+      stopRestTimer();
+      state.timer.remaining = 0;
+
+      saveProgram(state.program);
+      updateProgramUI();
+      updateWorkoutUI();
+      updateHeroFromProgram();
+
+      alert("Programme généré par l’IA ✅");
+
+    } catch (e) {
+      alert("Erreur réseau : " + e.message);
+    } finally {
+      btnAIProgram.disabled = false;
+      btnAIProgram.textContent = "Générer via l’IA";
+    }
+  });
+}
+
+  btnTimerToggle.addEventListener("click", () => {
+    if (state.timer.running) {
+      stopRestTimer();
+    } else {
+      startRestTimer();
+    }
+  });
+
+  btnNextExo.addEventListener("click", () => {
+    goToNextExercise();
+  });
+
+  btnPrevExo.addEventListener("click", () => {
+    goToPreviousExercise();
+  });
+
+  btnChangeDay.addEventListener("click", () => {
+    changeDay();
+  });
+
+if (btnOpenEditor) {
+  btnOpenEditor.addEventListener("click", () => {
+    if (!state.program || !editorDaySelect) return;
+
+    // Sélectionner le jour en cours dans l’éditeur
+    editorDaySelect.value = String(state.currentDayIndex);
+    state.editorDayIndex = state.currentDayIndex;
+
+    renderEditorDay();
+
+    // Basculer automatiquement sur l’onglet Programme
+    showScreen("setup");
+
+    // Scroll automatique vers l’éditeur
+    const card = document.getElementById("editor-card");
+    if (card) {
+      window.scrollTo({
+        top: card.offsetTop - 60,
+        behavior: "smooth"
+      });
+    }
+  });
+}
+
+  btnClearHistory.addEventListener("click", () => {
+    if (confirm("Tu veux vraiment effacer tout l’historique ?")) {
+      saveHistory([]);
+      updateHistoryUI();
+      updateHeroFromProgram();
+    }
+  });
+
+  tabWeekEl.addEventListener("click", () => {
+    state.historyFilter = "week";
+    tabWeekEl.classList.add("active");
+    tabAllEl.classList.remove("active");
+    updateHistoryUI();
+  });
+
+  tabAllEl.addEventListener("click", () => {
+    state.historyFilter = "all";
+    tabAllEl.classList.add("active");
+    tabWeekEl.classList.remove("active");
+    updateHistoryUI();
+  });
+
+  navItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const screen = item.getAttribute("data-screen");
+      showScreen(screen);
+    });
+  });
+
+  if (editorDaySelect) {
+    editorDaySelect.addEventListener("change", () => {
+      const idx = parseInt(editorDaySelect.value || "0", 10);
+      state.editorDayIndex = isNaN(idx) ? 0 : idx;
+      renderEditorDay();
+    });
+  }
+
+  if (btnAddExercise) {
+    btnAddExercise.addEventListener("click", () => {
+      if (!editorAddPanel) return;
+      editorAddPanel.style.display = editorAddPanel.style.display === "none" ? "block" : "none";
+    });
+  }
+
+  if (btnConfirmAdd) {
+    btnConfirmAdd.addEventListener("click", () => {
+      addExerciseToCurrentEditorDay();
+    });
+  }
+
+  if (btnSaveEditor) {
+    btnSaveEditor.addEventListener("click", () => {
+      saveEditorDay();
+    });
+  }
+
+  // === Init ===
+  function init() {
+    const savedProgram = loadProgram();
+    if (savedProgram) {
+      state.program = savedProgram;
+      state.currentDayIndex = 0;
+      state.currentExerciseIndex = 0;
+    } else {
+      focusSelect.value = "abs";
+    }
+    state.weights = loadWeights();
+
+    if (editorGroupSelect && editorExerciseSelect) {
+      initEditorAddPanel();
+    }
+
+    updateProgramUI();
+    updateWorkoutUI();
+    updateHeroFromProgram();
+    updateHistoryUI();
+    updateTimerUI();
+  }
+
+  init();
+</script>
+</body>
+</html>
