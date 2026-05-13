@@ -1,0 +1,18 @@
+-- AlterTable
+ALTER TABLE "Exercise" ALTER COLUMN "alternatives" DROP DEFAULT,
+ALTER COLUMN "commonMistakes" DROP DEFAULT,
+ALTER COLUMN "contraindications" DROP DEFAULT,
+ALTER COLUMN "detailedInstructions" DROP DEFAULT,
+ALTER COLUMN "fallbackAnimationPath" DROP DEFAULT,
+ALTER COLUMN "fallbackImagePath" DROP DEFAULT,
+ALTER COLUMN "fallbackThumbnailPath" DROP DEFAULT,
+ALTER COLUMN "movementType" DROP DEFAULT,
+ALTER COLUMN "objectives" DROP DEFAULT,
+ALTER COLUMN "primaryMuscles" DROP DEFAULT,
+ALTER COLUMN "shortTechnicalCues" DROP DEFAULT,
+ALTER COLUMN "tags" DROP DEFAULT,
+ALTER COLUMN "variants" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "ExerciseMedia" ALTER COLUMN "format" DROP DEFAULT,
+ALTER COLUMN "updatedAt" DROP DEFAULT;

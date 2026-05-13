@@ -1,0 +1,286 @@
+import { prisma } from "@/src/lib/prisma";
+import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
+
+type AiGoal = "MUSCLE_GAIN" | "FAT_LOSS" | "STRENGTH" | "RECOMPOSITION";
+type AiLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+
+export type AiProgramInput = {
+  goal: AiGoal;
+  level: AiLevel;
+  daysPerWeek: number;
+  sessionDurationMin: number;
+  availableEquipment: string[];
+  priorityMuscles: string[];
+  restrictions: string;
+};
+
+type ValidGeneratedProgram = {
+  programName: string;
+  goal: AiGoal;
+  days: Array<{
+    dayIndex: number;
+    title: string;
+    notes: string;
+    exercises: Array<{
+      exerciseSlug: string;
+      sets: number;
+      reps: string;
+      restSeconds: number;
+      tempo?: string;
+      notes?: string;
+    }>;
+  }>;
+  exercises: string[];
+  notes: string;
+};
+
+function toProgramGoal(goal: AiGoal): "HYPERTROPHY" | "FAT_LOSS" | "STRENGTH" | "GENERAL_FITNESS" {
+  if (goal === "MUSCLE_GAIN") return "HYPERTROPHY";
+  if (goal === "FAT_LOSS") return "FAT_LOSS";
+  if (goal === "STRENGTH") return "STRENGTH";
+  return "GENERAL_FITNESS";
+}
+
+function safeJsonParse(input: string): unknown {
+  try {
+    return JSON.parse(input);
+  } catch {
+    return null;
+  }
+}
+
+function extractJsonBlock(raw: string): string {
+  const first = raw.indexOf("{");
+  const last = raw.lastIndexOf("}");
+  if (first < 0 || last < 0 || last <= first) return raw;
+  return raw.slice(first, last + 1);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function validateGeneratedProgram(data: unknown): { valid: true; value: ValidGeneratedProgram } | { valid: false; reason: string } {
+  if (!data || typeof data !== "object") return { valid: false, reason: "root_not_object" };
+  const root = data as Record<string, unknown>;
+
+  if (!isNonEmptyString(root.programName)) return { valid: false, reason: "missing_program_name" };
+  if (!["MUSCLE_GAIN", "FAT_LOSS", "STRENGTH", "RECOMPOSITION"].includes(String(root.goal))) {
+    return { valid: false, reason: "invalid_goal" };
+  }
+  if (!Array.isArray(root.days) || root.days.length === 0) return { valid: false, reason: "invalid_days" };
+  if (!Array.isArray(root.exercises)) return { valid: false, reason: "invalid_exercises_list" };
+  if (!isNonEmptyString(root.notes)) return { valid: false, reason: "missing_notes" };
+
+  const days = root.days as Array<Record<string, unknown>>;
+  const normalizedDays: ValidGeneratedProgram["days"] = [];
+
+  for (const day of days) {
+    if (!Number.isFinite(Number(day.dayIndex))) return { valid: false, reason: "invalid_day_index" };
+    if (!isNonEmptyString(day.title)) return { valid: false, reason: "invalid_day_title" };
+    if (!isNonEmptyString(day.notes)) return { valid: false, reason: "invalid_day_notes" };
+    if (!Array.isArray(day.exercises) || day.exercises.length === 0) return { valid: false, reason: "invalid_day_exercises" };
+
+    const exercises = day.exercises as Array<Record<string, unknown>>;
+    const normalizedExercises: ValidGeneratedProgram["days"][number]["exercises"] = [];
+    for (const ex of exercises) {
+      if (!isNonEmptyString(ex.exerciseSlug)) return { valid: false, reason: "invalid_exercise_slug" };
+      if (!Number.isFinite(Number(ex.sets)) || Number(ex.sets) < 1) return { valid: false, reason: "invalid_sets" };
+      if (!isNonEmptyString(ex.reps)) return { valid: false, reason: "invalid_reps" };
+      if (!Number.isFinite(Number(ex.restSeconds)) || Number(ex.restSeconds) < 15) return { valid: false, reason: "invalid_rest" };
+
+      normalizedExercises.push({
+        exerciseSlug: String(ex.exerciseSlug).trim(),
+        sets: Math.floor(Number(ex.sets)),
+        reps: String(ex.reps).trim(),
+        restSeconds: Math.floor(Number(ex.restSeconds)),
+        tempo: isNonEmptyString(ex.tempo) ? String(ex.tempo).trim() : undefined,
+        notes: isNonEmptyString(ex.notes) ? String(ex.notes).trim() : undefined,
+      });
+    }
+
+    normalizedDays.push({
+      dayIndex: Math.floor(Number(day.dayIndex)),
+      title: String(day.title).trim(),
+      notes: String(day.notes).trim(),
+      exercises: normalizedExercises,
+    });
+  }
+
+  const normalized: ValidGeneratedProgram = {
+    programName: String(root.programName).trim(),
+    goal: String(root.goal).trim() as AiGoal,
+    days: normalizedDays.sort((a, b) => a.dayIndex - b.dayIndex),
+    exercises: (root.exercises as unknown[]).map((x) => String(x)).filter((x) => x.trim().length > 0),
+    notes: String(root.notes).trim(),
+  };
+
+  return { valid: true, value: normalized };
+}
+
+export async function generateAiProgram(input: AiProgramInput) {
+  const catalog = await prisma.exercise.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      nameFr: true,
+      difficulty: true,
+      primaryMuscles: true,
+      primaryMusclesFr: true,
+      equipment: true,
+      equipmentFr: true,
+    },
+    orderBy: [{ name: "asc" }],
+    take: 220,
+  });
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error("[AI_PROGRAM] OPENAI_API_KEY missing");
+    return { ok: false as const, error: "missing_api_key" };
+  }
+
+  const exerciseSummary = catalog.map((exercise) => ({
+    slug: exercise.slug,
+    name: exercise.nameFr || exercise.name,
+    level: exercise.difficulty,
+    primaryMuscles: exercise.primaryMusclesFr.length ? exercise.primaryMusclesFr : exercise.primaryMuscles,
+    equipment: exercise.equipmentFr.length ? exercise.equipmentFr : exercise.equipment,
+  }));
+
+  const prompt = [
+    "Tu es un coach expert.",
+    "Genere un programme strictement en JSON valide.",
+    "Ne renvoie AUCUN texte hors JSON.",
+    "Utilise UNIQUEMENT les exerciseSlug de la liste fournie.",
+    "Format exact attendu:",
+    JSON.stringify({
+      programName: "string",
+      goal: "MUSCLE_GAIN | FAT_LOSS | STRENGTH | RECOMPOSITION",
+      days: [
+        {
+          dayIndex: 1,
+          title: "string",
+          notes: "string",
+          exercises: [
+            {
+              exerciseSlug: "string",
+              sets: 4,
+              reps: "6-8",
+              restSeconds: 90,
+              tempo: "optional",
+              notes: "optional",
+            },
+          ],
+        },
+      ],
+      exercises: ["slug-a", "slug-b"],
+      notes: "string",
+    }),
+    `Contrainte jours/semaine: ${input.daysPerWeek}`,
+    `Duree cible par seance (min): ${input.sessionDurationMin}`,
+    `Objectif: ${input.goal}`,
+    `Niveau: ${input.level}`,
+    `Materiel dispo: ${input.availableEquipment.join(", ") || "non precise"}`,
+    `Muscles prioritaires: ${input.priorityMuscles.join(", ") || "non precise"}`,
+    `Restrictions/douleurs: ${input.restrictions || "aucune"}`,
+    "Catalogue exercices (slug obligatoire):",
+    JSON.stringify(exerciseSummary),
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: prompt,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("[AI_PROGRAM] OpenAI error", response.status);
+      return { ok: false as const, error: "openai_error" };
+    }
+
+    const payload = await response.json() as { output_text?: string };
+    const text = String(payload.output_text ?? "").trim();
+    const parsed = safeJsonParse(extractJsonBlock(text));
+    const valid = validateGeneratedProgram(parsed);
+    if (!valid.valid) {
+      console.error("[AI_PROGRAM] JSON invalide", valid.reason);
+      return { ok: false as const, error: "invalid_json", reason: valid.reason };
+    }
+
+    const known = new Set(catalog.map((item) => item.slug));
+    const unknownSlugs = valid.value.days
+      .flatMap((d) => d.exercises.map((e) => e.exerciseSlug))
+      .filter((slug) => !known.has(slug));
+
+    if (unknownSlugs.length > 0) {
+      console.error("[AI_PROGRAM] Exercices introuvables", unknownSlugs.join(", "));
+      return { ok: false as const, error: "unknown_exercises", unknownSlugs };
+    }
+
+    console.info("[AI_PROGRAM] Generation succes");
+    return { ok: true as const, program: valid.value };
+  } catch (error) {
+    console.error("[AI_PROGRAM] OpenAI exception", error);
+    return { ok: false as const, error: "openai_exception" };
+  }
+}
+
+export async function saveGeneratedProgram(program: ValidGeneratedProgram) {
+  const profile = await getOrCreateDemoProfile();
+
+  const uniqueSlugs = [...new Set(program.days.flatMap((d) => d.exercises.map((e) => e.exerciseSlug)))];
+  const exercises = await prisma.exercise.findMany({
+    where: { slug: { in: uniqueSlugs }, isActive: true },
+    select: { id: true, slug: true },
+  });
+  const slugToId = new Map(exercises.map((item) => [item.slug, item.id]));
+  const missing = uniqueSlugs.filter((slug) => !slugToId.has(slug));
+  if (missing.length > 0) {
+    console.error("[AI_PROGRAM] Exercices introuvables au save", missing.join(", "));
+    return { ok: false as const, error: "unknown_exercises", missing };
+  }
+
+  const created = await prisma.program.create({
+    data: {
+      userProfileId: profile.id,
+      name: program.programName,
+      goal: toProgramGoal(program.goal),
+      level: "INTERMEDIATE",
+      sessionsPerWeek: program.days.length,
+      description: program.notes,
+      status: "DRAFT",
+      days: {
+        create: program.days.map((day) => ({
+          dayIndex: day.dayIndex,
+          title: day.title,
+          focus: day.notes,
+          exercises: {
+            create: day.exercises.map((ex, idx) => ({
+              exerciseId: slugToId.get(ex.exerciseSlug)!,
+              orderIndex: idx + 1,
+              sets: ex.sets,
+              repsText: ex.reps,
+              restSeconds: ex.restSeconds,
+              tempo: ex.tempo ?? null,
+            })),
+          },
+        })),
+      },
+    },
+    select: { id: true, name: true },
+  });
+
+  console.info("[AI_PROGRAM] Sauvegarde succes", created.id);
+  return { ok: true as const, programId: created.id, programName: created.name };
+}
+

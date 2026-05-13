@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ProgramLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ProgramGoal {
+  STRENGTH
+  HYPERTROPHY
+  ENDURANCE
+  FAT_LOSS
+  GENERAL_FITNESS
+}
+
+enum ExerciseCategory {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  LEGS
+  ABS
+  CARDIO_MOBILITY
+}
+
+enum MediaType {
+  IMAGE
+  THUMBNAIL
+  ANIMATION
+}
+
+enum ProgramStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum SessionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum MetricType {
+  BODY_WEIGHT
+  BODY_FAT
+  WAIST
+  CHEST
+  ARM
+  THIGH
+  PERFORMANCE
+}
+
+model UserProfile {
+  id                 String           @id @default(cuid())
+  displayName        String
+  email              String?          @unique
+  age                Int?
+  heightCm           Int?
+  weightKg           Float?
+  trainingLevel      ProgramLevel?
+  primaryGoal        ProgramGoal?
+  sessionsPerWeek    Int?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  programs           Program[]
+  workoutSessions    WorkoutSession[]
+  progressMetrics    ProgressMetric[]
+}
+
+model Exercise {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  category           ExerciseCategory
+  primaryMuscle      String
+  secondaryMuscles   String[]
+  equipment          String[]
+  difficulty         ProgramLevel
+  instructions       String
+  tips               String[]
+  isCompound         Boolean            @default(false)
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  media              ExerciseMedia[]
+  programExercises   ProgramExercise[]
+  workoutSets        WorkoutSet[]
+
+  @@index([category, difficulty])
+  @@index([isActive])
+}
+
+model ExerciseMedia {
+  id                 String      @id @default(cuid())
+  exerciseId         String
+  type               MediaType
+  url                String
+  mimeType           String?
+  width              Int?
+  height             Int?
+  durationSeconds    Int?
+  createdAt          DateTime    @default(now())
+  exercise           Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([exerciseId, type])
+}
+
+model Program {
+  id                 String          @id @default(cuid())
+  userProfileId      String
+  name               String
+  goal               ProgramGoal
+  level              ProgramLevel
+  sessionsPerWeek    Int
+  description        String?
+  status             ProgramStatus   @default(DRAFT)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  userProfile        UserProfile     @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  days               ProgramDay[]
+  workoutSessions    WorkoutSession[]
+
+  @@index([userProfileId, status])
+}
+
+model ProgramDay {
+  id                 String            @id @default(cuid())
+  programId          String
+  dayIndex           Int
+  title              String
+  focus              String?
+  createdAt          DateTime          @default(now())
+  program            Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises          ProgramExercise[]
+
+  @@unique([programId, dayIndex])
+  @@index([programId])
+}
+
+model ProgramExercise {
+  id                 String         @id @default(cuid())
+  programDayId       String
+  exerciseId         String
+  orderIndex         Int
+  sets               Int
+  repsMin            Int?
+  repsMax            Int?
+  repsText           String?
+  restSeconds        Int            @default(60)
+  tempo              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  programDay         ProgramDay     @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  exercise           Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  workoutSets        WorkoutSet[]
+
+  @@unique([programDayId, orderIndex])
+  @@index([exerciseId])
+}
+
+model WorkoutSession {
+  id                 String          @id @default(cuid())
+  userProfileId      String
+  programId          String?
+  programDayId       String?
+  title              String
+  status             SessionStatus   @default(PLANNED)
+  startedAt          DateTime?
+  endedAt            DateTime?
+  durationSeconds    Int?
+  notes              String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  userProfile        UserProfile     @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  program            Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
+  sets               WorkoutSet[]
+
+  @@index([userProfileId, status, createdAt])
+}
+
+model WorkoutSet {
+  id                 String           @id @default(cuid())
+  workoutSessionId   String
+  exerciseId         String
+  programExerciseId  String?
+  setIndex           Int
+  targetRepsMin      Int?
+  targetRepsMax      Int?
+  actualReps         Int?
+  targetWeightKg     Float?
+  actualWeightKg     Float?
+  restSeconds        Int?
+  rpe                Int?
+  isCompleted        Boolean          @default(false)
+  completedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  workoutSession     WorkoutSession   @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exercise           Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  programExercise    ProgramExercise? @relation(fields: [programExerciseId], references: [id], onDelete: SetNull)
+
+  @@index([workoutSessionId, setIndex])
+  @@index([exerciseId])
+}
+
+model ProgressMetric {
+  id                 String        @id @default(cuid())
+  userProfileId      String
+  metricType         MetricType
+  value              Float
+  unit               String
+  measuredAt         DateTime      @default(now())
+  notes              String?
+  createdAt          DateTime      @default(now())
+  userProfile        UserProfile   @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId, metricType, measuredAt])
+}
