@@ -70,7 +70,13 @@ export type SessionWorkoutExercise = ExerciseWithFrCompat & {
 
 function isMissingColumnError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
-  return message.includes("does not exist in the current database");
+  return (
+    message.includes("does not exist in the current database") ||
+    message.includes("does not exist") ||
+    message.includes("Unknown field") ||
+    message.includes("Unknown argument") ||
+    message.includes("P2022")
+  );
 }
 
 function toFrCompat<T extends {
@@ -538,28 +544,83 @@ export async function getProgressDataForDemoUser(selectedExerciseId?: string) {
   const profile = await getOrCreateDemoProfile();
   const exerciseId = (selectedExerciseId ?? "").trim();
 
-  const [sessions, exercises] = await Promise.all([
-    prisma.workoutSession.findMany({
-      where: { userProfileId: profile.id },
-      include: {
-        sets: {
-          include: {
-            exercise: {
-              select: { id: true, name: true, nameFr: true },
+  let sessions: Array<{
+    id: string;
+    title: string;
+    startedAt: Date | null;
+    createdAt: Date;
+    status: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED";
+    durationSeconds: number | null;
+    sets: Array<{
+      exerciseId: string;
+      actualReps: number | null;
+      actualWeightKg: number | null;
+      exercise: { id: string; name: string; nameFr: string | null };
+    }>;
+  }> = [];
+
+  let exercises: Array<{ id: string; name: string; nameFr: string | null }> = [];
+
+  try {
+    const response = await Promise.all([
+      prisma.workoutSession.findMany({
+        where: { userProfileId: profile.id },
+        include: {
+          sets: {
+            include: {
+              exercise: {
+                select: { id: true, name: true, nameFr: true },
+              },
             },
           },
         },
-      },
-      orderBy: [{ createdAt: "desc" }],
-      take: 150,
-    }),
-    prisma.exercise.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, nameFr: true },
-      orderBy: [{ name: "asc" }],
-      take: 300,
-    }),
-  ]);
+        orderBy: [{ createdAt: "desc" }],
+        take: 150,
+      }),
+      prisma.exercise.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, nameFr: true },
+        orderBy: [{ name: "asc" }],
+        take: 300,
+      }),
+    ]);
+    sessions = response[0];
+    exercises = response[1];
+  } catch (error) {
+    if (!isMissingColumnError(error)) throw error;
+
+    const response = await Promise.all([
+      prisma.workoutSession.findMany({
+        where: { userProfileId: profile.id },
+        include: {
+          sets: {
+            include: {
+              exercise: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+        },
+        orderBy: [{ createdAt: "desc" }],
+        take: 150,
+      }),
+      prisma.exercise.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+        orderBy: [{ name: "asc" }],
+        take: 300,
+      }),
+    ]);
+
+    sessions = response[0].map((session) => ({
+      ...session,
+      sets: session.sets.map((set) => ({
+        ...set,
+        exercise: { ...set.exercise, nameFr: null },
+      })),
+    }));
+    exercises = response[1].map((exercise) => ({ ...exercise, nameFr: null }));
+  }
 
   const now = new Date();
   const startOfWeek = new Date(now);
