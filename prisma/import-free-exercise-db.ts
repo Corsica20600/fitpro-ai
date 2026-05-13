@@ -163,33 +163,40 @@ async function importOne(ex: ExternalExercise) {
   const fallbackImage = secondImage ? `/media/exercises/${slug}/${secondImage}` : fallbackThumb;
   const fallbackAnim = firstImage ? `/media/exercises/${slug}/${firstImage}` : "/media/exercises/fallback-anim.svg";
 
+  const primaryMuscles = [...(ex.primaryMuscles ?? []).map(toTitleCase)];
+  const secondaryMuscles = [...(ex.secondaryMuscles ?? []).map(toTitleCase)];
+  const equipment = [...mapEquipment(ex.equipment)];
+  const instructions = [...(ex.instructions ?? [])];
+  const commonMistakes = [
+    "Aller trop vite sans controle",
+    "Amplitude incomplete",
+    "Mauvais gainage",
+  ];
+  const tags = [ex.category ?? "general", ex.force ?? "unknown", ...(ex.primaryMuscles ?? [])].map((t) => t.toLowerCase());
+
   const payload = {
     name: ex.name.trim(),
     category: mapCategory(ex.primaryMuscles ?? [], ex.category),
     movementType: mapMovementType(ex.mechanic, ex.category),
-    primaryMuscles: (ex.primaryMuscles ?? []).map(toTitleCase),
-    secondaryMuscles: (ex.secondaryMuscles ?? []).map(toTitleCase),
-    equipment: mapEquipment(ex.equipment),
+    primaryMuscles,
+    secondaryMuscles,
+    equipment,
     difficulty: mapDifficulty(ex.level),
     objectives: mapObjectives(ex.category),
-    shortTechnicalCues: (ex.instructions ?? []).slice(0, 3).map((line) => line.slice(0, 120)),
-    detailedInstructions: (ex.instructions ?? []).join(" "),
-    commonMistakes: [
-      "Aller trop vite sans controle",
-      "Amplitude incomplete",
-      "Mauvais gainage",
-    ],
-    variants: [],
-    alternatives: [],
-    tags: [ex.category ?? "general", ex.force ?? "unknown", ...(ex.primaryMuscles ?? [])].map((t) => t.toLowerCase()),
-    contraindications: [],
+    shortTechnicalCues: [...instructions.slice(0, 3).map((line) => line.slice(0, 120))],
+    detailedInstructions: instructions.join(" "),
+    commonMistakes,
+    variants: [] as string[],
+    alternatives: [] as string[],
+    tags,
+    contraindications: [] as string[],
     primaryAnimationPath: fallbackAnim,
     fallbackImagePath: fallbackImage,
     fallbackThumbnailPath: fallbackThumb,
     fallbackAnimationPath: fallbackAnim,
     isCompound: ex.mechanic === "compound",
     isActive: true,
-  } as const;
+  };
 
   const existing = await prisma.exercise.findUnique({ where: { slug }, select: { id: true } });
   const record = await prisma.exercise.upsert({
