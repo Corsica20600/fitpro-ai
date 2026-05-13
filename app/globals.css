@@ -30,6 +30,7 @@ body {
   color: var(--text);
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 a { text-decoration: none; color: inherit; }
@@ -75,7 +76,7 @@ button, input, select { font-family: inherit; }
   max-width: 440px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 14px 12px 102px;
+  padding: 14px 12px calc(102px + env(safe-area-inset-bottom));
 }
 
 .screen { display: flex; flex-direction: column; gap: 14px; }
