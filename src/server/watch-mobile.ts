@@ -230,6 +230,28 @@ export async function nextWatchExercise(sessionId: string) {
   return getWatchPayload(state.sessionId);
 }
 
+export async function previousWatchExercise(sessionId: string) {
+  const state = await getWatchPayload(sessionId);
+  if (!state) return null;
+  await prisma.watchSession.upsert({
+    where: { workoutSessionId: state.sessionId },
+    update: {
+      currentExerciseIndex: Math.max(0, state.exerciseIndex - 2),
+      currentSetIndex: 1,
+      status: "ACTIVE",
+      lastSyncAt: new Date(),
+    },
+    create: {
+      workoutSessionId: state.sessionId,
+      currentExerciseIndex: Math.max(0, state.exerciseIndex - 2),
+      currentSetIndex: 1,
+      status: "ACTIVE",
+      lastSyncAt: new Date(),
+    },
+  });
+  return getWatchPayload(state.sessionId);
+}
+
 export async function skipWatchRest(sessionId: string) {
   const state = await getWatchPayload(sessionId);
   if (!state) return null;

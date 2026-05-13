@@ -19,7 +19,32 @@ function formatDate(value: Date | null) {
 export default async function ProgressPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const searchParams = await props.searchParams;
   const exerciseId = String(searchParams.exerciseId ?? "").trim();
-  const data = await getProgressDataForDemoUser(exerciseId);
+  const fallbackData = {
+    exerciseOptions: [] as Array<{ id: string; name: string }>,
+    selectedExercise: null as { id: string; name: string } | null,
+    headline: {
+      weeklySessions: 0,
+      weeklyVolume: 0,
+      totalSets: 0,
+      averageDuration: 0,
+      mostWorkedExercise: "N/A",
+    },
+    progression: {
+      bestWeight: 0,
+      bestReps: 0,
+      totalVolume: 0,
+      lastSessionAt: null as Date | null,
+      evolution: "stable",
+    },
+    records: {
+      bestWeight: null as { value: number; exerciseName: string } | null,
+      bestExerciseVolume: null as { exerciseId: string; name: string; volume: number } | null,
+      bestSession: null as { sessionId: string; title: string; volume: number } | null,
+    },
+    recentSessions: [] as Array<{ id: string; date: Date; status: string; setCount: number; volume: number }>,
+    progressMetricReady: false,
+  };
+  const data = await getProgressDataForDemoUser(exerciseId).catch(() => fallbackData);
 
   return (
     <div className="stack">

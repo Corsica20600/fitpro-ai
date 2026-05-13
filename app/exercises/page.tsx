@@ -25,10 +25,25 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
   const equipment = String(searchParams.equipment ?? "").trim();
   const page = Math.max(1, Number(searchParams.page ?? 1) || 1);
 
-  const [filters, result] = await Promise.all([
-    getExerciseFilterOptions(),
-    getExercisesCatalogPage({ search, muscle, equipment, page, pageSize: 24 }),
-  ]);
+  let filters = { muscles: [] as string[], equipment: [] as string[] };
+  let result = {
+    page,
+    pageSize: 24,
+    total: 0,
+    totalPages: 1,
+    exercises: [] as Awaited<ReturnType<typeof getExercisesCatalogPage>>["exercises"],
+  };
+
+  try {
+    const response = await Promise.all([
+      getExerciseFilterOptions(),
+      getExercisesCatalogPage({ search, muscle, equipment, page, pageSize: 24 }),
+    ]);
+    filters = response[0];
+    result = response[1];
+  } catch {
+    // Keep page renderable even if DB query fails in production.
+  }
 
   return (
     <div className="stack">

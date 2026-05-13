@@ -8,14 +8,19 @@ import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-cli
 
 export default async function WorkoutPage() {
   const { programs, sessionExercises, currentSession } = await getWorkoutPageData();
+  const heroExercise = sessionExercises[0] ?? null;
+  const heroTitle = currentSession
+    ? (heroExercise?.nameFr || heroExercise?.name || currentSession.title || "Seance du jour")
+    : "Seance guidee";
+  const heroImage = heroExercise?.fallbackImagePath || heroExercise?.fallbackThumbnailPath || "/media/exercises/air-bike/0.jpg";
 
   return (
     <AppShell className="stack workout-screen premium-workout">
       <HeroVisual
-        title="Execution en temps reel"
+        title={heroTitle}
         eyebrow="Seance guidee"
-        imageSrc={sessionExercises[0]?.fallbackImagePath || "/media/exercises/air-bike/0.jpg"}
-        imageAlt="Seance du jour"
+        imageSrc={heroImage}
+        imageAlt={heroTitle}
         className="workout-page-hero"
       />
 
