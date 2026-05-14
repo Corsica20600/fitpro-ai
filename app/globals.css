@@ -286,6 +286,18 @@ button, input, select { font-family: inherit; }
   object-fit: cover;
 }
 
+.program-day-item-visual {
+  width: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.program-day-item-visual .exercise-visual-media,
+.program-day-item-visual .exercise-visual-placeholder {
+  width: 64px;
+  height: 64px !important;
+}
+
 .program-day-item-title {
   margin: 0;
   font-size: .9rem;

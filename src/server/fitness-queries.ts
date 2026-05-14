@@ -305,7 +305,7 @@ export async function getProgramsForDemoUser() {
       days: {
         include: {
           exercises: {
-            include: { exercise: true },
+            include: { exercise: { include: { media: { orderBy: [{ type: "asc" }, { sortOrder: "asc" }] } } } },
             orderBy: { orderIndex: "asc" },
           },
         },

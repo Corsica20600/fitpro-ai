@@ -1,6 +1,7 @@
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
+import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import {
   applyWeeklyTemplateAction,
   addExerciseToProgramDayAction,
@@ -165,10 +166,20 @@ export default async function ProgramsPage() {
                       <div className="program-day-list">
                         {day.exercises.map((ex) => (
                           <article key={ex.id} className="program-day-item">
-                            <img
-                              src={ex.exercise.fallbackThumbnailPath || ex.exercise.fallbackImagePath}
-                              alt={ex.exercise.nameFr || ex.exercise.name}
-                              className="program-day-item-image"
+                            <ExerciseVisual
+                              media={
+                                ex.exercise.media?.map((m) => ({
+                                  type: m.type,
+                                  publicUrl: m.publicUrl,
+                                  url: m.url,
+                                  format: String(m.format || "").toLowerCase(),
+                                })) ?? []
+                              }
+                              fallbackImage={ex.exercise.fallbackThumbnailPath || ex.exercise.fallbackImagePath}
+                              fallbackAnimation={ex.exercise.primaryAnimationPath}
+                              title={ex.exercise.nameFr || ex.exercise.name}
+                              compact
+                              className="program-day-item-visual"
                             />
                             <div>
                               <p className="program-day-item-title">{ex.exercise.nameFr || ex.exercise.name}</p>
