@@ -5,6 +5,7 @@ import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { categoryToFr, levelToFr } from "@/src/lib/exercise-i18n";
 import { addExerciseToProgramDayAction } from "@/src/server/fitness-actions";
 import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-queries";
+import { looksEnglish, translateSentence, translateSimple } from "@/src/lib/exercise-i18n";
 
 export default async function ExerciseDetailPage(props: PageProps<"/exercises/[slug]">) {
   const { slug } = await props.params;
@@ -16,10 +17,13 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
   if (!exercise) notFound();
 
   const primaryMuscles = exercise.primaryMusclesFr.length ? exercise.primaryMusclesFr : exercise.primaryMuscles;
-  const secondaryMuscles = exercise.secondaryMuscles;
+  const secondaryMuscles = exercise.secondaryMuscles.map((item) => translateSimple(item).text);
   const equipment = exercise.equipmentFr.length ? exercise.equipmentFr : exercise.equipment;
-  const instructions = exercise.instructionsFr || exercise.detailedInstructions;
-  const commonMistakes = exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes;
+  const instructions = exercise.instructionsFr && !looksEnglish(exercise.instructionsFr)
+    ? exercise.instructionsFr
+    : translateSentence(exercise.detailedInstructions).text;
+  const commonMistakes = (exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes)
+    .map((item) => (looksEnglish(item) ? translateSentence(item).text : item));
 
   const sourceName = exercise.media.find((item) => item.sourceName)?.sourceName;
   const license = exercise.media.find((item) => item.license)?.license;
