@@ -117,3 +117,47 @@ export async function completeWorkoutSessionAction(formData: FormData) {
   revalidatePath("/workout");
   revalidatePath("/history");
 }
+
+export async function addExerciseToProgramDayAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const dayId = String(formData.get("dayId") ?? "").trim();
+  const exerciseId = String(formData.get("exerciseId") ?? "").trim();
+  const sets = Number(formData.get("sets") ?? 4);
+  const repsMin = Number(formData.get("repsMin") ?? 8);
+  const repsMax = Number(formData.get("repsMax") ?? 12);
+  const restSeconds = Number(formData.get("restSeconds") ?? 90);
+
+  if (!programId || !dayId || !exerciseId) return;
+
+  const day = await prisma.programDay.findFirst({
+    where: {
+      id: dayId,
+      programId,
+      program: { userProfileId: profile.id },
+    },
+    select: { id: true },
+  });
+
+  if (!day) return;
+
+  const last = await prisma.programExercise.findFirst({
+    where: { programDayId: dayId },
+    orderBy: { orderIndex: "desc" },
+    select: { orderIndex: true },
+  });
+
+  await prisma.programExercise.create({
+    data: {
+      programDayId: dayId,
+      exerciseId,
+      orderIndex: (last?.orderIndex ?? 0) + 1,
+      sets: Number.isFinite(sets) ? Math.max(1, Math.min(12, sets)) : 4,
+      repsMin: Number.isFinite(repsMin) ? Math.max(1, Math.min(40, repsMin)) : 8,
+      repsMax: Number.isFinite(repsMax) ? Math.max(1, Math.min(60, repsMax)) : 12,
+      restSeconds: Number.isFinite(restSeconds) ? Math.max(15, Math.min(300, restSeconds)) : 90,
+    },
+  });
+
+  revalidatePath("/programs");
+}

@@ -307,6 +307,21 @@ export async function getProgramsForDemoUser() {
   });
 }
 
+export async function getExerciseOptionsForPrograms(limit = 300) {
+  return prisma.exercise.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      nameFr: true,
+      primaryMuscles: true,
+      primaryMusclesFr: true,
+    },
+    orderBy: [{ name: "asc" }],
+    take: Math.max(60, Math.min(800, limit)),
+  });
+}
+
 export async function getWorkoutHistoryForDemoUser() {
   const profile = await getOrCreateDemoProfile();
 

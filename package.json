@@ -7,6 +7,7 @@
     "postinstall": "prisma generate",
     "build": "next build",
     "start": "next start",
+    "deploy:git": "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
