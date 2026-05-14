@@ -6,7 +6,13 @@ import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { getWorkoutPageData } from "@/src/server/fitness-queries";
 
 export default async function DashboardPage() {
-  const { currentSession, exercises } = await getWorkoutPageData();
+  const { currentSession, exercises, programs } = await getWorkoutPageData();
+  const selectedProgram = programs.find((program) => program.status === "ACTIVE") ?? programs[0] ?? null;
+  const selectedProgramStatus =
+    selectedProgram?.status === "ACTIVE" ? "Actif" :
+    selectedProgram?.status === "DRAFT" ? "Brouillon" :
+    selectedProgram?.status === "ARCHIVED" ? "Archive" :
+    null;
   const activeExercise = exercises[0] ?? null;
   const currentSetIndex = (currentSession?.sets?.length ?? 0) + 1;
   const currentExerciseIndex = 1;
@@ -30,8 +36,8 @@ export default async function DashboardPage() {
         <div className="dashboard-program-main">
           <img src={heroImage} alt={heroTitle} className="dashboard-program-image" />
           <div>
-            <h2>{currentSession ? "Bloc principal" : "Pret a lancer"}</h2>
-            <p>{currentSession ? heroTitle : "Session full body courte"}</p>
+            <h2>{selectedProgram?.name ?? "Aucun programme"}</h2>
+            <p>{selectedProgramStatus ? `Statut: ${selectedProgramStatus}` : "Cree ton premier programme dans Plans"}</p>
           </div>
         </div>
       </WorkoutCard>
@@ -55,11 +61,12 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="dashboard-mini-stats">
-        <span className="chip">Semaine 2/4</span>
-        <span className="chip">Volume 12 480</span>
-        <span className="chip">Streak 3j</span>
-      </section>
+      {selectedProgram ? (
+        <section className="dashboard-mini-stats">
+          <span className="chip">Programme: {selectedProgram.name}</span>
+          <span className="chip">Statut: {selectedProgramStatus ?? "Inconnu"}</span>
+        </section>
+      ) : null}
     </AppShell>
   );
 }

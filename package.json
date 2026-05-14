@@ -14,6 +14,7 @@
     "prisma:seed": "prisma db seed",
     "media:add-gif": "tsx scripts/add-exercise-gif.ts",
     "media:add": "tsx scripts/add-exercise-media.ts",
+    "reset:history-progress": "tsx scripts/reset-history-progress.ts",
     "import:exercises": "tsx prisma/import-exercises.ts --file=exercises.import.example.json",
     "import:free-exercise-db": "tsx prisma/import-free-exercise-db.ts",
     "translate:exercises-fr": "tsx scripts/translate-exercises-fr.ts",
