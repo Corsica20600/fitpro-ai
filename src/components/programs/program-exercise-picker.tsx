@@ -13,6 +13,7 @@ type ExerciseOption = {
   id: string;
   name: string;
   nameFr: string | null;
+  primaryAnimationPath: string | null;
   primaryMuscles: string[];
   primaryMusclesFr: string[];
   fallbackThumbnailPath: string;
@@ -109,7 +110,7 @@ export function ProgramExercisePicker({
         {filtered.map((exercise) => {
           const title = exercise.nameFr || exercise.name;
           const muscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
-          const image = exercise.fallbackThumbnailPath || exercise.fallbackImagePath;
+          const image = exercise.primaryAnimationPath || exercise.fallbackThumbnailPath || exercise.fallbackImagePath;
 
           return (
             <article key={exercise.id} className="program-picker-card">

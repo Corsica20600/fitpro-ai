@@ -323,6 +323,7 @@ export async function getExerciseOptionsForPrograms(limit = 300) {
       id: true,
       name: true,
       nameFr: true,
+      primaryAnimationPath: true,
       primaryMuscles: true,
       primaryMusclesFr: true,
       fallbackThumbnailPath: true,
