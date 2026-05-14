@@ -30,6 +30,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <div className="app-shell">
+          <header className="app-topbar">
+            <div className="app-brand">
+              <span className="app-brand-main">FITAi</span>
+              <span className="app-brand-pro">PRO</span>
+            </div>
+          </header>
           <main className="screen">{children}</main>
           <BottomNav />
         </div>

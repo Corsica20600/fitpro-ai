@@ -76,7 +76,7 @@ button, input, select { font-family: inherit; }
   max-width: 440px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 14px 12px calc(102px + env(safe-area-inset-bottom));
+  padding: 8px 12px calc(108px + env(safe-area-inset-bottom));
 }
 
 .screen { display: flex; flex-direction: column; gap: 14px; }
@@ -507,27 +507,83 @@ button, input, select { font-family: inherit; }
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 10px;
+  bottom: 12px;
   width: min(440px, calc(100vw - 24px));
   display: grid;
   grid-template-columns: repeat(6, minmax(0,1fr));
-  gap: 4px;
+  gap: 6px;
   border-radius: 999px;
-  border: 1px solid #24344f;
-  background: rgba(8, 14, 27, .92);
-  padding: 7px;
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(74, 130, 221, .28);
+  background:
+    linear-gradient(180deg, rgba(8, 13, 25, .95), rgba(8, 12, 21, .95)),
+    radial-gradient(90% 100% at 50% -20%, rgba(52, 119, 255, .28), transparent 70%);
+  padding: 8px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .42);
 }
 .bottom-nav-item {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
   text-align: center;
-  font-size: .68rem;
-  color: #8d9cbc;
-  border-radius: 999px;
-  padding: 8px 2px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: #8da5cb;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 8px 2px 7px;
 }
 .bottom-nav-item.active {
-  color: #f1f5ff;
-  background: linear-gradient(140deg, rgba(120, 168, 255, .34), rgba(120, 168, 255, .2));
+  color: #f6f9ff;
+  border-color: rgba(103, 154, 235, .42);
+  background: linear-gradient(140deg, rgba(39, 118, 255, .46), rgba(17, 74, 174, .4));
+  box-shadow: inset 0 0 0 1px rgba(137, 180, 255, .22), 0 8px 16px rgba(16, 79, 190, .35);
+}
+
+.bottom-nav-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+}
+
+.bottom-nav-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-bottom: 4px;
+  padding: 8px 4px 4px;
+  background: linear-gradient(180deg, rgba(5, 7, 12, .86), rgba(5, 7, 12, .36), transparent);
+  backdrop-filter: blur(5px);
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  letter-spacing: .01em;
+}
+
+.app-brand-main {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #f6fbff;
+  line-height: 1;
+}
+
+.app-brand-pro {
+  font-size: 1.7rem;
+  font-weight: 900;
+  font-style: italic;
+  color: #2f9dff;
+  line-height: 1;
+  text-shadow: 0 2px 16px rgba(47, 157, 255, .42);
 }
 
 .dashboard-focus {
