@@ -316,6 +316,8 @@ export async function getExerciseOptionsForPrograms(limit = 300) {
       nameFr: true,
       primaryMuscles: true,
       primaryMusclesFr: true,
+      fallbackThumbnailPath: true,
+      fallbackImagePath: true,
     },
     orderBy: [{ name: "asc" }],
     take: Math.max(60, Math.min(800, limit)),
