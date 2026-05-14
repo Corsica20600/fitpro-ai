@@ -192,6 +192,16 @@ button, input, select { font-family: inherit; }
   display: block;
 }
 
+.program-picker-visual {
+  border: none;
+  border-radius: 0;
+}
+
+.program-picker-visual .exercise-visual-media,
+.program-picker-visual .exercise-visual-placeholder {
+  height: 130px !important;
+}
+
 .program-picker-body {
   padding: 10px 10px 0;
 }

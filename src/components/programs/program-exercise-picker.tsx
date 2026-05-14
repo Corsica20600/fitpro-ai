@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
+import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 
 type DayOption = {
   id: string;
@@ -110,11 +111,28 @@ export function ProgramExercisePicker({
         {filtered.map((exercise) => {
           const title = exercise.nameFr || exercise.name;
           const muscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
-          const image = exercise.primaryAnimationPath || exercise.fallbackThumbnailPath || exercise.fallbackImagePath;
+          const image = exercise.fallbackThumbnailPath || exercise.fallbackImagePath;
 
           return (
             <article key={exercise.id} className="program-picker-card">
-              <img src={image} alt={title} className="program-picker-image" />
+              <ExerciseVisual
+                media={[
+                  ...(exercise.primaryAnimationPath
+                    ? [{ type: "ANIMATION" as const, publicUrl: exercise.primaryAnimationPath, url: exercise.primaryAnimationPath, format: "gif" }]
+                    : []),
+                  ...(exercise.fallbackThumbnailPath
+                    ? [{ type: "THUMBNAIL" as const, publicUrl: exercise.fallbackThumbnailPath, url: exercise.fallbackThumbnailPath, format: "webp" }]
+                    : []),
+                  ...(exercise.fallbackImagePath
+                    ? [{ type: "IMAGE" as const, publicUrl: exercise.fallbackImagePath, url: exercise.fallbackImagePath, format: "webp" }]
+                    : []),
+                ]}
+                fallbackImage={image}
+                fallbackAnimation={exercise.primaryAnimationPath}
+                title={title}
+                compact
+                className="program-picker-visual"
+              />
               <div className="program-picker-body">
                 <h4>{title}</h4>
                 <p>{muscle}</p>
