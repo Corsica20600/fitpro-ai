@@ -22,6 +22,7 @@ type WorkoutExercise = {
   plannedSets: number | null;
   plannedRepsMin: number | null;
   plannedRepsMax: number | null;
+  plannedWeightKg: number | null;
   plannedRestSeconds: number | null;
   media: Array<{
     id: string;
@@ -98,6 +99,7 @@ export function GuidedWorkoutClient({
   const [ending, setEnding] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
+  const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
   const autoAdvanceTimerRef = useRef<number | null>(null);
   const lastAutoAdvanceRef = useRef<string>("");
   const touchStartXRef = useRef<number | null>(null);
@@ -161,6 +163,7 @@ export function GuidedWorkoutClient({
   async function onValidateSet(setIndex: number, plannedReps: number) {
     const key = `${exercise.id}:${setIndex}`;
     const actualReps = Math.max(1, repsByKey[key] ?? plannedReps);
+    const actualWeightKg = Math.max(0, weightByKey[key] ?? exercise.plannedWeightKg ?? 0);
 
     const response = await fetch("/api/workout/log-set", {
       method: "POST",
@@ -171,7 +174,7 @@ export function GuidedWorkoutClient({
         setIndex,
         targetReps: plannedReps,
         actualReps,
-        actualWeightKg: null,
+        actualWeightKg,
         restSeconds: restChoice,
       }),
     });
@@ -246,6 +249,8 @@ export function GuidedWorkoutClient({
   const activeSet = setRows[Math.max(0, Math.min(nextSetIndex - 1, setRows.length - 1))];
   const activeKey = activeSet ? `${exercise.id}:${activeSet.setIndex}` : "";
   const activeReps = activeSet ? Math.max(1, repsByKey[activeKey] ?? activeSet.plannedReps) : 10;
+  const weightFromCompleted = activeSet?.existing?.actualWeightKg ?? null;
+  const activeWeight = activeSet ? Math.max(0, weightByKey[activeKey] ?? weightFromCompleted ?? exercise.plannedWeightKg ?? 0) : 0;
 
   function canTapToValidate() {
     return Boolean(activeSet) && !ending && restRemaining <= 0 && !isWorkoutDone;
@@ -340,6 +345,26 @@ export function GuidedWorkoutClient({
               type="button"
               className="ghost-btn"
               onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: activeReps + 1 }))}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="workout-active-reps">
+          <span>Poids (kg)</span>
+          <div className="workout-reps-control">
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, activeWeight - 1) }))}
+            >
+              -
+            </button>
+            <strong>{activeWeight}</strong>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: activeWeight + 1 }))}
             >
               +
             </button>

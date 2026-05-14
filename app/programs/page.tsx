@@ -2,14 +2,16 @@ import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
 import {
+  applyWeeklyTemplateAction,
   addExerciseToProgramDayAction,
   addProgramDayAction,
   createSimpleProgramAction,
   deleteProgramDayAction,
-  duplicateProgramDayExercisesAction,
+  deleteProgramExerciseAction,
   renameProgramDayAction,
   setProgramStatusAction,
   resetProgramStructureAction,
+  updateProgramExerciseAction,
 } from "@/src/server/fitness-actions";
 import { getExerciseOptionsForPrograms, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 import { levelToFr } from "@/src/lib/exercise-i18n";
@@ -110,8 +112,8 @@ export default async function ProgramsPage() {
               </div>
               <div className="stack" style={{ marginTop: 16 }}>
                 <section className="card">
-                  <p className="eyebrow">Dupliquer un jour</p>
-                  <form action={duplicateProgramDayExercisesAction} className="form-grid">
+                  <p className="eyebrow">Semaine type</p>
+                  <form action={applyWeeklyTemplateAction} className="form-grid">
                     <input type="hidden" name="programId" value={program.id} />
                     <label className="field-label">Depuis</label>
                     <select name="sourceDayId" className="input" defaultValue={program.days[0]?.id}>
@@ -119,13 +121,17 @@ export default async function ProgramsPage() {
                         <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
                       ))}
                     </select>
-                    <label className="field-label">Vers</label>
-                    <select name="targetDayId" className="input" defaultValue={program.days[1]?.id || program.days[0]?.id}>
-                      {program.days.map((day) => (
-                        <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
-                      ))}
-                    </select>
-                    <PrimaryButton type="submit">Dupliquer les exercices</PrimaryButton>
+                    <label className="field-label">Jours d'entrainement</label>
+                    <div className="chips">
+                      <label className="chip"><input type="checkbox" name="weekdays" value="MONDAY" defaultChecked /> Lundi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="TUESDAY" /> Mardi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="WEDNESDAY" defaultChecked /> Mercredi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="THURSDAY" /> Jeudi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="FRIDAY" defaultChecked /> Vendredi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="SATURDAY" /> Samedi</label>
+                      <label className="chip"><input type="checkbox" name="weekdays" value="SUNDAY" /> Dimanche</label>
+                    </div>
+                    <PrimaryButton type="submit">Appliquer la semaine</PrimaryButton>
                   </form>
                 </section>
 
@@ -168,6 +174,34 @@ export default async function ProgramsPage() {
                               <p className="muted">
                                 {ex.sets} series · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
                               </p>
+                              <form action={updateProgramExerciseAction} className="form-grid" style={{ marginTop: 8 }}>
+                                <input type="hidden" name="programId" value={program.id} />
+                                <input type="hidden" name="programExerciseId" value={ex.id} />
+                                <div className="grid-2">
+                                  <div>
+                                    <label className="field-label">Series</label>
+                                    <input name="sets" type="number" defaultValue={ex.sets} className="input" />
+                                  </div>
+                                  <div>
+                                    <label className="field-label">Repetitions</label>
+                                    <input name="repetitions" type="number" defaultValue={ex.repsMin ?? 10} className="input" />
+                                  </div>
+                                </div>
+                                <div className="grid-2">
+                                  <div>
+                                    <label className="field-label">Repos (sec)</label>
+                                    <input name="restSeconds" type="number" defaultValue={ex.restSeconds ?? 60} className="input" />
+                                  </div>
+                                  <div>
+                                    <label className="field-label">Poids (kg)</label>
+                                    <input name="targetWeightKg" type="number" defaultValue={Number(ex.repsText?.replace(/[^\d.,]/g, "").replace(",", ".") || 0)} className="input" />
+                                  </div>
+                                </div>
+                                <div className="grid-2">
+                                  <PrimaryButton type="submit">Modifier</PrimaryButton>
+                                  <button className="ghost-btn" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
+                                </div>
+                              </form>
                             </div>
                           </article>
                         ))}

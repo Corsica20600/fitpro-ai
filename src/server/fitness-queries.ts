@@ -61,12 +61,21 @@ export type SessionWorkoutExercise = ExerciseWithFrCompat & {
     sets: number | null;
     repsMin: number | null;
     repsMax: number | null;
+    plannedWeightKg: number | null;
     restSeconds: number | null;
     orderDayIndex: number | null;
     orderExerciseIndex: number | null;
     programExerciseId: string | null;
   };
 };
+
+function parseWeightKgFromText(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const match = value.match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) return null;
+  const parsed = Number(match[1].replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 function isMissingColumnError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
@@ -510,6 +519,21 @@ export async function getWorkoutPageData() {
   }
 
   let sessionExercises: SessionWorkoutExercise[] = [];
+  const latestWeightsRows = await prisma.workoutSet.findMany({
+    where: {
+      workoutSession: { userProfileId: profile.id },
+      actualWeightKg: { not: null },
+    },
+    orderBy: [{ createdAt: "desc" }],
+    select: { exerciseId: true, actualWeightKg: true },
+    take: 500,
+  });
+  const latestWeightByExercise = new Map<string, number>();
+  for (const row of latestWeightsRows) {
+    if (!latestWeightByExercise.has(row.exerciseId) && row.actualWeightKg != null) {
+      latestWeightByExercise.set(row.exerciseId, row.actualWeightKg);
+    }
+  }
 
   if (currentSession?.programId) {
     const sessionProgram = await prisma.program.findFirst({
@@ -532,20 +556,31 @@ export async function getWorkoutPageData() {
     });
 
     if (sessionProgram) {
-      sessionExercises = sessionProgram.days.flatMap((day) =>
-        day.exercises.map((programExercise) => ({
+      const weekdayByIndex = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const todayName = weekdayByIndex[new Date().getDay()] ?? "";
+      const dayForToday =
+        sessionProgram.days.find((d) => d.title.toLowerCase().includes(todayName)) ??
+        sessionProgram.days[0] ??
+        null;
+
+      if (dayForToday) {
+        sessionExercises = dayForToday.exercises.map((programExercise) => ({
           ...(toFrCompat(programExercise.exercise) as ExerciseWithFrCompat),
           plan: {
             sets: programExercise.sets ?? null,
             repsMin: programExercise.repsMin ?? null,
             repsMax: programExercise.repsMax ?? null,
+            plannedWeightKg:
+              parseWeightKgFromText(programExercise.repsText) ??
+              latestWeightByExercise.get(programExercise.exerciseId) ??
+              null,
             restSeconds: programExercise.restSeconds ?? null,
-            orderDayIndex: day.dayIndex,
+            orderDayIndex: dayForToday.dayIndex,
             orderExerciseIndex: programExercise.orderIndex,
             programExerciseId: programExercise.id,
           },
-        })),
-      );
+        }));
+      }
     }
   }
 

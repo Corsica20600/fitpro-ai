@@ -336,3 +336,127 @@ export async function setProgramStatusAction(formData: FormData) {
 
   revalidatePath("/programs");
 }
+
+export async function updateProgramExerciseAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const programExerciseId = String(formData.get("programExerciseId") ?? "").trim();
+  const sets = Number(formData.get("sets") ?? 3);
+  const repetitions = Number(formData.get("repetitions") ?? 10);
+  const restSeconds = Number(formData.get("restSeconds") ?? 60);
+  const targetWeightKg = Number(formData.get("targetWeightKg") ?? 0);
+  if (!programId || !programExerciseId) return;
+
+  const exists = await prisma.programExercise.findFirst({
+    where: {
+      id: programExerciseId,
+      programDay: { programId, program: { userProfileId: profile.id } },
+    },
+    select: { id: true },
+  });
+  if (!exists) return;
+
+  await prisma.programExercise.update({
+    where: { id: programExerciseId },
+    data: {
+      sets: Number.isFinite(sets) ? Math.max(1, Math.min(12, sets)) : 3,
+      repsMin: Number.isFinite(repetitions) ? Math.max(1, Math.min(60, repetitions)) : 10,
+      repsMax: Number.isFinite(repetitions) ? Math.max(1, Math.min(60, repetitions)) : 10,
+      restSeconds: Number.isFinite(restSeconds) ? Math.max(15, Math.min(300, restSeconds)) : 60,
+      repsText: Number.isFinite(targetWeightKg) && targetWeightKg > 0 ? `${targetWeightKg} kg` : null,
+    },
+  });
+
+  revalidatePath("/programs");
+}
+
+export async function deleteProgramExerciseAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const programExerciseId = String(formData.get("programExerciseId") ?? "").trim();
+  if (!programId || !programExerciseId) return;
+
+  const exists = await prisma.programExercise.findFirst({
+    where: {
+      id: programExerciseId,
+      programDay: { programId, program: { userProfileId: profile.id } },
+    },
+    select: { id: true },
+  });
+  if (!exists) return;
+
+  await prisma.programExercise.delete({ where: { id: programExerciseId } });
+  revalidatePath("/programs");
+}
+
+export async function applyWeeklyTemplateAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const sourceDayId = String(formData.get("sourceDayId") ?? "").trim();
+  const selectedWeekdays = formData.getAll("weekdays").map((v) => String(v)).filter(Boolean);
+  if (!programId || !sourceDayId || selectedWeekdays.length === 0) return;
+
+  const labels: Record<string, string> = {
+    MONDAY: "Lundi",
+    TUESDAY: "Mardi",
+    WEDNESDAY: "Mercredi",
+    THURSDAY: "Jeudi",
+    FRIDAY: "Vendredi",
+    SATURDAY: "Samedi",
+    SUNDAY: "Dimanche",
+  };
+
+  const program = await prisma.program.findFirst({
+    where: { id: programId, userProfileId: profile.id },
+    include: {
+      days: {
+        include: {
+          exercises: { orderBy: { orderIndex: "asc" } },
+        },
+      },
+    },
+  });
+  if (!program) return;
+
+  const source = program.days.find((d) => d.id === sourceDayId);
+  if (!source) return;
+
+  await prisma.programExercise.deleteMany({ where: { programDay: { programId } } });
+  await prisma.programDay.deleteMany({ where: { programId } });
+
+  for (let i = 0; i < selectedWeekdays.length; i += 1) {
+    const code = selectedWeekdays[i]!;
+    const title = labels[code] ?? `Jour ${i + 1}`;
+    const newDay = await prisma.programDay.create({
+      data: {
+        programId,
+        dayIndex: i + 1,
+        title,
+        focus: program.days.find((d) => d.id === sourceDayId)?.focus || "Routine",
+      },
+    });
+
+    if (source.exercises.length > 0) {
+      await prisma.programExercise.createMany({
+        data: source.exercises.map((ex, idx) => ({
+          programDayId: newDay.id,
+          exerciseId: ex.exerciseId,
+          orderIndex: idx + 1,
+          sets: ex.sets,
+          repsMin: ex.repsMin,
+          repsMax: ex.repsMax,
+          repsText: ex.repsText,
+          restSeconds: ex.restSeconds,
+          tempo: ex.tempo,
+        })),
+      });
+    }
+  }
+
+  await prisma.program.update({
+    where: { id: programId },
+    data: { sessionsPerWeek: selectedWeekdays.length },
+  });
+
+  revalidatePath("/programs");
+}
