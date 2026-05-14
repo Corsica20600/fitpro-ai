@@ -41,7 +41,8 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
     ]);
     filters = response[0];
     result = response[1];
-  } catch {
+  } catch (error) {
+    console.error("[exercises-page] failed to load exercises catalog", error);
     // Keep page renderable even if DB query fails in production.
   }
 
