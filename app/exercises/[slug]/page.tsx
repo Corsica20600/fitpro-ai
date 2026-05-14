@@ -3,11 +3,15 @@ import { notFound } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { categoryToFr, levelToFr } from "@/src/lib/exercise-i18n";
-import { getExerciseBySlug } from "@/src/server/fitness-queries";
+import { addExerciseToProgramDayAction } from "@/src/server/fitness-actions";
+import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 
 export default async function ExerciseDetailPage(props: PageProps<"/exercises/[slug]">) {
   const { slug } = await props.params;
-  const exercise = await getExerciseBySlug(slug);
+  const [exercise, programs] = await Promise.all([
+    getExerciseBySlug(slug),
+    getProgramsForDemoUser(),
+  ]);
 
   if (!exercise) notFound();
 
@@ -19,6 +23,8 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
 
   const sourceName = exercise.media.find((item) => item.sourceName)?.sourceName;
   const license = exercise.media.find((item) => item.license)?.license;
+  const firstProgram = programs[0] ?? null;
+  const firstDay = firstProgram?.days[0] ?? null;
 
   return (
     <div className="stack exercise-detail-screen">
@@ -77,9 +83,59 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
       )}
 
       <section className="card action-stack">
-        <Link href="/workout">
-          <PrimaryButton>Ajouter a une seance</PrimaryButton>
-        </Link>
+        {programs.length === 0 || !firstProgram || !firstDay ? (
+          <div className="stack">
+            <p className="muted">Cree d'abord un programme pour ajouter cet exercice.</p>
+            <Link href="/programs">
+              <PrimaryButton>Creer un programme</PrimaryButton>
+            </Link>
+          </div>
+        ) : (
+          <form action={addExerciseToProgramDayAction} className="form-grid">
+            <input type="hidden" name="exerciseId" value={exercise.id} />
+            <label className="field-label">Programme</label>
+            <select name="programId" className="input" defaultValue={firstProgram.id}>
+              {programs.map((program) => (
+                <option key={program.id} value={program.id}>
+                  {program.name}
+                </option>
+              ))}
+            </select>
+
+            <label className="field-label">Jour du programme</label>
+            <select name="dayId" className="input" defaultValue={firstDay.id}>
+              {programs.flatMap((program) =>
+                program.days.map((day) => (
+                  <option key={day.id} value={day.id}>
+                    {program.name} · Jour {day.dayIndex} · {day.title}
+                  </option>
+                )),
+              )}
+            </select>
+
+            <div className="grid-2">
+              <div>
+                <label className="field-label">Series</label>
+                <input className="input" type="number" name="sets" min={1} max={12} defaultValue={3} />
+              </div>
+              <div>
+                <label className="field-label">Repetitions</label>
+                <input className="input" type="number" name="repetitions" min={1} max={60} defaultValue={10} />
+              </div>
+            </div>
+            <div className="grid-2">
+              <div>
+                <label className="field-label">Repos (sec)</label>
+                <input className="input" type="number" name="restSeconds" min={15} max={300} defaultValue={45} />
+              </div>
+              <div>
+                <label className="field-label">Poids (kg)</label>
+                <input className="input" type="number" name="targetWeightKg" min={0} max={300} defaultValue={0} />
+              </div>
+            </div>
+            <PrimaryButton>Ajouter au programme</PrimaryButton>
+          </form>
+        )}
         <Link href="/exercises" className="outline-link">Retour catalogue</Link>
       </section>
     </div>

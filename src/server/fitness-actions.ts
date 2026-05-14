@@ -125,15 +125,15 @@ export async function addExerciseToProgramDayAction(formData: FormData) {
   const restSeconds = Number(formData.get("restSeconds") ?? 90);
   const targetWeightKg = Number(formData.get("targetWeightKg") ?? 0);
 
-  if (!programId || !dayId || !exerciseId) return;
+  if (!dayId || !exerciseId) return;
 
   const day = await prisma.programDay.findFirst({
     where: {
       id: dayId,
-      programId,
+      ...(programId ? { programId } : {}),
       program: { userProfileId: profile.id },
     },
-    select: { id: true },
+    select: { id: true, programId: true },
   });
 
   if (!day) return;
