@@ -321,6 +321,7 @@ export async function getExerciseOptionsForPrograms(limit = 300) {
     where: { isActive: true },
     select: {
       id: true,
+      slug: true,
       name: true,
       nameFr: true,
       primaryAnimationPath: true,

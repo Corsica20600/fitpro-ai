@@ -12,6 +12,7 @@ type DayOption = {
 
 type ExerciseOption = {
   id: string;
+  slug: string;
   name: string;
   nameFr: string | null;
   primaryAnimationPath: string | null;
@@ -68,15 +69,22 @@ export function ProgramExercisePicker({
   const [query, setQuery] = useState("");
   const [dayId, setDayId] = useState(days[0]?.id ?? "");
 
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return exercises.slice(0, 30);
+    const q = normalize(query.trim());
+    if (!q) return exercises.slice(0, 120);
     return exercises
       .filter((ex) => {
         const muscle = ex.primaryMusclesFr[0] || ex.primaryMuscles[0] || "";
-        return `${ex.nameFr || ex.name} ${muscle}`.toLowerCase().includes(q);
+        const hay = normalize(`${ex.nameFr || ex.name} ${ex.name} ${ex.slug} ${muscle}`);
+        return hay.includes(q);
       })
-      .slice(0, 30);
+      .slice(0, 120);
   }, [exercises, query]);
 
   if (!days.length) return null;

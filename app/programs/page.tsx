@@ -8,6 +8,7 @@ import {
   createSimpleProgramAction,
   deleteProgramDayAction,
   deleteProgramExerciseAction,
+  replaceProgramExerciseAction,
   renameProgramDayAction,
   setProgramStatusAction,
   resetProgramStructureAction,
@@ -42,7 +43,7 @@ function statusToFr(status: string) {
 export default async function ProgramsPage() {
   const [programs, exerciseOptions] = await Promise.all([
     getProgramsForDemoUser(),
-    getExerciseOptionsForPrograms(360),
+    getExerciseOptionsForPrograms(2000),
   ]);
 
   return (
@@ -201,6 +202,19 @@ export default async function ProgramsPage() {
                                   <PrimaryButton type="submit">Modifier</PrimaryButton>
                                   <button className="ghost-btn" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
                                 </div>
+                              </form>
+                              <form action={replaceProgramExerciseAction} className="form-grid" style={{ marginTop: 8 }}>
+                                <input type="hidden" name="programId" value={program.id} />
+                                <input type="hidden" name="programExerciseId" value={ex.id} />
+                                <label className="field-label">Remplacer par</label>
+                                <select name="exerciseId" className="input" defaultValue={ex.exerciseId}>
+                                  {exerciseOptions.map((opt) => (
+                                    <option key={opt.id} value={opt.id}>
+                                      {(opt.nameFr || opt.name)} · {(opt.primaryMusclesFr[0] || opt.primaryMuscles[0] || "Full body")}
+                                    </option>
+                                  ))}
+                                </select>
+                                <PrimaryButton type="submit">Remplacer l'exercice</PrimaryButton>
                               </form>
                             </div>
                           </article>

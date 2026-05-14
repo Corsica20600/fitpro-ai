@@ -389,6 +389,30 @@ export async function deleteProgramExerciseAction(formData: FormData) {
   revalidatePath("/programs");
 }
 
+export async function replaceProgramExerciseAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const programExerciseId = String(formData.get("programExerciseId") ?? "").trim();
+  const exerciseId = String(formData.get("exerciseId") ?? "").trim();
+  if (!programId || !programExerciseId || !exerciseId) return;
+
+  const exists = await prisma.programExercise.findFirst({
+    where: {
+      id: programExerciseId,
+      programDay: { programId, program: { userProfileId: profile.id } },
+    },
+    select: { id: true },
+  });
+  if (!exists) return;
+
+  await prisma.programExercise.update({
+    where: { id: programExerciseId },
+    data: { exerciseId },
+  });
+
+  revalidatePath("/programs");
+}
+
 export async function applyWeeklyTemplateAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programId = String(formData.get("programId") ?? "").trim();
