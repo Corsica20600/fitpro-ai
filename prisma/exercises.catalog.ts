@@ -5,7 +5,7 @@ import {
   MediaFormat,
   MediaType,
   ProgramLevel,
-} from "../src/generated/prisma/client";
+} from "@prisma/client";
 
 export type ExerciseCatalogItem = {
   slug: string;

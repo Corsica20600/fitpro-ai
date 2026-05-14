@@ -10,7 +10,7 @@ import {
   ExerciseObjective,
   MediaFormat,
   ProgramLevel,
-} from "../src/generated/prisma/client";
+} from "@prisma/client";
 
 type ExternalExercise = {
   id: string;

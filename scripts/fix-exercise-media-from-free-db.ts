@@ -2,7 +2,7 @@ import "dotenv/config";
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { PrismaClient, MediaFormat } from "../src/generated/prisma/client";
+import { PrismaClient, MediaFormat } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

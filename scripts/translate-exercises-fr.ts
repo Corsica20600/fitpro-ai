@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { looksEnglish, translateList, translateSentence, translateSimple } from "../src/lib/exercise-i18n";
 
 const prisma = new PrismaClient();
