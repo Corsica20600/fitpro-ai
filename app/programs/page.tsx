@@ -6,7 +6,9 @@ import {
   addProgramDayAction,
   createSimpleProgramAction,
   deleteProgramDayAction,
+  duplicateProgramDayExercisesAction,
   renameProgramDayAction,
+  setProgramStatusAction,
   resetProgramStructureAction,
 } from "@/src/server/fitness-actions";
 import { getExerciseOptionsForPrograms, getProgramsForDemoUser } from "@/src/server/fitness-queries";
@@ -92,9 +94,47 @@ export default async function ProgramsPage() {
                 <span className="chip">Statut: {statusToFr(program.status)}</span>
                 <span className="chip">Jours: {program.days.length}</span>
               </div>
+              <div className="grid-2" style={{ marginTop: 10 }}>
+                <form action={setProgramStatusAction}>
+                  <input type="hidden" name="programId" value={program.id} />
+                  <input type="hidden" name="status" value={program.status === "ACTIVE" ? "DRAFT" : "ACTIVE"} />
+                  <PrimaryButton type="submit">
+                    {program.status === "ACTIVE" ? "Passer en brouillon" : "Activer le programme"}
+                  </PrimaryButton>
+                </form>
+                <form action={setProgramStatusAction}>
+                  <input type="hidden" name="programId" value={program.id} />
+                  <input type="hidden" name="status" value="ARCHIVED" />
+                  <button className="ghost-btn" type="submit">Archiver</button>
+                </form>
+              </div>
               <div className="stack" style={{ marginTop: 16 }}>
+                <section className="card">
+                  <p className="eyebrow">Dupliquer un jour</p>
+                  <form action={duplicateProgramDayExercisesAction} className="form-grid">
+                    <input type="hidden" name="programId" value={program.id} />
+                    <label className="field-label">Depuis</label>
+                    <select name="sourceDayId" className="input" defaultValue={program.days[0]?.id}>
+                      {program.days.map((day) => (
+                        <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
+                      ))}
+                    </select>
+                    <label className="field-label">Vers</label>
+                    <select name="targetDayId" className="input" defaultValue={program.days[1]?.id || program.days[0]?.id}>
+                      {program.days.map((day) => (
+                        <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
+                      ))}
+                    </select>
+                    <PrimaryButton type="submit">Dupliquer les exercices</PrimaryButton>
+                  </form>
+                </section>
+
                 {program.days.map((day) => (
-                  <section key={day.id} className="card">
+                  <details key={day.id} className="card">
+                    <summary className="day-summary">
+                      <span>Jour {day.dayIndex} · {day.title}</span>
+                      <span className="chip">{day.exercises.length} exos</span>
+                    </summary>
                     <p className="eyebrow">Jour {day.dayIndex}</p>
                     <form action={renameProgramDayAction} className="form-grid">
                       <input type="hidden" name="programId" value={program.id} />
@@ -115,15 +155,25 @@ export default async function ProgramsPage() {
                     {day.exercises.length === 0 ? (
                       <p className="muted">Aucun exercice pour ce jour.</p>
                     ) : (
-                      <div className="chips">
+                      <div className="program-day-list">
                         {day.exercises.map((ex) => (
-                          <span key={ex.id} className="chip">
-                            {ex.exercise.nameFr || ex.exercise.name} · {ex.sets}x{ex.repsMin ?? "?"}-{ex.repsMax ?? "?"}
-                          </span>
+                          <article key={ex.id} className="program-day-item">
+                            <img
+                              src={ex.exercise.fallbackThumbnailPath || ex.exercise.fallbackImagePath}
+                              alt={ex.exercise.nameFr || ex.exercise.name}
+                              className="program-day-item-image"
+                            />
+                            <div>
+                              <p className="program-day-item-title">{ex.exercise.nameFr || ex.exercise.name}</p>
+                              <p className="muted">
+                                {ex.sets} series · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
+                              </p>
+                            </div>
+                          </article>
                         ))}
                       </div>
                     )}
-                  </section>
+                  </details>
                 ))}
 
                 <form action={addProgramDayAction}>

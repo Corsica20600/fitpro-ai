@@ -207,6 +207,81 @@ button, input, select { font-family: inherit; }
   font-size: .8rem;
 }
 
+.program-picker-form {
+  padding: 0 10px 10px;
+}
+
+.wheel-field {
+  display: grid;
+  gap: 5px;
+}
+
+.wheel-control {
+  border: 1px solid #2f3e5f;
+  border-radius: 14px;
+  background: rgba(10, 16, 30, .96);
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+}
+
+.wheel-control strong {
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+.wheel-btn {
+  border: none;
+  background: transparent;
+  color: #d6e7ff;
+  font-size: 1.3rem;
+  font-weight: 900;
+  min-height: 44px;
+}
+
+.day-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.day-summary::-webkit-details-marker {
+  display: none;
+}
+
+.program-day-list {
+  display: grid;
+  gap: 8px;
+}
+
+.program-day-item {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 12px;
+  padding: 7px;
+  background: rgba(17, 26, 43, .72);
+}
+
+.program-day-item-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.program-day-item-title {
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
 .exercise-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

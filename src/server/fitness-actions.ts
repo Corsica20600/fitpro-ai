@@ -121,9 +121,9 @@ export async function addExerciseToProgramDayAction(formData: FormData) {
   const dayId = String(formData.get("dayId") ?? "").trim();
   const exerciseId = String(formData.get("exerciseId") ?? "").trim();
   const sets = Number(formData.get("sets") ?? 4);
-  const repsMin = Number(formData.get("repsMin") ?? 8);
-  const repsMax = Number(formData.get("repsMax") ?? 12);
+  const reps = Number(formData.get("repetitions") ?? 10);
   const restSeconds = Number(formData.get("restSeconds") ?? 90);
+  const targetWeightKg = Number(formData.get("targetWeightKg") ?? 0);
 
   if (!programId || !dayId || !exerciseId) return;
 
@@ -150,8 +150,9 @@ export async function addExerciseToProgramDayAction(formData: FormData) {
       exerciseId,
       orderIndex: (last?.orderIndex ?? 0) + 1,
       sets: Number.isFinite(sets) ? Math.max(1, Math.min(12, sets)) : 4,
-      repsMin: Number.isFinite(repsMin) ? Math.max(1, Math.min(40, repsMin)) : 8,
-      repsMax: Number.isFinite(repsMax) ? Math.max(1, Math.min(60, repsMax)) : 12,
+      repsMin: Number.isFinite(reps) ? Math.max(1, Math.min(60, reps)) : 10,
+      repsMax: Number.isFinite(reps) ? Math.max(1, Math.min(60, reps)) : 10,
+      repsText: Number.isFinite(targetWeightKg) && targetWeightKg > 0 ? `${targetWeightKg} kg` : null,
       restSeconds: Number.isFinite(restSeconds) ? Math.max(15, Math.min(300, restSeconds)) : 90,
     },
   });
@@ -269,6 +270,69 @@ export async function resetProgramStructureAction() {
       data: { sessionsPerWeek: 1 },
     });
   }
+
+  revalidatePath("/programs");
+}
+
+export async function duplicateProgramDayExercisesAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const sourceDayId = String(formData.get("sourceDayId") ?? "").trim();
+  const targetDayId = String(formData.get("targetDayId") ?? "").trim();
+  if (!programId || !sourceDayId || !targetDayId || sourceDayId === targetDayId) return;
+
+  const program = await prisma.program.findFirst({
+    where: { id: programId, userProfileId: profile.id },
+    include: {
+      days: {
+        where: { id: { in: [sourceDayId, targetDayId] } },
+        include: { exercises: { orderBy: { orderIndex: "asc" } } },
+      },
+    },
+  });
+  if (!program || program.days.length < 2) return;
+
+  const sourceDay = program.days.find((d) => d.id === sourceDayId);
+  const targetDay = program.days.find((d) => d.id === targetDayId);
+  if (!sourceDay || !targetDay) return;
+
+  await prisma.programExercise.deleteMany({ where: { programDayId: targetDayId } });
+
+  if (sourceDay.exercises.length > 0) {
+    await prisma.programExercise.createMany({
+      data: sourceDay.exercises.map((ex, idx) => ({
+        programDayId: targetDayId,
+        exerciseId: ex.exerciseId,
+        orderIndex: idx + 1,
+        sets: ex.sets,
+        repsMin: ex.repsMin,
+        repsMax: ex.repsMax,
+        repsText: ex.repsText,
+        restSeconds: ex.restSeconds,
+        tempo: ex.tempo,
+      })),
+    });
+  }
+
+  revalidatePath("/programs");
+}
+
+export async function setProgramStatusAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const nextStatus = String(formData.get("status") ?? "").trim();
+  if (!programId || !["DRAFT", "ACTIVE", "ARCHIVED"].includes(nextStatus)) return;
+
+  const program = await prisma.program.findFirst({
+    where: { id: programId, userProfileId: profile.id },
+    select: { id: true },
+  });
+  if (!program) return;
+
+  await prisma.program.update({
+    where: { id: programId },
+    data: { status: nextStatus as "DRAFT" | "ACTIVE" | "ARCHIVED" },
+  });
 
   revalidatePath("/programs");
 }

@@ -19,6 +19,39 @@ type ExerciseOption = {
   fallbackImagePath: string;
 };
 
+function WheelNumber({
+  label,
+  name,
+  min,
+  max,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  min: number;
+  max: number;
+  defaultValue: number;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  const clamped = Math.max(min, Math.min(max, value));
+
+  function step(delta: number) {
+    setValue((v) => Math.max(min, Math.min(max, v + delta)));
+  }
+
+  return (
+    <div className="wheel-field">
+      <label className="field-label">{label}</label>
+      <input type="hidden" name={name} value={clamped} />
+      <div className="wheel-control">
+        <button type="button" className="wheel-btn" onClick={() => step(-1)}>-</button>
+        <strong>{clamped}</strong>
+        <button type="button" className="wheel-btn" onClick={() => step(1)}>+</button>
+      </div>
+    </div>
+  );
+}
+
 export function ProgramExercisePicker({
   programId,
   days,
@@ -35,13 +68,13 @@ export function ProgramExercisePicker({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return exercises.slice(0, 60);
+    if (!q) return exercises.slice(0, 30);
     return exercises
       .filter((ex) => {
         const muscle = ex.primaryMusclesFr[0] || ex.primaryMuscles[0] || "";
         return `${ex.nameFr || ex.name} ${muscle}`.toLowerCase().includes(q);
       })
-      .slice(0, 60);
+      .slice(0, 30);
   }, [exercises, query]);
 
   if (!days.length) return null;
@@ -49,7 +82,6 @@ export function ProgramExercisePicker({
   return (
     <section className="card">
       <p className="eyebrow">Ajouter un exercice</p>
-
       <label className="field-label" htmlFor={`day-${programId}`}>Jour cible</label>
       <select
         id={`day-${programId}`}
@@ -64,11 +96,11 @@ export function ProgramExercisePicker({
         ))}
       </select>
 
-      <label className="field-label" htmlFor={`search-${programId}`}>Rechercher un exercice</label>
+      <label className="field-label" htmlFor={`search-${programId}`}>Recherche</label>
       <input
         id={`search-${programId}`}
         className="input"
-        placeholder="Ex: squat, pectoraux, halteres..."
+        placeholder="Nom ou muscle..."
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
@@ -87,31 +119,18 @@ export function ProgramExercisePicker({
                 <p>{muscle}</p>
               </div>
 
-              <form action={action} className="form-grid">
+              <form action={action} className="form-grid program-picker-form">
                 <input type="hidden" name="programId" value={programId} />
                 <input type="hidden" name="dayId" value={dayId} />
                 <input type="hidden" name="exerciseId" value={exercise.id} />
 
                 <div className="grid-2">
-                  <div>
-                    <label className="field-label">Series</label>
-                    <input name="sets" type="number" min={1} max={12} defaultValue={4} className="input" />
-                  </div>
-                  <div>
-                    <label className="field-label">Repos (sec)</label>
-                    <input name="restSeconds" type="number" min={15} max={300} defaultValue={90} className="input" />
-                  </div>
+                  <WheelNumber label="Series" name="sets" min={1} max={12} defaultValue={3} />
+                  <WheelNumber label="Repos (sec)" name="restSeconds" min={15} max={300} defaultValue={60} />
                 </div>
-
                 <div className="grid-2">
-                  <div>
-                    <label className="field-label">Repetitions min</label>
-                    <input name="repsMin" type="number" min={1} max={40} defaultValue={8} className="input" />
-                  </div>
-                  <div>
-                    <label className="field-label">Repetitions max</label>
-                    <input name="repsMax" type="number" min={1} max={60} defaultValue={12} className="input" />
-                  </div>
+                  <WheelNumber label="Repetitions" name="repetitions" min={1} max={60} defaultValue={10} />
+                  <WheelNumber label="Poids (kg)" name="targetWeightKg" min={0} max={300} defaultValue={0} />
                 </div>
 
                 <PrimaryButton type="submit">Ajouter</PrimaryButton>
