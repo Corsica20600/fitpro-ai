@@ -255,7 +255,10 @@ export function GuidedWorkoutClient({
           return prev === next ? prev : next;
         });
         setRestChoice(getPlannedRestForIndex(exerciseIndexFromWatch));
-        setRestRemaining(restFromWatch);
+        setRestRemaining((prev) => {
+          if (prev > 0 && restFromWatch === 0) return prev;
+          return restFromWatch;
+        });
 
         const exerciseFromWatch = exercises[Math.max(0, Math.min(exercises.length - 1, exerciseIndexFromWatch))];
         if (!exerciseFromWatch) return;
@@ -355,7 +358,10 @@ export function GuidedWorkoutClient({
         }
         setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
         setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
-        setRestRemaining(strictRest);
+        setRestRemaining((prev) => {
+          if (prev > 0 && strictRest === 0) return prev;
+          return strictRest;
+        });
         lastSyncedWatchPositionRef.current = `${strictExerciseIndex}:${strictSetIndex}:${strictRest}`;
       }
     } catch {
