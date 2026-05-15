@@ -315,6 +315,7 @@ export function GuidedWorkoutClient({
         sessionId,
         exerciseId: exercise.id,
         currentExerciseIndex: exerciseIndex,
+        totalSetsForExercise: setRows.length,
         setIndex,
         targetReps: plannedReps,
         actualReps,

@@ -8,6 +8,7 @@ export async function POST(request: Request) {
   const exerciseId = String(body.exerciseId ?? "").trim();
   const setIndex = Number(body.setIndex ?? 0);
   const currentExerciseIndex = body.currentExerciseIndex == null ? null : Number(body.currentExerciseIndex);
+  const totalSetsForExercise = body.totalSetsForExercise == null ? null : Number(body.totalSetsForExercise);
   const targetReps = Number(body.targetReps ?? 0);
   const actualReps = body.actualReps == null ? null : Number(body.actualReps);
   const actualWeightKg = body.actualWeightKg == null ? null : Number(body.actualWeightKg);
@@ -46,18 +47,26 @@ export async function POST(request: Request) {
         },
       });
 
+  const exerciseFinished =
+    Number.isFinite(totalSetsForExercise as number) &&
+    (totalSetsForExercise as number) > 0 &&
+    saved.setIndex >= Math.floor(totalSetsForExercise as number);
+  const baseExerciseIndex = Number.isFinite(currentExerciseIndex as number) ? Math.max(0, Math.floor(currentExerciseIndex as number)) : 0;
+  const nextExerciseIndex = exerciseFinished ? baseExerciseIndex + 1 : baseExerciseIndex;
+  const nextSetIndex = exerciseFinished ? 1 : Math.max(1, saved.setIndex + 1);
+
   await prisma.watchSession.upsert({
     where: { workoutSessionId: sessionId },
     update: {
-      currentExerciseIndex: Number.isFinite(currentExerciseIndex as number) ? Math.max(0, Math.floor(currentExerciseIndex as number)) : undefined,
-      currentSetIndex: Math.max(1, saved.setIndex + 1),
+      currentExerciseIndex: nextExerciseIndex,
+      currentSetIndex: nextSetIndex,
       status: "ACTIVE",
       lastSyncAt: new Date(),
     },
     create: {
       workoutSessionId: sessionId,
-      currentExerciseIndex: Number.isFinite(currentExerciseIndex as number) ? Math.max(0, Math.floor(currentExerciseIndex as number)) : 0,
-      currentSetIndex: Math.max(1, saved.setIndex + 1),
+      currentExerciseIndex: nextExerciseIndex,
+      currentSetIndex: nextSetIndex,
       status: "ACTIVE",
       lastSyncAt: new Date(),
     },
