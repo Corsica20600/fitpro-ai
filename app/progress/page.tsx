@@ -45,6 +45,16 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
     progressMetricReady: false,
   };
   const data = await getProgressDataForDemoUser(exerciseId).catch(() => fallbackData);
+  const sessionsForChart = data.recentSessions.slice(0, 6).reverse();
+  const maxVolume = Math.max(1, ...sessionsForChart.map((item) => item.volume));
+  const donutWeight = Math.max(0, data.progression.bestWeight);
+  const donutReps = Math.max(0, data.progression.bestReps);
+  const donutVolume = Math.max(0, Math.round(data.progression.totalVolume / 40));
+  const donutTotal = Math.max(1, donutWeight + donutReps + donutVolume);
+  const weightPct = (donutWeight / donutTotal) * 100;
+  const repsPct = (donutReps / donutTotal) * 100;
+  const volumePct = 100 - weightPct - repsPct;
+  const donutGradient = `conic-gradient(#5eb8ff 0 ${weightPct}%, #38e3a5 ${weightPct}% ${weightPct + repsPct}%, #9b7dff ${weightPct + repsPct}% 100%)`;
 
   return (
     <div className="stack">
@@ -80,6 +90,46 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
           <span className="chip">Volume total: {Math.round(data.progression.totalVolume)} kg</span>
           <span className="chip">Derniere seance: {formatDate(data.progression.lastSessionAt)}</span>
           <span className="chip">Evolution: {data.progression.evolution}</span>
+        </div>
+      </section>
+
+      <section className="card progress-visuals">
+        <h2 className="section-title">Visualisation</h2>
+        <div className="progress-visual-grid">
+          <div className="progress-block">
+            <p className="eyebrow">Dernieres seances</p>
+            <div className="progress-bars">
+              {sessionsForChart.length === 0 ? (
+                <p className="muted">Pas assez de donnees.</p>
+              ) : (
+                sessionsForChart.map((session) => (
+                  <div key={session.id} className="progress-bar-row">
+                    <span>{formatDate(session.date)}</span>
+                    <div className="progress-bar-track">
+                      <i style={{ width: `${Math.max(8, (session.volume / maxVolume) * 100)}%` }} />
+                    </div>
+                    <strong>{Math.round(session.volume)} kg</strong>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="progress-block">
+            <p className="eyebrow">Repartition</p>
+            <div className="progress-donut-wrap">
+              <div className="progress-donut" style={{ background: donutGradient }}>
+                <div className="progress-donut-center">
+                  <strong>{Math.round(data.progression.totalVolume)}kg</strong>
+                  <span>Total</span>
+                </div>
+              </div>
+              <div className="progress-legend">
+                <span><i style={{ background: "#5eb8ff" }} /> Charge max</span>
+                <span><i style={{ background: "#38e3a5" }} /> Reps max</span>
+                <span><i style={{ background: "#9b7dff" }} /> Volume</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
