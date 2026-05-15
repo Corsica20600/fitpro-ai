@@ -140,6 +140,12 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
     where: { workoutSessionId: session.id, exerciseId: currentExercise.exerciseId, setIndex },
     orderBy: { createdAt: "desc" },
   });
+  const completedAtMs = latestSet?.completedAt ? latestSet.completedAt.getTime() : null;
+  const nowMs = Date.now();
+  const configuredRest = Math.max(0, latestSet?.restSeconds ?? currentExercise.restSeconds ?? 90);
+  const restRemaining = completedAtMs == null
+    ? configuredRest
+    : Math.max(0, configuredRest - Math.floor((nowMs - completedAtMs) / 1000));
 
   return {
     sessionId: session.id,
@@ -150,7 +156,7 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
     totalSets,
     targetReps,
     weight: latestSet?.actualWeightKg ?? null,
-    restRemaining: Math.max(0, latestSet?.restSeconds ?? currentExercise.restSeconds ?? 90),
+    restRemaining,
     status: session.status,
   };
 }
