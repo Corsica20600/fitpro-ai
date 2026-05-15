@@ -332,15 +332,27 @@ export function GuidedWorkoutClient({
       const withoutSame = prev.filter((item) => !(item.exerciseId === saved.exerciseId && item.setIndex === saved.setIndex));
       return [...withoutSame, saved];
     });
+    const isLastSetForExercise = setIndex >= setRows.length;
+    const optimisticExerciseIndex = isLastSetForExercise
+      ? Math.max(0, Math.min(exercises.length - 1, exerciseIndex + 1))
+      : exerciseIndex;
+    const optimisticSetIndex = isLastSetForExercise ? 1 : (setIndex + 1);
     setRestRemaining(restChoice);
-    pushSyncState(exerciseIndex, setIndex + 1, restChoice);
+    if (isLastSetForExercise && exerciseIndex < exercises.length - 1) {
+      setExerciseIndex(optimisticExerciseIndex);
+      setRestChoice(getPlannedRestForIndex(optimisticExerciseIndex));
+    }
+    pushSyncState(optimisticExerciseIndex, optimisticSetIndex, restChoice);
     try {
       const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
       if (strictStateRes.ok) {
         const strictState = await strictStateRes.json() as { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
-        const strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
+        let strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
         const strictSetIndex = Math.max(1, Number(strictState.setIndex ?? (setIndex + 1)));
         const strictRest = Math.max(0, Number(strictState.restRemaining ?? restChoice));
+        if (isLastSetForExercise && strictExerciseIndex < optimisticExerciseIndex) {
+          strictExerciseIndex = optimisticExerciseIndex;
+        }
         setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
         setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
         setRestRemaining(strictRest);
@@ -395,7 +407,7 @@ export function GuidedWorkoutClient({
           <span className="chip">Series: {summary.setsCount}</span>
           <span className="chip">Volume: {Math.round(summary.volumeTotal)} kg</span>
         </div>
-        <PrimaryAction type="button" onClick={() => router.refresh()}>Terminer</PrimaryAction>
+        <PrimaryAction type="button" onClick={() => router.push("/dashboard")}>Terminer</PrimaryAction>
         <button type="button" className="outline-link" onClick={() => router.push("/workout")}>Recommencer</button>
       </section>
     );

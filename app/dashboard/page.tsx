@@ -49,17 +49,15 @@ export default async function DashboardPage() {
         <span className="dashboard-quick-chip">Progress {currentSession ? `${progressPercent}%` : "0%"}</span>
       </section>
 
-      {currentSession ? (
-        <section className="dashboard-progress-bar-card">
-          <div className="dashboard-progress-head">
-            <span>Progression seance</span>
-            <strong>{progressPercent}%</strong>
-          </div>
-          <div className="dashboard-progress-track">
-            <span style={{ width: `${progressPercent}%` }} />
-          </div>
-        </section>
-      ) : null}
+      <section className="dashboard-progress-bar-card">
+        <div className="dashboard-progress-head">
+          <span>Progression seance</span>
+          <strong>{progressPercent}%</strong>
+        </div>
+        <div className="dashboard-progress-track">
+          <span style={{ width: `${progressPercent}%` }} />
+        </div>
+      </section>
 
       {selectedProgram ? (
         <section className="dashboard-mini-stats">
