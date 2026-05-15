@@ -104,6 +104,7 @@ export function GuidedWorkoutClient({
   const lastAutoAdvanceRef = useRef<string>("");
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+  const lastSyncedWatchPositionRef = useRef<string>("");
 
   const exercise = exercises[exerciseIndex];
   const plannedRepsForExercise = buildPlannedReps(exercise);
@@ -129,6 +130,75 @@ export function GuidedWorkoutClient({
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [restRemaining]);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function pullWatchState() {
+      try {
+        const response = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const state = await response.json() as {
+          exerciseIndex?: number;
+          setIndex?: number;
+          totalSets?: number;
+          restRemaining?: number;
+          status?: string;
+        };
+
+        if (!alive || state.status !== "IN_PROGRESS") return;
+        const exerciseIndexFromWatch = Math.max(1, Number(state.exerciseIndex ?? 1)) - 1;
+        const setIndexFromWatch = Math.max(1, Number(state.setIndex ?? 1));
+        const restFromWatch = Math.max(0, Number(state.restRemaining ?? 0));
+        const guard = `${exerciseIndexFromWatch}:${setIndexFromWatch}:${restFromWatch}`;
+        if (lastSyncedWatchPositionRef.current === guard) return;
+        lastSyncedWatchPositionRef.current = guard;
+
+        setExerciseIndex((prev) => {
+          const next = Math.max(0, Math.min(exercises.length - 1, exerciseIndexFromWatch));
+          return prev === next ? prev : next;
+        });
+        setRestChoice(getPlannedRestForIndex(exerciseIndexFromWatch));
+        setRestRemaining(restFromWatch);
+
+        const exerciseFromWatch = exercises[Math.max(0, Math.min(exercises.length - 1, exerciseIndexFromWatch))];
+        if (!exerciseFromWatch) return;
+
+        const planned = buildPlannedReps(exerciseFromWatch);
+        const completedUntil = Math.max(0, setIndexFromWatch - 1);
+        if (completedUntil <= 0) return;
+
+        setCompletedSets((prev) => {
+          const out = [...prev];
+          for (let idx = 1; idx <= completedUntil; idx += 1) {
+            const exists = out.some((item) => item.exerciseId === exerciseFromWatch.id && item.setIndex === idx);
+            if (exists) continue;
+            out.push({
+              id: `watch-sync-${exerciseFromWatch.id}-${idx}`,
+              exerciseId: exerciseFromWatch.id,
+              setIndex: idx,
+              targetRepsMin: planned[Math.max(0, idx - 1)] ?? 10,
+              actualReps: null,
+              actualWeightKg: null,
+              createdAt: new Date().toISOString(),
+            });
+          }
+          return out;
+        });
+      } catch {
+        // Keep local workout resilient if watch endpoint is temporarily unavailable.
+      }
+    }
+
+    const interval = window.setInterval(pullWatchState, 3000);
+    void pullWatchState();
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+    };
+  }, [sessionId, exercises, getPlannedRestForIndex]);
 
   useEffect(() => {
     if (autoAdvanceTimerRef.current) {
@@ -198,6 +268,17 @@ export function GuidedWorkoutClient({
     const clamped = Math.max(0, Math.min(exercises.length - 1, nextIdx));
     setExerciseIndex(clamped);
     setRestChoice(getPlannedRestForIndex(clamped));
+    void fetch("/api/watch/syncWorkoutState", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        workoutSessionId: sessionId,
+        currentExerciseIndex: clamped,
+        currentSetIndex: 1,
+        status: "ACTIVE",
+        lastSyncAt: new Date().toISOString(),
+      }),
+    });
   }
 
   async function onCompleteWorkout() {
