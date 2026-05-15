@@ -180,38 +180,6 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
         </article>
       </section>
 
-      <section className="card details-grid">
-        <div>
-          <h3>Muscles principaux</h3>
-          <p>{primaryMuscles.join(" · ") || "Full body"}</p>
-        </div>
-        <div>
-          <h3>Muscles secondaires</h3>
-          <p>{secondaryMuscles.join(" · ") || "Aucun"}</p>
-        </div>
-        <div>
-          <h3>Materiel</h3>
-          <p>{equipment.join(" · ") || "Poids du corps"}</p>
-        </div>
-        <div>
-          <h3>Niveau</h3>
-          <p>{levelToFr(exercise.difficulty)}</p>
-        </div>
-        <div>
-          <h3>Instructions</h3>
-          <p>{instructions}</p>
-        </div>
-      </section>
-
-      {commonMistakes.length > 0 && (
-        <section className="card">
-          <h3>Erreurs frequentes</h3>
-          <ul className="detail-list">
-            {commonMistakes.map((item) => <li key={item}>{item}</li>)}
-          </ul>
-        </section>
-      )}
-
       {(sourceName || license) && (
         <section className="card">
           <p className="muted">
