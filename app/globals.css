@@ -419,6 +419,84 @@ button, input, select { font-family: inherit; }
 .details-grid p { margin: 0; color: #d6e7ff; line-height: 1.4; }
 .detail-list { margin: 0; padding-left: 18px; color: #d6e7ff; display: grid; gap: 4px; }
 .action-stack { display: grid; gap: 10px; }
+.exercise-pro-header {
+  border: 1px solid rgba(84, 150, 255, .45);
+  background:
+    linear-gradient(160deg, rgba(5, 12, 28, .98), rgba(8, 16, 35, .98)),
+    radial-gradient(circle at 75% -40%, rgba(38, 137, 255, .28), transparent 58%);
+}
+.exercise-pro-brand {
+  margin: 0;
+  color: #8db7ff;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.exercise-pro-header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(1.55rem, 6.5vw, 2.3rem);
+  line-height: 1.02;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+.exercise-pro-header h1 span {
+  color: #65e56c;
+}
+.exercise-pro-subtitle {
+  margin: 8px 0 0;
+  display: inline-flex;
+  border: 1px solid rgba(83, 164, 255, .42);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #f8fbff;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.exercise-steps-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.exercise-step-card {
+  position: relative;
+  padding-top: 22px;
+}
+.exercise-step-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(160deg, #53b2ff, #2f76ff);
+  border: 1px solid rgba(255, 255, 255, .42);
+}
+.exercise-step-title {
+  margin: 4px 0 8px;
+  font-size: .95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.exercise-pro-panels {
+  display: grid;
+  gap: 10px;
+}
+.exercise-pro-panels h3 {
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+@media (max-width: 440px) {
+  .exercise-steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .ghost-btn {
   border: 1px solid #324666;
   background: rgba(16, 25, 42, .96);
