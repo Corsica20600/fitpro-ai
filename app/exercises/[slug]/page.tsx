@@ -15,6 +15,20 @@ const DIPS_GUIDE_SLUGS = new Set([
   "parallel-bar-dip",
 ]);
 
+function uniqueText(items: string[]) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of items) {
+    const value = raw.trim();
+    if (!value) continue;
+    const key = value.toLocaleLowerCase("fr");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+}
+
 export default async function ExerciseDetailPage(props: PageProps<"/exercises/[slug]">) {
   const { slug } = await props.params;
   const [exercise, programs] = await Promise.all([
@@ -24,16 +38,18 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
 
   if (!exercise) notFound();
 
-  const primaryMuscles = exercise.primaryMusclesFr.length ? exercise.primaryMusclesFr : exercise.primaryMuscles;
-  const secondaryMuscles = exercise.secondaryMuscles.map((item) => translateSimple(item).text);
-  const equipment = exercise.equipmentFr.length ? exercise.equipmentFr : exercise.equipment;
+  const primaryMuscles = uniqueText(exercise.primaryMusclesFr.length ? exercise.primaryMusclesFr : exercise.primaryMuscles);
+  const secondaryMuscles = uniqueText(exercise.secondaryMuscles.map((item) => translateSimple(item).text));
+  const equipment = uniqueText(exercise.equipmentFr.length ? exercise.equipmentFr : exercise.equipment);
   const instructions = exercise.instructionsFr && !looksEnglish(exercise.instructionsFr)
     ? exercise.instructionsFr
     : translateSentence(exercise.detailedInstructions).text;
-  const commonMistakesRaw = (exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes)
-    .map((item) => (looksEnglish(item) ? translateSentence(item).text : item));
+  const commonMistakesRaw = uniqueText(
+    (exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes)
+      .map((item) => (looksEnglish(item) ? translateSentence(item).text : item)),
+  );
   const isDipsGuide = DIPS_GUIDE_SLUGS.has(exercise.slug);
-  const commonMistakes = isDipsGuide
+  const commonMistakes = uniqueText(isDipsGuide
     ? [
       "Rester droit (triceps uniquement)",
       "Descendre à moitié",
@@ -41,12 +57,12 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
       "Trop d'assistance",
       "Coudes collés au corps",
     ]
-    : commonMistakesRaw;
+    : commonMistakesRaw);
 
   const sourceName = exercise.media.find((item) => item.sourceName)?.sourceName;
   const license = exercise.media.find((item) => item.license)?.license;
   const firstProgram = programs[0] ?? null;
-  const keyPoints = (isDipsGuide
+  const keyPoints = uniqueText((isDipsGuide
     ? [
       "Buste penché vers l'avant (clé pour les pectoraux)",
       "Coudes légèrement ouverts",
@@ -54,11 +70,10 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
       "Épaules basses et stables",
       "Contrôle du mouvement",
     ]
-    : (exercise.shortTechnicalCues.length ? exercise.shortTechnicalCues : instructions.split(/[.!?]\s+/)))
+    : (exercise.shortTechnicalCues.length ? exercise.shortTechnicalCues : instructions.split(/[.!?]\s+/))))
     .map((item) => item.trim())
-    .filter(Boolean)
     .slice(0, 5);
-  const stepTexts = (isDipsGuide
+  const stepTexts = uniqueText((isDipsGuide
     ? [
       "Buste penché vers l'avant. Poignées saisies. Épaules basses et stables. Regard vers le bas.",
       "Descendez lentement. Écartez légèrement les coudes.",
@@ -69,10 +84,10 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
     : instructions
     .split(/[.!?]\s+/)
     .map((item) => item.trim())
-    .filter(Boolean))
+    .filter(Boolean)))
     .slice(0, 5);
   const stepTitles = ["Position de départ", "Descente", "Étirement bas", "Remontée", "Contraction finale"];
-  const tipItems = [
+  const tipItems = uniqueText([
     ...(isDipsGuide
       ? [
         "Assistance modérée (ni trop facile, ni trop lourd)",
@@ -84,7 +99,7 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
     `Matériel: ${equipment.join(" · ") || "Poids du corps"}`,
     `Objectif: ${categoryToFr(exercise.category)}`,
     "Respiration: inspire en descente, expire en remontée",
-  ];
+  ]);
   const visualGuideImage = isDipsGuide ? "/media/guides/dips-assistes-machine-pectoreaux.png" : null;
 
   return (
