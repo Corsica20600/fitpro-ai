@@ -62,6 +62,17 @@ type WorkoutSummary = {
 
 const PLANNED_REPS = [12, 10, 10];
 
+type WakeLockSentinelLike = {
+  released: boolean;
+  release: () => Promise<void>;
+};
+
+type WakeLockNavigator = Navigator & {
+  wakeLock?: {
+    request: (type: "screen") => Promise<WakeLockSentinelLike>;
+  };
+};
+
 function buildPlannedReps(exercise: WorkoutExercise) {
   const setsCount = Math.max(1, Math.min(8, exercise.plannedSets ?? PLANNED_REPS.length));
   const targetReps = exercise.plannedRepsMin ?? exercise.plannedRepsMax ?? null;
@@ -103,6 +114,9 @@ export function GuidedWorkoutClient({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const prevRestRemainingRef = useRef<number>(0);
   const pushSyncState = useCallback((nextExerciseIndex: number, nextSetIndex: number, nextRest: number) => {
     void fetch("/api/watch/syncWorkoutState", {
       method: "POST",
@@ -142,6 +156,74 @@ export function GuidedWorkoutClient({
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [restRemaining]);
+
+  const playRestFinishedBeep = useCallback(() => {
+    try {
+      const audioContext = audioCtxRef.current ?? new AudioContext();
+      audioCtxRef.current = audioContext;
+      if (audioContext.state === "suspended") {
+        void audioContext.resume();
+      }
+      const now = audioContext.currentTime;
+      for (let i = 0; i < 2; i += 1) {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, now + i * 0.18);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + i * 0.18 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.14);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start(now + i * 0.18);
+        osc.stop(now + i * 0.18 + 0.16);
+      }
+    } catch {
+      // Keep workout flow resilient if audio API is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    const previous = prevRestRemainingRef.current;
+    if (previous > 0 && restRemaining === 0) {
+      playRestFinishedBeep();
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([120, 80, 120]);
+      }
+    }
+    prevRestRemainingRef.current = restRemaining;
+  }, [restRemaining, playRestFinishedBeep]);
+
+  useEffect(() => {
+    const nav = navigator as WakeLockNavigator;
+
+    const requestWakeLock = async () => {
+      try {
+        if (!nav.wakeLock || document.visibilityState !== "visible") return;
+        if (wakeLockRef.current && !wakeLockRef.current.released) return;
+        wakeLockRef.current = await nav.wakeLock.request("screen");
+      } catch {
+        // Wake Lock may be blocked by browser/power policy; ignore gracefully.
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void requestWakeLock();
+      }
+    };
+
+    void requestWakeLock();
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (wakeLockRef.current && !wakeLockRef.current.released) {
+        void wakeLockRef.current.release();
+      }
+      wakeLockRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
