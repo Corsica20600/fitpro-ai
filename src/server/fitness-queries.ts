@@ -754,6 +754,31 @@ export async function getProgressDataForDemoUser(selectedExerciseId?: string) {
 
   const totalDuration = sessionsWithVolume.reduce((acc, session) => acc + (session.durationSeconds ?? 0), 0);
   const averageDuration = sessionsWithVolume.length ? Math.round(totalDuration / sessionsWithVolume.length) : 0;
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const volumeByExerciseLast7Days = new Map<string, { name: string; volume: number }>();
+  for (const session of sessions) {
+    const sessionDate = session.startedAt ?? session.createdAt;
+    if (sessionDate < sevenDaysAgo) continue;
+    for (const set of session.sets) {
+      const volume = (set.actualReps ?? 0) * (set.actualWeightKg ?? 0);
+      if (volume <= 0) continue;
+      const current = volumeByExerciseLast7Days.get(set.exerciseId) ?? {
+        name: set.exercise.nameFr || set.exercise.name,
+        volume: 0,
+      };
+      current.volume += volume;
+      volumeByExerciseLast7Days.set(set.exerciseId, current);
+    }
+  }
+  const donutExerciseDistribution = [...volumeByExerciseLast7Days.entries()]
+    .map(([exerciseId, item]) => ({
+      exerciseId,
+      name: item.name,
+      volume: item.volume,
+    }))
+    .sort((a, b) => b.volume - a.volume)
+    .slice(0, 5);
 
   return {
     exerciseOptions: exercises.map((item) => ({
@@ -791,6 +816,7 @@ export async function getProgressDataForDemoUser(selectedExerciseId?: string) {
       setCount: session.setCount,
       volume: session.volume,
     })),
+    donutExerciseDistribution,
     progressMetricReady: true,
   };
 }

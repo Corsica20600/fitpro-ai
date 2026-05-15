@@ -41,19 +41,25 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
       bestSession: null as { sessionId: string; title: string; volume: number } | null,
     },
     recentSessions: [] as Array<{ id: string; date: Date; status: string; setCount: number; volume: number }>,
+    donutExerciseDistribution: [] as Array<{ exerciseId: string; name: string; volume: number }>,
     progressMetricReady: false,
   };
   const data = await getProgressDataForDemoUser(exerciseId).catch(() => fallbackData);
   const sessionsForChart = data.recentSessions.slice(0, 6).reverse();
   const maxVolume = Math.max(1, ...sessionsForChart.map((item) => item.volume));
-  const donutWeight = Math.max(0, data.progression.bestWeight);
-  const donutReps = Math.max(0, data.progression.bestReps);
-  const donutVolume = Math.max(0, Math.round(data.progression.totalVolume / 40));
-  const donutTotal = Math.max(1, donutWeight + donutReps + donutVolume);
-  const weightPct = (donutWeight / donutTotal) * 100;
-  const repsPct = (donutReps / donutTotal) * 100;
-  const volumePct = 100 - weightPct - repsPct;
-  const donutGradient = `conic-gradient(#5eb8ff 0 ${weightPct}%, #38e3a5 ${weightPct}% ${weightPct + repsPct}%, #9b7dff ${weightPct + repsPct}% 100%)`;
+  const donutColors = ["#5eb8ff", "#38e3a5", "#9b7dff", "#ffb65e", "#ff6c9d"];
+  const donutTotalVolume = data.donutExerciseDistribution.reduce((acc, item) => acc + item.volume, 0);
+  let currentPct = 0;
+  const donutSegments = data.donutExerciseDistribution.map((item, index) => {
+    const pct = donutTotalVolume > 0 ? (item.volume / donutTotalVolume) * 100 : 0;
+    const from = currentPct;
+    const to = currentPct + pct;
+    currentPct = to;
+    return { ...item, color: donutColors[index % donutColors.length], from, to };
+  });
+  const donutGradient = donutSegments.length
+    ? `conic-gradient(${donutSegments.map((segment) => `${segment.color} ${segment.from}% ${segment.to}%`).join(", ")})`
+    : "conic-gradient(#1d2b4a 0 100%)";
 
   return (
     <div className="stack">
@@ -95,18 +101,22 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
             </div>
           </div>
           <div className="progress-block">
-            <p className="eyebrow">Repartition</p>
+            <p className="eyebrow">Repartition 7 jours</p>
             <div className="progress-donut-wrap">
               <div className="progress-donut" style={{ background: donutGradient }}>
                 <div className="progress-donut-center">
-                  <strong>{Math.round(data.progression.totalVolume)}kg</strong>
+                  <strong>{Math.round(donutTotalVolume)}kg</strong>
                   <span>Total</span>
                 </div>
               </div>
               <div className="progress-legend">
-                <span><i style={{ background: "#5eb8ff" }} /> Charge max</span>
-                <span><i style={{ background: "#38e3a5" }} /> Reps max</span>
-                <span><i style={{ background: "#9b7dff" }} /> Volume</span>
+                {donutSegments.length === 0 ? (
+                  <span><i style={{ background: "#1d2b4a" }} /> Pas de volume recent</span>
+                ) : donutSegments.map((segment) => (
+                  <span key={segment.exerciseId}>
+                    <i style={{ background: segment.color }} /> {segment.name} ({Math.round(segment.volume)} kg)
+                  </span>
+                ))}
               </div>
             </div>
           </div>
