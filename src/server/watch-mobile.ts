@@ -173,6 +173,7 @@ export async function validateWatchSet(input: {
   const currentExercise = ordered[exerciseIndex];
   if (!currentExercise) return null;
   const setIndex = Math.max(1, session.watchSession?.currentSetIndex ?? 1);
+  const totalSetsForExercise = Math.max(1, currentExercise.totalSets ?? 1);
 
   const existing = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: session.id, exerciseId: currentExercise.exerciseId, setIndex },
@@ -202,17 +203,23 @@ export async function validateWatchSet(input: {
     });
   }
 
+  const isExerciseFinished = setIndex >= totalSetsForExercise;
+  const isLastExercise = exerciseIndex >= Math.max(0, ordered.length - 1);
+  const nextExerciseIndex = isExerciseFinished && !isLastExercise ? exerciseIndex + 1 : exerciseIndex;
+  const nextSetIndex = isExerciseFinished ? 1 : setIndex + 1;
+
   await prisma.watchSession.upsert({
     where: { workoutSessionId: session.id },
     update: {
-      currentSetIndex: setIndex + 1,
+      currentExerciseIndex: nextExerciseIndex,
+      currentSetIndex: nextSetIndex,
       status: "ACTIVE",
       lastSyncAt: new Date(),
     },
     create: {
       workoutSessionId: session.id,
-      currentExerciseIndex: exerciseIndex,
-      currentSetIndex: setIndex + 1,
+      currentExerciseIndex: nextExerciseIndex,
+      currentSetIndex: nextSetIndex,
       status: "ACTIVE",
       lastSyncAt: new Date(),
     },
