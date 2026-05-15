@@ -62,8 +62,6 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
     ]
     : commonMistakesRaw);
 
-  const sourceName = exercise.media.find((item) => item.sourceName)?.sourceName;
-  const license = exercise.media.find((item) => item.license)?.license;
   const firstProgram = programs[0] ?? null;
   const keyPoints = uniqueText((isDipsGuide
     ? [
@@ -179,14 +177,6 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
           </ul>
         </article>
       </section>
-
-      {(sourceName || license) && (
-        <section className="card">
-          <p className="muted">
-            Source: {sourceName || "N/A"}{license ? ` · Licence: ${license}` : ""}
-          </p>
-        </section>
-      )}
 
       <section className="card action-stack">
         {programs.length === 0 || !firstProgram ? (
