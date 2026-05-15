@@ -11,6 +11,15 @@ const NAME_OVERRIDES: Record<string, string> = {
   "incline dumbbell press": "Développé incliné haltères",
 };
 
+const SLUG_NAME_OVERRIDES: Record<string, string> = {
+  "lat-pulldown": "Tirage vertical",
+  "wide-grip-lat-pulldown": "Tirage vertical prise large",
+  "close-grip-front-lat-pulldown": "Tirage vertical prise serrée",
+  "one-arm-lat-pulldown": "Tirage vertical unilatéral",
+  "full-range-of-motion-lat-pulldown": "Tirage vertical amplitude complète",
+  "wide-grip-pulldown-behind-the-neck": "Tirage nuque prise large",
+};
+
 const EQUIPMENT_CANONICAL: Array<{ test: RegExp; value: string }> = [
   { test: /(barbell|barre|ez bar|smith)/i, value: "Barre" },
   { test: /(dumbbell|haltere|haltère|kettlebell)/i, value: "Haltères" },
@@ -69,6 +78,7 @@ function standardizeEquipment(source: string[]) {
 }
 
 function standardizeNameFr(ex: ExerciseRow) {
+  if (SLUG_NAME_OVERRIDES[ex.slug]) return SLUG_NAME_OVERRIDES[ex.slug];
   const seed = ex.nameFr?.trim() || ex.name.trim();
   const key = normalizeKey(seed);
   if (NAME_OVERRIDES[key]) return NAME_OVERRIDES[key];
