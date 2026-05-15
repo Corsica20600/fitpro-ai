@@ -74,16 +74,23 @@ async function getOrderedExercisesForSession(session: { id: string; programId: s
     });
 
     if (program) {
-      const fromProgram = program.days.flatMap((day) =>
-        day.exercises.map((item) => ({
+      const weekdayByIndex = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const todayName = weekdayByIndex[new Date().getDay()] ?? "";
+      const dayForToday =
+        program.days.find((day) => day.title.toLowerCase().includes(todayName)) ??
+        program.days[0] ??
+        null;
+
+      if (dayForToday) {
+        const fromProgramDay = dayForToday.exercises.map((item) => ({
           exerciseId: item.exerciseId,
           exerciseName: item.exercise.nameFr || item.exercise.name,
           totalSets: Math.max(1, item.sets ?? 3),
           targetReps: item.repsMin ?? item.repsMax ?? DEFAULT_REPS[0],
           restSeconds: item.restSeconds ?? 90,
-        })),
-      );
-      if (fromProgram.length > 0) return fromProgram;
+        }));
+        if (fromProgramDay.length > 0) return fromProgramDay;
+      }
     }
   }
 
