@@ -365,6 +365,7 @@ button, input, select { font-family: inherit; }
 .outline-link:active { transform: scale(.97); }
 
 .exercise-visual {
+  position: relative;
   width: 100%;
   border-radius: 16px;
   border: 1px solid #2f4163;
@@ -381,6 +382,23 @@ button, input, select { font-family: inherit; }
   display: block;
 }
 .exercise-visual.compact .exercise-visual-media { height: 126px; }
+.exercise-visual-media-contain {
+  object-fit: contain;
+  background: radial-gradient(circle at 50% 20%, rgba(40, 73, 120, .35), rgba(10, 17, 32, .95));
+}
+.exercise-visual-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid rgba(126, 174, 255, .5);
+  border-radius: 999px;
+  background: rgba(7, 12, 23, .8);
+  color: #e8f2ff;
+  padding: 6px 10px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
 
 .exercise-visual-placeholder {
   height: 230px;

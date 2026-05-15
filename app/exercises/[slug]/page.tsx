@@ -7,6 +7,7 @@ import { categoryToFr, levelToFr } from "@/src/lib/exercise-i18n";
 import { addExerciseToProgramDayAction } from "@/src/server/fitness-actions";
 import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 import { looksEnglish, translateSentence, translateSimple } from "@/src/lib/exercise-i18n";
+import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 
 const DIPS_GUIDE_SLUGS = new Set([
   "dips-assistes",
@@ -37,6 +38,8 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
   ]);
 
   if (!exercise) notFound();
+  const override = getExerciseOverride(exercise.slug);
+  const displayName = override?.displayNameFr || exercise.nameFr || exercise.name;
 
   const primaryMuscles = uniqueText(exercise.primaryMusclesFr.length ? exercise.primaryMusclesFr : exercise.primaryMuscles);
   const secondaryMuscles = uniqueText(exercise.secondaryMuscles.map((item) => translateSimple(item).text));
@@ -101,13 +104,14 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
     "Respiration: inspire en descente, expire en remontée",
   ]);
   const visualGuideImage = isDipsGuide ? "/media/guides/dips-assistes-machine-pectoreaux.png" : null;
+  const detailInfographic = override?.detailImage || visualGuideImage;
 
   return (
     <div className="stack exercise-detail-screen">
       <section className="card exercise-pro-header">
         <p className="exercise-pro-brand">FitAI Pro</p>
         <h1>
-          {exercise.nameFr || exercise.name} <span>{primaryMuscles[0] || "Full body"}</span>
+          {displayName} <span>{primaryMuscles[0] || "Full body"}</span>
         </h1>
         <p className="exercise-pro-subtitle">
           Technique parfaite pour cibler {primaryMuscles[0]?.toLowerCase() || "les muscles visés"}
@@ -118,21 +122,23 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
         <ExerciseVisual
           media={exercise.media as never}
           fallbackAnimation={exercise.fallbackAnimationPath}
-          fallbackImage={exercise.fallbackImagePath}
-          title={exercise.nameFr || exercise.name}
+          fallbackImage={override?.cardImage || exercise.fallbackImagePath}
+          frameAnimationUrls={override?.frameAnimationUrls}
+          frameIntervalMs={override?.frameIntervalMs ?? 700}
+          title={displayName}
         />
         <div className="exercise-header-text">
           <p className="eyebrow">{categoryToFr(exercise.category)} · {levelToFr(exercise.difficulty)}</p>
-          <h1>{exercise.nameFr || exercise.name}</h1>
+          <h1>{displayName}</h1>
           <p className="muted">{primaryMuscles.join(" · ") || "Full body"}</p>
         </div>
       </section>
-      {visualGuideImage ? (
+      {detailInfographic ? (
         <section className="card">
           <p className="eyebrow">Guide visuel complet</p>
           <img
-            src={visualGuideImage}
-            alt="Guide visuel dips assistés machine pectoraux"
+            src={detailInfographic}
+            alt={`Guide visuel complet ${displayName}`}
             className="exercise-guide-infographic"
           />
         </section>

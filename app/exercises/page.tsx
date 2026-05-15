@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { levelToFr } from "@/src/lib/exercise-i18n";
 import { getExerciseFilterOptions, getExercisesCatalogPage } from "@/src/server/fitness-queries";
@@ -76,17 +77,20 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
         </section>
 
         <section className="exercise-grid">
-          {result.exercises.map((exercise) => (
+          {result.exercises.map((exercise) => {
+            const override = getExerciseOverride(exercise.slug);
+            const displayName = override?.displayNameFr || exercise.nameFr || exercise.name;
+            return (
             <article key={exercise.id} className="exercise-card exercise-card-premium">
               <ExerciseVisual
                 media={exercise.media as never}
-                fallbackImage={exercise.fallbackThumbnailPath || exercise.fallbackImagePath}
+                fallbackImage={override?.cardImage || exercise.fallbackThumbnailPath || exercise.fallbackImagePath}
                 fallbackAnimation={exercise.fallbackAnimationPath}
-                title={exercise.nameFr || exercise.name}
+                title={displayName}
                 compact
               />
               <div className="exercise-card-overlay">
-                <h3>{exercise.nameFr || exercise.name}</h3>
+                <h3>{displayName}</h3>
                 <p className="muted">{exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body"}</p>
                 <div className="chips">
                   <span className="chip">{exercise.equipmentFr[0] || exercise.equipment[0] || "Poids du corps"}</span>
@@ -95,7 +99,7 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
               </div>
               <Link href={`/exercises/${exercise.slug}`} className="outline-link">Voir detail</Link>
             </article>
-          ))}
+          )})}
         </section>
 
         {result.exercises.length === 0 && (
