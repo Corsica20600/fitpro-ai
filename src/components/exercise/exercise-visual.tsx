@@ -24,6 +24,7 @@ export function ExerciseVisual({
   fallbackAnimation,
   frameAnimationUrls = [],
   frameIntervalMs = 700,
+  preferFallbackImage = false,
   title,
   className = "",
   compact = false,
@@ -33,6 +34,7 @@ export function ExerciseVisual({
   fallbackAnimation?: string | null;
   frameAnimationUrls?: string[];
   frameIntervalMs?: number;
+  preferFallbackImage?: boolean;
   title: string;
   className?: string;
   compact?: boolean;
@@ -52,7 +54,9 @@ export function ExerciseVisual({
     image?.url ||
     "";
   const animSrc = animation?.publicUrl || animation?.url || fallbackAnimation || "";
-  const imageSrc = preferredImageSrc || fallbackImage || "";
+  const imageSrc = preferFallbackImage
+    ? (fallbackImage || preferredImageSrc || "")
+    : (preferredImageSrc || fallbackImage || "");
 
   const format = (animation?.format || extOf(animSrc)).toLowerCase();
 

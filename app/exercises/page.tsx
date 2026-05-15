@@ -86,6 +86,9 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
                 media={exercise.media as never}
                 fallbackImage={override?.cardImage || exercise.fallbackThumbnailPath || exercise.fallbackImagePath}
                 fallbackAnimation={exercise.fallbackAnimationPath}
+                frameAnimationUrls={override?.frameAnimationUrls}
+                frameIntervalMs={override?.frameIntervalMs ?? 700}
+                preferFallbackImage={Boolean(override?.cardImage)}
                 title={displayName}
                 compact
               />
