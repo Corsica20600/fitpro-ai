@@ -202,12 +202,21 @@ export async function syncWorkoutState(input: {
 
   const fallback = await ensureDeviceSession(input.workoutSessionId);
   const syncDate = input.lastSyncAt ? new Date(input.lastSyncAt) : new Date();
+  const currentExerciseIndex = Number.isFinite(input.currentExerciseIndex as number)
+    ? Math.max(0, Math.floor(input.currentExerciseIndex as number))
+    : fallback.currentExerciseIndex;
+  const currentSetIndex = Number.isFinite(input.currentSetIndex as number)
+    ? Math.max(1, Math.floor(input.currentSetIndex as number))
+    : fallback.currentSetIndex;
+  const currentScore = (fallback.currentExerciseIndex * 1000) + fallback.currentSetIndex;
+  const incomingScore = (currentExerciseIndex * 1000) + currentSetIndex;
+  const shouldPreventRollback = (input.status ?? fallback.status) === "ACTIVE" && incomingScore < currentScore;
 
   await prisma.watchSession.update({
     where: { id: fallback.id },
     data: {
-      currentExerciseIndex: Number.isFinite(input.currentExerciseIndex as number) ? Math.max(0, Math.floor(input.currentExerciseIndex as number)) : fallback.currentExerciseIndex,
-      currentSetIndex: Number.isFinite(input.currentSetIndex as number) ? Math.max(1, Math.floor(input.currentSetIndex as number)) : fallback.currentSetIndex,
+      currentExerciseIndex: shouldPreventRollback ? fallback.currentExerciseIndex : currentExerciseIndex,
+      currentSetIndex: shouldPreventRollback ? fallback.currentSetIndex : currentSetIndex,
       status: input.status ?? fallback.status,
       lastSyncAt: Number.isNaN(syncDate.getTime()) ? new Date() : syncDate,
     },
@@ -215,4 +224,3 @@ export async function syncWorkoutState(input: {
 
   return getCurrentWorkoutState(input.workoutSessionId);
 }
-

@@ -136,13 +136,17 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
   const totalSets = Math.max(1, currentExercise?.totalSets ?? 3);
   const targetReps = currentExercise?.targetReps ?? (DEFAULT_REPS[Math.min(totalSets - 1, setIndex - 1)] ?? DEFAULT_REPS[0]);
 
-  const latestSet = await prisma.workoutSet.findFirst({
+  const latestSetForCurrent = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: session.id, exerciseId: currentExercise.exerciseId, setIndex },
     orderBy: { createdAt: "desc" },
   });
-  const completedAtMs = latestSet?.completedAt ? latestSet.completedAt.getTime() : null;
+  const latestCompletedSet = await prisma.workoutSet.findFirst({
+    where: { workoutSessionId: session.id, isCompleted: true, completedAt: { not: null } },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+  });
+  const completedAtMs = latestCompletedSet?.completedAt ? latestCompletedSet.completedAt.getTime() : null;
   const nowMs = Date.now();
-  const configuredRest = Math.max(0, latestSet?.restSeconds ?? currentExercise.restSeconds ?? 90);
+  const configuredRest = Math.max(0, latestCompletedSet?.restSeconds ?? currentExercise.restSeconds ?? 90);
   const restRemaining = completedAtMs == null
     ? configuredRest
     : Math.max(0, configuredRest - Math.floor((nowMs - completedAtMs) / 1000));
@@ -155,7 +159,7 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
     setIndex: Math.min(setIndex, totalSets),
     totalSets,
     targetReps,
-    weight: latestSet?.actualWeightKg ?? null,
+    weight: latestSetForCurrent?.actualWeightKg ?? latestCompletedSet?.actualWeightKg ?? null,
     restRemaining,
     status: session.status,
   };
