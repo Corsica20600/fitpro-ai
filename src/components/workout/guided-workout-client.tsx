@@ -105,6 +105,20 @@ export function GuidedWorkoutClient({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
+  const pushSyncState = useCallback((nextExerciseIndex: number, nextSetIndex: number, nextRest: number) => {
+    void fetch("/api/watch/syncWorkoutState", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        workoutSessionId: sessionId,
+        currentExerciseIndex: Math.max(0, nextExerciseIndex),
+        currentSetIndex: Math.max(1, nextSetIndex),
+        status: "ACTIVE",
+        lastSyncAt: new Date().toISOString(),
+        restRemaining: Math.max(0, nextRest),
+      }),
+    });
+  }, [sessionId]);
 
   const exercise = exercises[exerciseIndex];
   const plannedRepsForExercise = buildPlannedReps(exercise);
@@ -192,7 +206,7 @@ export function GuidedWorkoutClient({
       }
     }
 
-    const interval = window.setInterval(pullWatchState, 3000);
+    const interval = window.setInterval(pullWatchState, 1000);
     void pullWatchState();
     return () => {
       alive = false;
@@ -241,6 +255,7 @@ export function GuidedWorkoutClient({
       body: JSON.stringify({
         sessionId,
         exerciseId: exercise.id,
+        currentExerciseIndex: exerciseIndex,
         setIndex,
         targetReps: plannedReps,
         actualReps,
@@ -258,6 +273,7 @@ export function GuidedWorkoutClient({
       return [...withoutSame, saved];
     });
     setRestRemaining(restChoice);
+    pushSyncState(exerciseIndex, setIndex + 1, restChoice);
   }
 
   function goToExercise(nextIdx: number) {
@@ -268,17 +284,7 @@ export function GuidedWorkoutClient({
     const clamped = Math.max(0, Math.min(exercises.length - 1, nextIdx));
     setExerciseIndex(clamped);
     setRestChoice(getPlannedRestForIndex(clamped));
-    void fetch("/api/watch/syncWorkoutState", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        workoutSessionId: sessionId,
-        currentExerciseIndex: clamped,
-        currentSetIndex: 1,
-        status: "ACTIVE",
-        lastSyncAt: new Date().toISOString(),
-      }),
-    });
+    pushSyncState(clamped, 1, 0);
   }
 
   async function onCompleteWorkout() {

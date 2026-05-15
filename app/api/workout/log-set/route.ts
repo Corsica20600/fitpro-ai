@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   const sessionId = String(body.sessionId ?? "").trim();
   const exerciseId = String(body.exerciseId ?? "").trim();
   const setIndex = Number(body.setIndex ?? 0);
+  const currentExerciseIndex = body.currentExerciseIndex == null ? null : Number(body.currentExerciseIndex);
   const targetReps = Number(body.targetReps ?? 0);
   const actualReps = body.actualReps == null ? null : Number(body.actualReps);
   const actualWeightKg = body.actualWeightKg == null ? null : Number(body.actualWeightKg);
@@ -48,13 +49,14 @@ export async function POST(request: Request) {
   await prisma.watchSession.upsert({
     where: { workoutSessionId: sessionId },
     update: {
+      currentExerciseIndex: Number.isFinite(currentExerciseIndex as number) ? Math.max(0, Math.floor(currentExerciseIndex as number)) : undefined,
       currentSetIndex: Math.max(1, saved.setIndex + 1),
       status: "ACTIVE",
       lastSyncAt: new Date(),
     },
     create: {
       workoutSessionId: sessionId,
-      currentExerciseIndex: 0,
+      currentExerciseIndex: Number.isFinite(currentExerciseIndex as number) ? Math.max(0, Math.floor(currentExerciseIndex as number)) : 0,
       currentSetIndex: Math.max(1, saved.setIndex + 1),
       status: "ACTIVE",
       lastSyncAt: new Date(),
