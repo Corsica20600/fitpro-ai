@@ -18,6 +18,7 @@
     "import:exercises": "tsx prisma/import-exercises.ts --file=exercises.import.example.json",
     "import:free-exercise-db": "tsx prisma/import-free-exercise-db.ts",
     "translate:exercises-fr": "tsx scripts/translate-exercises-fr.ts",
+    "standardize:exercises": "tsx scripts/standardize-exercises-table.ts",
     "report:missing-visuals": "tsx scripts/report-exercises-missing-visuals.ts",
     "fix:media-free-db": "tsx scripts/fix-exercise-media-from-free-db.ts"
   },
