@@ -100,8 +100,6 @@ export function GuidedWorkoutClient({
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
-  const autoAdvanceTimerRef = useRef<number | null>(null);
-  const lastAutoAdvanceRef = useRef<string>("");
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
@@ -185,21 +183,30 @@ export function GuidedWorkoutClient({
         if (completedUntil <= 0) return;
 
         setCompletedSets((prev) => {
-          const out = [...prev];
+          const fromExercise = prev.filter((item) => item.exerciseId === exerciseFromWatch.id);
+          const bySetIndex = new Map<number, CompletedSet>();
+          for (const item of fromExercise) bySetIndex.set(item.setIndex, item);
+
+          const strictForExercise: CompletedSet[] = [];
           for (let idx = 1; idx <= completedUntil; idx += 1) {
-            const exists = out.some((item) => item.exerciseId === exerciseFromWatch.id && item.setIndex === idx);
-            if (exists) continue;
-            out.push({
-              id: `watch-sync-${exerciseFromWatch.id}-${idx}`,
-              exerciseId: exerciseFromWatch.id,
-              setIndex: idx,
-              targetRepsMin: planned[Math.max(0, idx - 1)] ?? 10,
-              actualReps: null,
-              actualWeightKg: null,
-              createdAt: new Date().toISOString(),
-            });
+            const existing = bySetIndex.get(idx);
+            strictForExercise.push(
+              existing ?? {
+                id: `watch-sync-${exerciseFromWatch.id}-${idx}`,
+                exerciseId: exerciseFromWatch.id,
+                setIndex: idx,
+                targetRepsMin: planned[Math.max(0, idx - 1)] ?? 10,
+                actualReps: null,
+                actualWeightKg: null,
+                createdAt: new Date().toISOString(),
+              },
+            );
           }
-          return out;
+
+          return [
+            ...prev.filter((item) => item.exerciseId !== exerciseFromWatch.id),
+            ...strictForExercise,
+          ];
         });
       } catch {
         // Keep local workout resilient if watch endpoint is temporarily unavailable.
@@ -213,36 +220,6 @@ export function GuidedWorkoutClient({
       window.clearInterval(interval);
     };
   }, [sessionId, exercises, getPlannedRestForIndex]);
-
-  useEffect(() => {
-    if (autoAdvanceTimerRef.current) {
-      window.clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-
-    const isExerciseDone = completedForExercise.length >= setRows.length && setRows.length > 0;
-    const hasNextExercise = exerciseIndex < exercises.length - 1;
-    if (!isExerciseDone || !hasNextExercise) return;
-
-    const guardKey = `${exercise.id}:${setRows.length}`;
-    if (lastAutoAdvanceRef.current === guardKey) return;
-
-    autoAdvanceTimerRef.current = window.setTimeout(() => {
-      setExerciseIndex((idx) => {
-        const nextIdx = Math.min(exercises.length - 1, idx + 1);
-        setRestChoice(getPlannedRestForIndex(nextIdx));
-        return nextIdx;
-      });
-      lastAutoAdvanceRef.current = guardKey;
-    }, 1200);
-
-    return () => {
-      if (autoAdvanceTimerRef.current) {
-        window.clearTimeout(autoAdvanceTimerRef.current);
-        autoAdvanceTimerRef.current = null;
-      }
-    };
-  }, [completedForExercise.length, setRows.length, exerciseIndex, exercises.length, exercise.id, getPlannedRestForIndex]);
 
   async function onValidateSet(setIndex: number, plannedReps: number) {
     const key = `${exercise.id}:${setIndex}`;
@@ -274,13 +251,24 @@ export function GuidedWorkoutClient({
     });
     setRestRemaining(restChoice);
     pushSyncState(exerciseIndex, setIndex + 1, restChoice);
+    try {
+      const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
+      if (strictStateRes.ok) {
+        const strictState = await strictStateRes.json() as { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
+        const strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
+        const strictSetIndex = Math.max(1, Number(strictState.setIndex ?? (setIndex + 1)));
+        const strictRest = Math.max(0, Number(strictState.restRemaining ?? restChoice));
+        setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
+        setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
+        setRestRemaining(strictRest);
+        lastSyncedWatchPositionRef.current = `${strictExerciseIndex}:${strictSetIndex}:${strictRest}`;
+      }
+    } catch {
+      // No-op: UI keeps last known local state if strict read fails.
+    }
   }
 
   function goToExercise(nextIdx: number) {
-    if (autoAdvanceTimerRef.current) {
-      window.clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
     const clamped = Math.max(0, Math.min(exercises.length - 1, nextIdx));
     setExerciseIndex(clamped);
     setRestChoice(getPlannedRestForIndex(clamped));
