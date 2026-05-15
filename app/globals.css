@@ -419,6 +419,13 @@ button, input, select { font-family: inherit; }
 .details-grid p { margin: 0; color: #d6e7ff; line-height: 1.4; }
 .detail-list { margin: 0; padding-left: 18px; color: #d6e7ff; display: grid; gap: 4px; }
 .action-stack { display: grid; gap: 10px; }
+.exercise-guide-infographic {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(95, 167, 255, .32);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+}
 .exercise-pro-header {
   border: 1px solid rgba(84, 150, 255, .45);
   background:

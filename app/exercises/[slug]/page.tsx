@@ -8,6 +8,13 @@ import { addExerciseToProgramDayAction } from "@/src/server/fitness-actions";
 import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 import { looksEnglish, translateSentence, translateSimple } from "@/src/lib/exercise-i18n";
 
+const DIPS_GUIDE_SLUGS = new Set([
+  "dips-assistes",
+  "dips-chest-version",
+  "dip-machine",
+  "parallel-bar-dip",
+]);
+
 export default async function ExerciseDetailPage(props: PageProps<"/exercises/[slug]">) {
   const { slug } = await props.params;
   const [exercise, programs] = await Promise.all([
@@ -23,28 +30,62 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
   const instructions = exercise.instructionsFr && !looksEnglish(exercise.instructionsFr)
     ? exercise.instructionsFr
     : translateSentence(exercise.detailedInstructions).text;
-  const commonMistakes = (exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes)
+  const commonMistakesRaw = (exercise.commonMistakesFr.length ? exercise.commonMistakesFr : exercise.commonMistakes)
     .map((item) => (looksEnglish(item) ? translateSentence(item).text : item));
+  const isDipsGuide = DIPS_GUIDE_SLUGS.has(exercise.slug);
+  const commonMistakes = isDipsGuide
+    ? [
+      "Rester droit (triceps uniquement)",
+      "Descendre à moitié",
+      "Épaules qui montent",
+      "Trop d'assistance",
+      "Coudes collés au corps",
+    ]
+    : commonMistakesRaw;
 
   const sourceName = exercise.media.find((item) => item.sourceName)?.sourceName;
   const license = exercise.media.find((item) => item.license)?.license;
   const firstProgram = programs[0] ?? null;
-  const keyPoints = (exercise.shortTechnicalCues.length ? exercise.shortTechnicalCues : instructions.split(/[.!?]\s+/))
+  const keyPoints = (isDipsGuide
+    ? [
+      "Buste penché vers l'avant (clé pour les pectoraux)",
+      "Coudes légèrement ouverts",
+      "Descente profonde",
+      "Épaules basses et stables",
+      "Contrôle du mouvement",
+    ]
+    : (exercise.shortTechnicalCues.length ? exercise.shortTechnicalCues : instructions.split(/[.!?]\s+/)))
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, 5);
-  const stepTexts = instructions
+  const stepTexts = (isDipsGuide
+    ? [
+      "Buste penché vers l'avant. Poignées saisies. Épaules basses et stables. Regard vers le bas.",
+      "Descendez lentement. Écartez légèrement les coudes.",
+      "Atteignez le point le plus bas et sentez l'étirement dans les pectoraux.",
+      "Remontez en poussant avec les pectoraux. Contraction en haut sans verrouiller les bras.",
+      "Revenez à la position de départ en gardant la tension sur les pectoraux.",
+    ]
+    : instructions
     .split(/[.!?]\s+/)
     .map((item) => item.trim())
-    .filter(Boolean)
+    .filter(Boolean))
     .slice(0, 5);
   const stepTitles = ["Position de départ", "Descente", "Étirement bas", "Remontée", "Contraction finale"];
   const tipItems = [
+    ...(isDipsGuide
+      ? [
+        "Assistance modérée (ni trop facile, ni trop lourd)",
+        "8 à 15 répétitions",
+        "Tempo: descente lente (2-3 sec), remontée contrôlée",
+      ]
+      : []),
     `Niveau: ${levelToFr(exercise.difficulty)}`,
     `Matériel: ${equipment.join(" · ") || "Poids du corps"}`,
     `Objectif: ${categoryToFr(exercise.category)}`,
     "Respiration: inspire en descente, expire en remontée",
   ];
+  const visualGuideImage = isDipsGuide ? "/media/guides/dips-assistes-machine-pectoreaux.png" : null;
 
   return (
     <div className="stack exercise-detail-screen">
@@ -71,6 +112,16 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
           <p className="muted">{primaryMuscles.join(" · ") || "Full body"}</p>
         </div>
       </section>
+      {visualGuideImage ? (
+        <section className="card">
+          <p className="eyebrow">Guide visuel complet</p>
+          <img
+            src={visualGuideImage}
+            alt="Guide visuel dips assistés machine pectoraux"
+            className="exercise-guide-infographic"
+          />
+        </section>
+      ) : null}
 
       <section className="exercise-steps-grid">
         {stepTitles.map((title, idx) => (
