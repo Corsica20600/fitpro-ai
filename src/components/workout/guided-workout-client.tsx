@@ -453,6 +453,14 @@ export function GuidedWorkoutClient({
         >
           Valider
         </PrimaryAction>
+        <button
+          type="button"
+          className="outline-link"
+          onClick={onCompleteWorkout}
+          disabled={ending}
+        >
+          {ending ? "..." : "Finir la seance"}
+        </button>
       </div>
     </section>
   );

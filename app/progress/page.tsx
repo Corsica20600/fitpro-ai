@@ -143,11 +143,6 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
         </div>
       </section>
 
-      <section className="card">
-        <p className="muted">
-          ProgressMetric: {data.progressMetricReady ? "structure prete, calcul serveur privilegie depuis WorkoutSet." : "non disponible."}
-        </p>
-      </section>
     </div>
   );
 }
