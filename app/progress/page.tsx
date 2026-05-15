@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
-import { PrimaryButton } from "@/src/components/ui/primary-button";
 
 function formatDuration(seconds: number) {
   if (!seconds || seconds <= 0) return "0 min";
@@ -71,25 +70,6 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
           <span className="chip">Series totales: {data.headline.totalSets}</span>
           <span className="chip">Duree moyenne: {formatDuration(data.headline.averageDuration)}</span>
           <span className="chip">Exo le plus travaille: {data.headline.mostWorkedExercise}</span>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2 className="section-title">Progression par exercice</h2>
-        <form method="get" className="form-grid">
-          <select name="exerciseId" defaultValue={data.selectedExercise?.id ?? ""} className="input">
-            {data.exerciseOptions.map((exercise) => (
-              <option key={exercise.id} value={exercise.id}>{exercise.name}</option>
-            ))}
-          </select>
-          <PrimaryButton type="submit">Afficher progression</PrimaryButton>
-        </form>
-        <div className="chips mt-10">
-          <span className="chip">Meilleure charge: {data.progression.bestWeight.toFixed(1)} kg</span>
-          <span className="chip">Meilleures reps: {data.progression.bestReps}</span>
-          <span className="chip">Volume total: {Math.round(data.progression.totalVolume)} kg</span>
-          <span className="chip">Derniere seance: {formatDate(data.progression.lastSessionAt)}</span>
-          <span className="chip">Evolution: {data.progression.evolution}</span>
         </div>
       </section>
 
