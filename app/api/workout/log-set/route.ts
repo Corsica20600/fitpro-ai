@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { syncProgramExerciseTargets } from "@/src/server/program-target-sync";
 
 export async function POST(request: Request) {
   const body = await request.json();
 
   const sessionId = String(body.sessionId ?? "").trim();
   const exerciseId = String(body.exerciseId ?? "").trim();
+  const programExerciseId = String(body.programExerciseId ?? "").trim();
   const setIndex = Number(body.setIndex ?? 0);
   const currentExerciseIndex = body.currentExerciseIndex == null ? null : Number(body.currentExerciseIndex);
   const totalSetsForExercise = body.totalSetsForExercise == null ? null : Number(body.totalSetsForExercise);
@@ -32,16 +34,27 @@ export async function POST(request: Request) {
     where: { workoutSessionId: sessionId, exerciseId, setIndex },
     orderBy: { createdAt: "desc" },
   });
+  const syncedProgramExerciseId = await syncProgramExerciseTargets({
+    workoutSessionId: sessionId,
+    exerciseId,
+    programExerciseId: programExerciseId || null,
+    actualReps: payload.actualReps,
+    actualWeightKg: payload.actualWeightKg,
+  });
 
   const saved = existing
     ? await prisma.workoutSet.update({
         where: { id: existing.id },
-        data: payload,
+        data: {
+          ...payload,
+          ...(syncedProgramExerciseId ? { programExerciseId: syncedProgramExerciseId } : {}),
+        },
       })
     : await prisma.workoutSet.create({
         data: {
           workoutSessionId: sessionId,
           exerciseId,
+          programExerciseId: syncedProgramExerciseId,
           setIndex,
           ...payload,
         },

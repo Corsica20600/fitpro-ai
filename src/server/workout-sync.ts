@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
+import { syncProgramExerciseTargets } from "@/src/server/program-target-sync";
 
 export type WorkoutStatePayload = {
   session: {
@@ -138,17 +139,27 @@ export async function updateSetCompleted(input: {
     isCompleted: true,
     completedAt: new Date(),
   };
+  const syncedProgramExerciseId = await syncProgramExerciseTargets({
+    workoutSessionId,
+    exerciseId,
+    actualReps: payload.actualReps,
+    actualWeightKg: payload.actualWeightKg,
+  });
 
   if (existing) {
     await prisma.workoutSet.update({
       where: { id: existing.id },
-      data: payload,
+      data: {
+        ...payload,
+        ...(syncedProgramExerciseId ? { programExerciseId: syncedProgramExerciseId } : {}),
+      },
     });
   } else {
     await prisma.workoutSet.create({
       data: {
         workoutSessionId,
         exerciseId,
+        programExerciseId: syncedProgramExerciseId,
         setIndex,
         ...payload,
       },

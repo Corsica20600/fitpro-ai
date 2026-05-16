@@ -64,6 +64,7 @@ export default async function WorkoutPage() {
             plannedRepsMax: item.plan?.repsMax ?? null,
             plannedWeightKg: item.plan?.plannedWeightKg ?? null,
             plannedRestSeconds: item.plan?.restSeconds ?? null,
+            programExerciseId: item.plan?.programExerciseId ?? null,
             media: item.media.map((media) => ({
               id: media.id,
               type: media.type,

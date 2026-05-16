@@ -24,6 +24,7 @@ type WorkoutExercise = {
   plannedRepsMax: number | null;
   plannedWeightKg: number | null;
   plannedRestSeconds: number | null;
+  programExerciseId: string | null;
   media: Array<{
     id: string;
     type: "IMAGE" | "THUMBNAIL" | "ANIMATION";
@@ -333,6 +334,7 @@ export function GuidedWorkoutClient({
       body: JSON.stringify({
         sessionId,
         exerciseId: exercise.id,
+        programExerciseId: exercise.programExerciseId,
         currentExerciseIndex: exerciseIndex,
         totalSetsForExercise: setRows.length,
         setIndex,
