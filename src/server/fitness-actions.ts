@@ -33,12 +33,22 @@ export async function startWorkoutSessionAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programIdRaw = String(formData.get("programId") ?? "").trim();
   const title = String(formData.get("title") ?? "Seance libre").trim();
+  const selectedProgram = programIdRaw.length
+    ? await prisma.program.findFirst({
+        where: { id: programIdRaw, userProfileId: profile.id },
+        select: { id: true, name: true },
+      })
+    : null;
+  const defaultTitle = selectedProgram?.name?.trim() || "Seance libre";
+  const sessionTitle = title.length && title.toLowerCase() !== "seance libre"
+    ? title
+    : defaultTitle;
 
   const session = await prisma.workoutSession.create({
     data: {
       userProfileId: profile.id,
-      programId: programIdRaw.length ? programIdRaw : null,
-      title: title.length ? title : "Seance libre",
+      programId: selectedProgram?.id ?? null,
+      title: sessionTitle,
       status: "IN_PROGRESS",
       startedAt: new Date(),
     },

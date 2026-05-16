@@ -28,7 +28,7 @@ export default async function WorkoutPage() {
         <WorkoutCard light>
           <h2 className="section-title">Demarrer une seance</h2>
           <form action={startWorkoutSessionAction} className="form-grid">
-            <input name="title" className="input" placeholder="Ex: Push explosif" defaultValue="Seance libre" />
+            <input name="title" className="input" placeholder="Nom de seance optionnel" />
             <select name="programId" className="input" defaultValue="">
               <option value="">Sans programme</option>
               {programs.map((program) => (
