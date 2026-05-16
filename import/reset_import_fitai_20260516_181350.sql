@@ -1,0 +1,25 @@
+﻿DROP TABLE IF EXISTS exercise_import_clean;
+CREATE TABLE exercise_import_clean (
+  source_id TEXT,
+  source TEXT,
+  source_path TEXT,
+  slug TEXT UNIQUE,
+  name_en TEXT,
+  name_fr TEXT,
+  category TEXT,
+  primary_muscles_fr JSONB,
+  secondary_muscles_fr JSONB,
+  equipment_fr JSONB,
+  difficulty TEXT,
+  movement_type TEXT,
+  instructions_fr TEXT,
+  common_mistakes_fr JSONB,
+  image_path TEXT,
+  animation_path TEXT,
+  thumbnail_path TEXT,
+  is_active BOOLEAN,
+  is_variant BOOLEAN,
+  canonical_key TEXT,
+  canonical_slug TEXT,
+  variant_label_fr TEXT
+);
