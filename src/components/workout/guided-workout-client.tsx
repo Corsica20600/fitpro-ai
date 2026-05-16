@@ -118,6 +118,7 @@ export function GuidedWorkoutClient({
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevRestRemainingRef = useRef<number>(0);
+  const skipRestRequestedRef = useRef(false);
 
   const unlockRestAudio = useCallback(() => {
     try {
@@ -272,6 +273,10 @@ export function GuidedWorkoutClient({
         });
         setRestChoice(getPlannedRestForIndex(exerciseIndexFromWatch));
         setRestRemaining((prev) => {
+          if (restFromWatch === 0 && skipRestRequestedRef.current) {
+            skipRestRequestedRef.current = false;
+            return 0;
+          }
           if (prev > 0 && restFromWatch === 0) return prev;
           return restFromWatch;
         });
@@ -397,16 +402,21 @@ export function GuidedWorkoutClient({
 
   async function onSkipRest() {
     unlockRestAudio();
+    skipRestRequestedRef.current = true;
     prevRestRemainingRef.current = 0;
     setRestRemaining(0);
     lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:0`;
     pushSyncState(exerciseIndex, Math.max(1, nextSetIndex), 0);
     try {
-      await fetch("/api/watch/skip-rest", {
+      const response = await fetch("/api/watch/skip-rest", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sessionId }),
       });
+      if (response.ok) {
+        skipRestRequestedRef.current = false;
+        setRestRemaining(0);
+      }
     } catch {
       // Local skip remains useful even if the watch sync endpoint is unavailable.
     }

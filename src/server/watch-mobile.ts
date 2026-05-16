@@ -143,7 +143,7 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
   const nowMs = Date.now();
   const configuredRest = Math.max(0, latestCompletedSet?.restSeconds ?? currentExercise.restSeconds ?? 90);
   const restRemaining = completedAtMs == null
-    ? configuredRest
+    ? 0
     : Math.max(0, configuredRest - Math.floor((nowMs - completedAtMs) / 1000));
 
   return {
