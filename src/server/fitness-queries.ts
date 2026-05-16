@@ -489,7 +489,7 @@ export async function getWorkoutPageData() {
   const profile = await getOrCreateDemoProfile();
 
   let exercises: ExerciseWithFrCompat[] = [];
-  const [programs, currentSession] = await Promise.all([
+  const [programs, currentSession, latestProgramSession] = await Promise.all([
     prisma.program.findMany({
       where: { userProfileId: profile.id, status: { in: ["ACTIVE", "DRAFT"] } },
       orderBy: { createdAt: "desc" },
@@ -500,7 +500,13 @@ export async function getWorkoutPageData() {
       include: { sets: { orderBy: { createdAt: "desc" }, take: 20 }, program: true },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.workoutSession.findFirst({
+      where: { userProfileId: profile.id, status: "COMPLETED", programId: { not: null } },
+      select: { programId: true },
+      orderBy: [{ endedAt: "desc" }, { createdAt: "desc" }],
+    }),
   ]);
+  const lastPerformedProgramId = latestProgramSession?.programId ?? null;
 
   try {
     exercises = await prisma.exercise.findMany({
@@ -586,7 +592,7 @@ export async function getWorkoutPageData() {
     sessionExercises = shuffled.slice(0, 6).map((exercise) => ({ ...exercise, plan: undefined }));
   }
 
-  return { profile, programs, exercises, sessionExercises, currentSession };
+  return { profile, programs, exercises, sessionExercises, currentSession, lastPerformedProgramId };
 }
 
 export async function getProgressDataForDemoUser(selectedExerciseId?: string) {

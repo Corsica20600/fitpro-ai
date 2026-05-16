@@ -66,6 +66,7 @@ export async function startWorkoutSessionAction(formData: FormData) {
   });
 
   revalidatePath("/workout");
+  revalidatePath("/dashboard");
   revalidatePath("/history");
 }
 
@@ -95,6 +96,7 @@ export async function logWorkoutSetAction(formData: FormData) {
   });
 
   revalidatePath("/workout");
+  revalidatePath("/dashboard");
   revalidatePath("/history");
 }
 
@@ -123,6 +125,7 @@ export async function completeWorkoutSessionAction(formData: FormData) {
   });
 
   revalidatePath("/workout");
+  revalidatePath("/dashboard");
   revalidatePath("/history");
 }
 

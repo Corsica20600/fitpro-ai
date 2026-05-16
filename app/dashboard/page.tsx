@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { HeroVisual } from "@/src/components/ui/hero-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
@@ -6,6 +7,7 @@ import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { getWorkoutPageData } from "@/src/server/fitness-queries";
 
 export default async function DashboardPage() {
+  await connection();
   const { currentSession, exercises, programs } = await getWorkoutPageData();
   const selectedProgram = programs.find((program) => program.status === "ACTIVE") ?? programs[0] ?? null;
   const selectedProgramStatus =
@@ -26,7 +28,7 @@ export default async function DashboardPage() {
   return (
     <AppShell className="stack dashboard-premium-screen">
       <HeroVisual title={heroTitle} imageSrc={heroImage} imageAlt={heroTitle} eyebrow="FitAI Pro" className="dashboard-premium-hero">
-        <Link href="/workout" className="dashboard-premium-action">
+        <Link href="/workout" prefetch={false} className="dashboard-premium-action">
           <PrimaryAction className="dashboard-premium-cta">{startLabel}</PrimaryAction>
         </Link>
       </HeroVisual>

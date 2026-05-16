@@ -68,7 +68,7 @@ export function BottomNav() {
       {nav.map((item) => {
         const active = pathname === item.href;
         return (
-          <Link key={item.href} href={item.href} className={`bottom-nav-item ${active ? "active" : ""}`}>
+          <Link key={item.href} href={item.href} prefetch={false} className={`bottom-nav-item ${active ? "active" : ""}`}>
             <span className="bottom-nav-icon">{item.icon}</span>
             <span>{item.label}</span>
           </Link>

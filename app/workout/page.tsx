@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { startWorkoutSessionAction } from "@/src/server/fitness-actions";
 import { getWorkoutPageData } from "@/src/server/fitness-queries";
 import { AppShell } from "@/src/components/ui/app-shell";
@@ -7,8 +8,12 @@ import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
 
 export default async function WorkoutPage() {
-  const { programs, sessionExercises, currentSession } = await getWorkoutPageData();
+  await connection();
+  const { programs, sessionExercises, currentSession, lastPerformedProgramId } = await getWorkoutPageData();
   const heroExercise = sessionExercises[0] ?? null;
+  const defaultProgramId = programs.some((program) => program.id === lastPerformedProgramId)
+    ? lastPerformedProgramId
+    : (programs.find((program) => program.status === "ACTIVE")?.id ?? "");
   const heroTitle = currentSession
     ? (heroExercise?.nameFr || heroExercise?.name || currentSession.title || "Seance du jour")
     : "Seance guidee";
@@ -28,8 +33,7 @@ export default async function WorkoutPage() {
         <WorkoutCard light>
           <h2 className="section-title">Demarrer une seance</h2>
           <form action={startWorkoutSessionAction} className="form-grid">
-            <input name="title" className="input" placeholder="Nom de seance optionnel" />
-            <select name="programId" className="input" defaultValue="">
+            <select name="programId" className="input" defaultValue={defaultProgramId ?? ""}>
               <option value="">Sans programme</option>
               {programs.map((program) => (
                 <option key={program.id} value={program.id}>{program.name}</option>

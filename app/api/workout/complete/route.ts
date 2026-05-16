@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
 
 export async function POST(request: Request) {
@@ -44,6 +45,10 @@ export async function POST(request: Request) {
   const exercisesCount = new Set(sets.map((set) => set.exerciseId)).size;
   const setsCount = sets.length;
   const volumeTotal = sets.reduce((acc, set) => acc + ((set.actualReps ?? 0) * (set.actualWeightKg ?? 0)), 0);
+
+  revalidatePath("/workout");
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
 
   return NextResponse.json({
     ok: true,
