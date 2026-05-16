@@ -55,19 +55,25 @@ export function AddToProgramForm({
         ))}
       </select>
 
-      <label className="field-label">Jour du programme</label>
-      <select
-        name="dayId"
-        className="input"
-        value={effectiveDayId}
-        onChange={(event) => setDayId(event.target.value)}
-      >
-        {days.map((day) => (
-          <option key={day.id} value={day.id}>
-            Jour {day.dayIndex} · {day.title}
-          </option>
-        ))}
-      </select>
+      {days.length > 1 ? (
+        <>
+          <label className="field-label">Seance du programme</label>
+          <select
+            name="dayId"
+            className="input"
+            value={effectiveDayId}
+            onChange={(event) => setDayId(event.target.value)}
+          >
+            {days.map((day) => (
+              <option key={day.id} value={day.id}>
+                {day.title || `Seance ${day.dayIndex}`}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : (
+        <input type="hidden" name="dayId" value={effectiveDayId} />
+      )}
 
       <div className="grid-2">
         <div>

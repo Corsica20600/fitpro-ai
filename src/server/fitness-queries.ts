@@ -558,12 +558,7 @@ export async function getWorkoutPageData() {
     });
 
     if (sessionProgram) {
-      const weekdayByIndex = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const todayName = weekdayByIndex[new Date().getDay()] ?? "";
-      const dayForToday =
-        sessionProgram.days.find((d) => d.title.toLowerCase().includes(todayName)) ??
-        sessionProgram.days[0] ??
-        null;
+      const dayForToday = sessionProgram.days[0] ?? null;
 
       if (dayForToday) {
         sessionExercises = dayForToday.exercises.map((programExercise) => ({

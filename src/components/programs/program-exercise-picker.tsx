@@ -92,19 +92,23 @@ export function ProgramExercisePicker({
   return (
     <section className="card">
       <p className="eyebrow">Ajouter un exercice</p>
-      <label className="field-label" htmlFor={`day-${programId}`}>Jour cible</label>
-      <select
-        id={`day-${programId}`}
-        className="input"
-        value={dayId}
-        onChange={(event) => setDayId(event.target.value)}
-      >
-        {days.map((day) => (
-          <option key={day.id} value={day.id}>
-            Jour {day.dayIndex} · {day.title}
-          </option>
-        ))}
-      </select>
+      {days.length > 1 ? (
+        <>
+          <label className="field-label" htmlFor={`day-${programId}`}>Seance cible</label>
+          <select
+            id={`day-${programId}`}
+            className="input"
+            value={dayId}
+            onChange={(event) => setDayId(event.target.value)}
+          >
+            {days.map((day) => (
+              <option key={day.id} value={day.id}>
+                {day.title || `Seance ${day.dayIndex}`}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : null}
 
       <label className="field-label" htmlFor={`search-${programId}`}>Recherche</label>
       <input

@@ -3,16 +3,12 @@ import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-ge
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import {
-  applyWeeklyTemplateAction,
   addExerciseToProgramDayAction,
-  addProgramDayAction,
   createSimpleProgramAction,
-  deleteProgramDayAction,
   deleteProgramExerciseAction,
   replaceProgramExerciseAction,
   renameProgramDayAction,
   setProgramStatusAction,
-  resetProgramStructureAction,
   updateProgramExerciseAction,
 } from "@/src/server/fitness-actions";
 import { getExerciseOptionsForPrograms, getProgramsForDemoUser } from "@/src/server/fitness-queries";
@@ -74,14 +70,6 @@ export default async function ProgramsPage() {
         </form>
       </section>
 
-      <section className="card">
-        <p className="eyebrow">Administration</p>
-        <form action={resetProgramStructureAction}>
-          <PrimaryButton type="submit">Reinitialiser les anciens programmes</PrimaryButton>
-        </form>
-        <p className="muted">Action destructive: supprime les exercices deja places et remet un jour de base.</p>
-      </section>
-
       <AiProgramGeneratorPanel />
 
       <section className="stack">
@@ -96,7 +84,7 @@ export default async function ProgramsPage() {
               <h2 className="section-title">{program.name}</h2>
               <div className="chips">
                 <span className="chip">Statut: {statusToFr(program.status)}</span>
-                <span className="chip">Jours: {program.days.length}</span>
+                <span className="chip">Seance unique</span>
               </div>
               <div className="grid-2" style={{ marginTop: 10 }}>
                 <form action={setProgramStatusAction}>
@@ -113,51 +101,22 @@ export default async function ProgramsPage() {
                 </form>
               </div>
               <div className="stack" style={{ marginTop: 16 }}>
-                <section className="card">
-                  <p className="eyebrow">Semaine type</p>
-                  <form action={applyWeeklyTemplateAction} className="form-grid">
-                    <input type="hidden" name="programId" value={program.id} />
-                    <label className="field-label">Depuis</label>
-                    <select name="sourceDayId" className="input" defaultValue={program.days[0]?.id}>
-                      {program.days.map((day) => (
-                        <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
-                      ))}
-                    </select>
-                    <label className="field-label">Jours d&apos;entrainement</label>
-                    <div className="chips">
-                      <label className="chip"><input type="checkbox" name="weekdays" value="MONDAY" defaultChecked /> Lundi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="TUESDAY" /> Mardi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="WEDNESDAY" defaultChecked /> Mercredi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="THURSDAY" /> Jeudi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="FRIDAY" defaultChecked /> Vendredi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="SATURDAY" /> Samedi</label>
-                      <label className="chip"><input type="checkbox" name="weekdays" value="SUNDAY" /> Dimanche</label>
-                    </div>
-                    <PrimaryButton type="submit">Appliquer la semaine</PrimaryButton>
-                  </form>
-                </section>
-
                 {program.days.map((day) => (
                   <details key={day.id} className="card">
                     <summary className="day-summary">
-                      <span>Jour {day.dayIndex} · {day.title}</span>
+                      <span>{day.title || program.name}</span>
                       <span className="chip">{day.exercises.length} exos</span>
                     </summary>
-                    <p className="eyebrow">Jour {day.dayIndex}</p>
+                    <p className="eyebrow">Seance du programme</p>
                     <form action={renameProgramDayAction} className="form-grid">
                       <input type="hidden" name="programId" value={program.id} />
                       <input type="hidden" name="dayId" value={day.id} />
 
-                      <label className="field-label">Nom du jour</label>
+                      <label className="field-label">Nom de la seance</label>
                       <input name="title" defaultValue={day.title} className="input" />
                       <label className="field-label">Focus</label>
                       <input name="focus" defaultValue={day.focus || ""} className="input" placeholder="Ex: Haut du corps" />
-                      <div className="grid-2">
-                        <PrimaryButton type="submit">Enregistrer</PrimaryButton>
-                        <button className="ghost-btn" type="submit" formAction={deleteProgramDayAction}>
-                          Supprimer
-                        </button>
-                      </div>
+                      <PrimaryButton type="submit">Enregistrer</PrimaryButton>
                     </form>
 
                     {day.exercises.length === 0 ? (
@@ -234,11 +193,6 @@ export default async function ProgramsPage() {
                     )}
                   </details>
                 ))}
-
-                <form action={addProgramDayAction}>
-                  <input type="hidden" name="programId" value={program.id} />
-                  <PrimaryButton type="submit">Ajouter un jour</PrimaryButton>
-                </form>
 
                 <ProgramExercisePicker
                   programId={program.id}

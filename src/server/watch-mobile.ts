@@ -74,12 +74,7 @@ async function getOrderedExercisesForSession(session: { id: string; programId: s
     });
 
     if (program) {
-      const weekdayByIndex = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const todayName = weekdayByIndex[new Date().getDay()] ?? "";
-      const dayForToday =
-        program.days.find((day) => day.title.toLowerCase().includes(todayName)) ??
-        program.days[0] ??
-        null;
+      const dayForToday = program.days[0] ?? null;
 
       if (dayForToday) {
         const fromProgramDay = dayForToday.exercises.map((item) => ({

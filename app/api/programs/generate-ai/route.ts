@@ -6,7 +6,6 @@ export async function POST(request: Request) {
 
   const goal = String(body.goal ?? "").trim();
   const level = String(body.level ?? "").trim();
-  const daysPerWeek = Number(body.daysPerWeek ?? 4);
   const sessionDurationMin = Number(body.sessionDurationMin ?? 60);
   const availableEquipment = Array.isArray(body.availableEquipment) ? body.availableEquipment.map(String) : [];
   const priorityMuscles = Array.isArray(body.priorityMuscles) ? body.priorityMuscles.map(String) : [];
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
   const result = await generateAiProgram({
     goal: goal as "MUSCLE_GAIN" | "FAT_LOSS" | "STRENGTH" | "RECOMPOSITION",
     level: level as "BEGINNER" | "INTERMEDIATE" | "ADVANCED",
-    daysPerWeek: Number.isFinite(daysPerWeek) ? Math.max(2, Math.min(6, Math.floor(daysPerWeek))) : 4,
+    daysPerWeek: 1,
     sessionDurationMin: Number.isFinite(sessionDurationMin) ? Math.max(25, Math.min(120, Math.floor(sessionDurationMin))) : 60,
     availableEquipment,
     priorityMuscles,
@@ -35,4 +34,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json(result);
 }
-

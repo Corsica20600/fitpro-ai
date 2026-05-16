@@ -7,20 +7,21 @@ import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
 export async function createSimpleProgramAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const name = String(formData.get("name") ?? "Programme MVP").trim();
+  const programName = name.length ? name : "Programme MVP";
   const goal = String(formData.get("goal") ?? "HYPERTROPHY");
   const level = String(formData.get("level") ?? "INTERMEDIATE");
 
   await prisma.program.create({
     data: {
       userProfileId: profile.id,
-      name: name.length ? name : "Programme MVP",
+      name: programName,
       goal: goal as never,
       level: level as never,
       sessionsPerWeek: 1,
       status: "DRAFT",
       days: {
         create: [
-          { dayIndex: 1, title: "Jour 1", focus: "A personnaliser" },
+          { dayIndex: 1, title: programName, focus: "A personnaliser" },
         ],
       },
     },
@@ -204,14 +205,14 @@ export async function renameProgramDayAction(formData: FormData) {
 
   const day = await prisma.programDay.findFirst({
     where: { id: dayId, programId, program: { userProfileId: profile.id } },
-    select: { dayIndex: true },
+    select: { id: true },
   });
   if (!day) return;
 
   await prisma.programDay.update({
     where: { id: dayId },
     data: {
-      title: title || `Jour ${day.dayIndex}`,
+      title: title || "Seance",
       focus: focus || null,
     },
   });

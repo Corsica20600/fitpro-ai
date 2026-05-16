@@ -41,7 +41,7 @@ export function AiProgramGeneratorPanel() {
     const payload = {
       goal: String(formData.get("goal") ?? "MUSCLE_GAIN"),
       level: String(formData.get("level") ?? "INTERMEDIATE"),
-      daysPerWeek: Number(formData.get("daysPerWeek") ?? 4),
+      daysPerWeek: 1,
       sessionDurationMin: Number(formData.get("sessionDurationMin") ?? 60),
       availableEquipment: String(formData.get("availableEquipment") ?? "")
         .split(",")
@@ -113,7 +113,6 @@ export function AiProgramGeneratorPanel() {
           <option value="INTERMEDIATE">Intermediaire</option>
           <option value="ADVANCED">Avance</option>
         </select>
-        <input name="daysPerWeek" type="number" min={2} max={6} defaultValue={4} className="input" placeholder="Jours / semaine" />
         <input name="sessionDurationMin" type="number" min={25} max={120} defaultValue={60} className="input" placeholder="Duree seance (min)" />
         <input name="availableEquipment" className="input" placeholder="Materiel (csv) ex: halteres, barre, machine" />
         <input name="priorityMuscles" className="input" placeholder="Muscles prioritaires (csv)" />
@@ -129,7 +128,7 @@ export function AiProgramGeneratorPanel() {
           <h3 className="section-title">{result.programName}</h3>
           {result.days.map((day) => (
             <section key={day.dayIndex} className="card">
-              <p className="eyebrow">Jour {day.dayIndex}</p>
+              <p className="eyebrow">Seance</p>
               <h4 className="section-title">{day.title}</h4>
               <p className="muted">{day.notes}</p>
               <div className="stack mt-10">

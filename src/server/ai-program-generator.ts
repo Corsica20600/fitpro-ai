@@ -180,6 +180,7 @@ export async function generateAiProgram(input: AiProgramInput) {
       notes: "string",
     }),
     `Contrainte jours/semaine: ${input.daysPerWeek}`,
+    "Le programme doit contenir exactement 1 entree dans days: une seule seance complete.",
     `Duree cible par seance (min): ${input.sessionDurationMin}`,
     `Objectif: ${input.goal}`,
     `Niveau: ${input.level}`,
@@ -256,13 +257,13 @@ export async function saveGeneratedProgram(program: ValidGeneratedProgram) {
       name: program.programName,
       goal: toProgramGoal(program.goal),
       level: "INTERMEDIATE",
-      sessionsPerWeek: program.days.length,
+      sessionsPerWeek: 1,
       description: program.notes,
       status: "DRAFT",
       days: {
-        create: program.days.map((day) => ({
-          dayIndex: day.dayIndex,
-          title: day.title,
+        create: program.days.slice(0, 1).map((day) => ({
+          dayIndex: 1,
+          title: day.title || program.programName,
           focus: day.notes,
           exercises: {
             create: day.exercises.map((ex, idx) => ({
@@ -283,4 +284,3 @@ export async function saveGeneratedProgram(program: ValidGeneratedProgram) {
   console.info("[AI_PROGRAM] Sauvegarde succes", created.id);
   return { ok: true as const, programId: created.id, programName: created.name };
 }
-
