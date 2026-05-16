@@ -44,22 +44,26 @@ export default async function DashboardPage() {
         </div>
       </WorkoutCard>
 
-      <section className="dashboard-quick-chips">
-        <span className="dashboard-quick-chip">Exercice {currentSession ? `${currentExerciseIndex}/${totalExercises}` : "-"}</span>
-        <span className="dashboard-quick-chip">Serie {currentSession ? currentSetIndex : "-"}</span>
-        <span className="dashboard-quick-chip">Repos {currentSession ? `${restSeconds}s` : "-"}</span>
-        <span className="dashboard-quick-chip">Progress {currentSession ? `${progressPercent}%` : "0%"}</span>
-      </section>
+      {currentSession ? (
+        <>
+          <section className="dashboard-quick-chips">
+            <span className="dashboard-quick-chip">Exercice {`${currentExerciseIndex}/${totalExercises}`}</span>
+            <span className="dashboard-quick-chip">Serie {currentSetIndex}</span>
+            <span className="dashboard-quick-chip">Repos {`${restSeconds}s`}</span>
+            <span className="dashboard-quick-chip">Progress {`${progressPercent}%`}</span>
+          </section>
 
-      <section className="dashboard-progress-bar-card">
-        <div className="dashboard-progress-head">
-          <span>Progression seance</span>
-          <strong>{progressPercent}%</strong>
-        </div>
-        <div className="dashboard-progress-track">
-          <span style={{ width: `${progressPercent}%` }} />
-        </div>
-      </section>
+          <section className="dashboard-progress-bar-card">
+            <div className="dashboard-progress-head">
+              <span>Progression seance</span>
+              <strong>{progressPercent}%</strong>
+            </div>
+            <div className="dashboard-progress-track">
+              <span style={{ width: `${progressPercent}%` }} />
+            </div>
+          </section>
+        </>
+      ) : null}
 
       {selectedProgram ? (
         <section className="dashboard-mini-stats">
