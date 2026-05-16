@@ -119,6 +119,7 @@ export function GuidedWorkoutClient({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevRestRemainingRef = useRef<number>(0);
   const skipRestRequestedRef = useRef(false);
+  const surfaceTapReadyAtRef = useRef<number>(0);
 
   const unlockRestAudio = useCallback(() => {
     try {
@@ -148,6 +149,7 @@ export function GuidedWorkoutClient({
   }, [sessionId]);
 
   const exercise = exercises[exerciseIndex];
+  const isActiveWorkoutSurface = restRemaining <= 0;
   const plannedRepsForExercise = buildPlannedReps(exercise);
   const completedForExercise = completedSets
     .filter((item) => item.exerciseId === exercise.id)
@@ -327,6 +329,10 @@ export function GuidedWorkoutClient({
     };
   }, [sessionId, exercises, getPlannedRestForIndex]);
 
+  useEffect(() => {
+    surfaceTapReadyAtRef.current = Date.now() + 1200;
+  }, [exerciseIndex, isActiveWorkoutSurface]);
+
   async function onValidateSet(setIndex: number, plannedReps: number) {
     unlockRestAudio();
     const key = `${exercise.id}:${setIndex}`;
@@ -483,6 +489,7 @@ export function GuidedWorkoutClient({
     const target = event.target as HTMLElement | null;
     if (!target) return;
     if (target.closest("button, a, input, select, textarea, label")) return;
+    if (Date.now() < surfaceTapReadyAtRef.current) return;
     if (!canTapToValidate() || !activeSet) return;
     onValidateSet(activeSet.setIndex, activeSet.plannedReps);
   }
