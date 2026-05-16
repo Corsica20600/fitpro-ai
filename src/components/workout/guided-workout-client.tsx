@@ -117,6 +117,19 @@ export function GuidedWorkoutClient({
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevRestRemainingRef = useRef<number>(0);
+
+  const unlockRestAudio = useCallback(() => {
+    try {
+      const audioContext = audioCtxRef.current ?? new AudioContext();
+      audioCtxRef.current = audioContext;
+      if (audioContext.state === "suspended") {
+        void audioContext.resume();
+      }
+    } catch {
+      // Audio can be unavailable in some embedded browsers; the workout must continue.
+    }
+  }, []);
+
   const pushSyncState = useCallback((nextExerciseIndex: number, nextSetIndex: number, nextRest: number) => {
     void fetch("/api/watch/syncWorkoutState", {
       method: "POST",
@@ -165,19 +178,21 @@ export function GuidedWorkoutClient({
         void audioContext.resume();
       }
       const now = audioContext.currentTime;
-      for (let i = 0; i < 2; i += 1) {
+      const notes = [659, 880, 1175];
+      notes.forEach((frequency, index) => {
+        const start = now + index * 0.13;
         const osc = audioContext.createOscillator();
         const gain = audioContext.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(880, now + i * 0.18);
-        gain.gain.setValueAtTime(0.0001, now + i * 0.18);
-        gain.gain.exponentialRampToValueAtTime(0.12, now + i * 0.18 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.14);
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.19);
         osc.connect(gain);
         gain.connect(audioContext.destination);
-        osc.start(now + i * 0.18);
-        osc.stop(now + i * 0.18 + 0.16);
-      }
+        osc.start(start);
+        osc.stop(start + 0.21);
+      });
     } catch {
       // Keep workout flow resilient if audio API is unavailable.
     }
@@ -307,6 +322,7 @@ export function GuidedWorkoutClient({
   }, [sessionId, exercises, getPlannedRestForIndex]);
 
   async function onValidateSet(setIndex: number, plannedReps: number) {
+    unlockRestAudio();
     const key = `${exercise.id}:${setIndex}`;
     const actualReps = Math.max(1, repsByKey[key] ?? plannedReps);
     const actualWeightKg = Math.max(0, weightByKey[key] ?? exercise.plannedWeightKg ?? 0);
@@ -370,13 +386,32 @@ export function GuidedWorkoutClient({
   }
 
   function goToExercise(nextIdx: number) {
+    unlockRestAudio();
     const clamped = Math.max(0, Math.min(exercises.length - 1, nextIdx));
     setExerciseIndex(clamped);
     setRestChoice(getPlannedRestForIndex(clamped));
     pushSyncState(clamped, 1, 0);
   }
 
+  async function onSkipRest() {
+    unlockRestAudio();
+    prevRestRemainingRef.current = 0;
+    setRestRemaining(0);
+    lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:0`;
+    pushSyncState(exerciseIndex, Math.max(1, nextSetIndex), 0);
+    try {
+      await fetch("/api/watch/skip-rest", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+    } catch {
+      // Local skip remains useful even if the watch sync endpoint is unavailable.
+    }
+  }
+
   async function onCompleteWorkout() {
+    unlockRestAudio();
     setEnding(true);
     const response = await fetch("/api/workout/complete", {
       method: "POST",
@@ -473,7 +508,7 @@ export function GuidedWorkoutClient({
         <div className="workout-rest-timer-xl">
           {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
         </div>
-        <button type="button" className="outline-link" onClick={() => setRestRemaining(0)}>Passer</button>
+        <button type="button" className="outline-link" onClick={onSkipRest}>Passer</button>
       </section>
     );
   }

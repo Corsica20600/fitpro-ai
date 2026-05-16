@@ -49,12 +49,12 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
   const maxVolume = Math.max(1, ...sessionsForChart.map((item) => item.volume));
   const donutColors = ["#5eb8ff", "#38e3a5", "#9b7dff", "#ffb65e", "#ff6c9d"];
   const donutTotalVolume = data.donutExerciseDistribution.reduce((acc, item) => acc + item.volume, 0);
-  let currentPct = 0;
+  const donutPercentages = data.donutExerciseDistribution.map((item) => (
+    donutTotalVolume > 0 ? (item.volume / donutTotalVolume) * 100 : 0
+  ));
   const donutSegments = data.donutExerciseDistribution.map((item, index) => {
-    const pct = donutTotalVolume > 0 ? (item.volume / donutTotalVolume) * 100 : 0;
-    const from = currentPct;
-    const to = currentPct + pct;
-    currentPct = to;
+    const from = donutPercentages.slice(0, index).reduce((acc, pct) => acc + pct, 0);
+    const to = from + (donutPercentages[index] ?? 0);
     return { ...item, color: donutColors[index % donutColors.length], from, to };
   });
   const donutGradient = donutSegments.length

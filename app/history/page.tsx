@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { getHistoryVisualFallback, getWorkoutHistorySummaryForDemoUser } from "@/src/server/fitness-queries";
 
@@ -20,6 +21,7 @@ function formatDuration(seconds: number | null) {
 }
 
 export default async function HistoryPage() {
+  await connection();
   const [{ sessions, stats }, historyVisual] = await Promise.all([
     getWorkoutHistorySummaryForDemoUser(),
     getHistoryVisualFallback(),

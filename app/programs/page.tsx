@@ -123,7 +123,7 @@ export default async function ProgramsPage() {
                         <option key={day.id} value={day.id}>Jour {day.dayIndex} · {day.title}</option>
                       ))}
                     </select>
-                    <label className="field-label">Jours d'entrainement</label>
+                    <label className="field-label">Jours d&apos;entrainement</label>
                     <div className="chips">
                       <label className="chip"><input type="checkbox" name="weekdays" value="MONDAY" defaultChecked /> Lundi</label>
                       <label className="chip"><input type="checkbox" name="weekdays" value="TUESDAY" /> Mardi</label>
@@ -225,7 +225,7 @@ export default async function ProgramsPage() {
                                     </option>
                                   ))}
                                 </select>
-                                <PrimaryButton type="submit">Remplacer l'exercice</PrimaryButton>
+                                <PrimaryButton type="submit">Remplacer l&apos;exercice</PrimaryButton>
                               </form>
                             </div>
                           </article>

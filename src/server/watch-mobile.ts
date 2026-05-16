@@ -279,6 +279,16 @@ export async function previousWatchExercise(sessionId: string) {
 export async function skipWatchRest(sessionId: string) {
   const state = await getWatchPayload(sessionId);
   if (!state) return null;
+  const latestCompletedSet = await prisma.workoutSet.findFirst({
+    where: { workoutSessionId: state.sessionId, isCompleted: true, completedAt: { not: null } },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+  });
+  if (latestCompletedSet) {
+    await prisma.workoutSet.update({
+      where: { id: latestCompletedSet.id },
+      data: { restSeconds: 0 },
+    });
+  }
   return { ...state, restRemaining: 0 };
 }
 

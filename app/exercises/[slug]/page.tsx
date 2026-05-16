@@ -181,7 +181,7 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
       <section className="card action-stack">
         {programs.length === 0 || !firstProgram ? (
           <div className="stack">
-            <p className="muted">Cree d'abord un programme pour ajouter cet exercice.</p>
+            <p className="muted">Cree d&apos;abord un programme pour ajouter cet exercice.</p>
             <Link href="/programs">
               <PrimaryButton>Creer un programme</PrimaryButton>
             </Link>
