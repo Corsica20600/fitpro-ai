@@ -6,6 +6,8 @@ import { HeroVisual } from "@/src/components/ui/hero-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
+import { AppShortcutLink } from "@/src/components/integrations/app-shortcut-link";
+import { spotifyIntegration } from "@/src/lib/integrations";
 
 export default async function WorkoutPage() {
   await connection();
@@ -41,52 +43,74 @@ export default async function WorkoutPage() {
             </select>
             <PrimaryAction type="submit">Demarrer</PrimaryAction>
           </form>
+          <div className="stack" style={{ marginTop: 10 }}>
+            <AppShortcutLink
+              label={`Ouvrir ${spotifyIntegration.appName}`}
+              deepLinkUrl={spotifyIntegration.deepLinkUrl}
+              fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+            />
+          </div>
         </WorkoutCard>
       ) : sessionExercises.length === 0 ? (
         <WorkoutCard light>
           <h2 className="section-title">Aucun exercice disponible</h2>
           <p className="muted">Importez d&apos;abord des exercices pour lancer une seance guidee.</p>
+          <AppShortcutLink
+            label={`Ouvrir ${spotifyIntegration.appName}`}
+            deepLinkUrl={spotifyIntegration.deepLinkUrl}
+            fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+          />
         </WorkoutCard>
       ) : (
-        <GuidedWorkoutClient
-          sessionId={currentSession.id}
-          exercises={sessionExercises.map((item) => ({
-            id: item.id,
-            slug: item.slug,
-            name: item.name,
-            nameFr: item.nameFr,
-            primaryMuscles: item.primaryMuscles,
-            primaryMusclesFr: item.primaryMusclesFr,
-            equipment: item.equipment,
-            equipmentFr: item.equipmentFr,
-            difficulty: item.difficulty,
-            fallbackImagePath: item.fallbackImagePath,
-            fallbackThumbnailPath: item.fallbackThumbnailPath,
-            fallbackAnimationPath: item.fallbackAnimationPath,
-            plannedSets: item.plan?.sets ?? null,
-            plannedRepsMin: item.plan?.repsMin ?? null,
-            plannedRepsMax: item.plan?.repsMax ?? null,
-            plannedWeightKg: item.plan?.plannedWeightKg ?? null,
-            plannedRestSeconds: item.plan?.restSeconds ?? null,
-            programExerciseId: item.plan?.programExerciseId ?? null,
-            media: item.media.map((media) => ({
-              id: media.id,
-              type: media.type,
-              publicUrl: media.publicUrl,
-              url: media.url,
-              format: media.format,
-            })),
-          }))}
-          existingSets={currentSession.sets.map((set) => ({
-            id: set.id,
-            exerciseId: set.exerciseId,
-            setIndex: set.setIndex,
-            targetRepsMin: set.targetRepsMin,
-            actualReps: set.actualReps,
-            actualWeightKg: set.actualWeightKg,
-            createdAt: set.createdAt.toISOString(),
-          }))}
-        />
+        <>
+          <WorkoutCard light>
+            <p className="eyebrow">Focus musique</p>
+            <AppShortcutLink
+              label={`Ouvrir ${spotifyIntegration.appName}`}
+              deepLinkUrl={spotifyIntegration.deepLinkUrl}
+              fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+            />
+          </WorkoutCard>
+          <GuidedWorkoutClient
+            sessionId={currentSession.id}
+            exercises={sessionExercises.map((item) => ({
+              id: item.id,
+              slug: item.slug,
+              name: item.name,
+              nameFr: item.nameFr,
+              primaryMuscles: item.primaryMuscles,
+              primaryMusclesFr: item.primaryMusclesFr,
+              equipment: item.equipment,
+              equipmentFr: item.equipmentFr,
+              difficulty: item.difficulty,
+              fallbackImagePath: item.fallbackImagePath,
+              fallbackThumbnailPath: item.fallbackThumbnailPath,
+              fallbackAnimationPath: item.fallbackAnimationPath,
+              plannedSets: item.plan?.sets ?? null,
+              plannedRepsMin: item.plan?.repsMin ?? null,
+              plannedRepsMax: item.plan?.repsMax ?? null,
+              plannedWeightKg: item.plan?.plannedWeightKg ?? null,
+              plannedRestSeconds: item.plan?.restSeconds ?? null,
+              programExerciseId: item.plan?.programExerciseId ?? null,
+              media: item.media.map((media) => ({
+                id: media.id,
+                type: media.type,
+                publicUrl: media.publicUrl,
+                url: media.url,
+                format: media.format,
+              })),
+            }))}
+            existingSets={currentSession.sets.map((set) => ({
+              id: set.id,
+              exerciseId: set.exerciseId,
+              setIndex: set.setIndex,
+              targetRepsMin: set.targetRepsMin,
+              actualReps: set.actualReps,
+              actualWeightKg: set.actualWeightKg,
+              createdAt: set.createdAt.toISOString(),
+            }))}
+          />
+        </>
       )}
     </AppShell>
   );
