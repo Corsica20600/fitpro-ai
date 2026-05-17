@@ -20,15 +20,12 @@ class SyncHealthActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.tab_sync_health)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        binding.textConfig.text = "API: ${BuildConfig.FITAI_SYNC_BASE_URL}"
+        binding.textConfig.text = "API: https://fitai-pro-zeta.vercel.app"
         binding.buttonSync.setOnClickListener { syncNow() }
     }
 
     private fun syncNow() {
-        if (BuildConfig.FITAI_SYNC_TOKEN.isBlank()) {
-            binding.textStatus.text = "Erreur: FITAI_SYNC_TOKEN manquant"
-            return
-        }
+        // Désactive le check pour test
         binding.buttonSync.isEnabled = false
         binding.textStatus.text = "Sync en cours..."
 
@@ -36,8 +33,8 @@ class SyncHealthActivity : AppCompatActivity() {
             val records = samsungHealthProvider.readLatestMetrics()
             val result = withContext(Dispatchers.IO) {
                 SamsungSyncApi.push(
-                    baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                    token = BuildConfig.FITAI_SYNC_TOKEN,
+                    baseUrl = "https://fitai-pro-zeta.vercel.app",
+                    token = "Erwan20620@/",
                     records = records,
                 )
             }
