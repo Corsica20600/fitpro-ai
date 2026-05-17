@@ -11,12 +11,12 @@ android {
         applicationId = "com.fitai.privateapp"
         minSdk = 29
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?) ?: "http://10.0.2.2:3000"
+        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?) ?: "https://fitai-pro-zeta.vercel.app"
         val syncToken = (project.findProperty("FITAI_SYNC_TOKEN") as String?) ?: ""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
         buildConfigField("String", "FITAI_SYNC_TOKEN", "\"$syncToken\"")

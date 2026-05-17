@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -42,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupWebView() {
+        CookieManager.getInstance().removeAllCookies(null)
+        CookieManager.getInstance().flush()
+        binding.webViewFitAi.clearCache(true)
+        binding.webViewFitAi.clearHistory()
         binding.webViewFitAi.settings.javaScriptEnabled = true
         binding.webViewFitAi.settings.domStorageEnabled = true
         binding.webViewFitAi.settings.loadsImagesAutomatically = true
