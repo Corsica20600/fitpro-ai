@@ -2,6 +2,11 @@
 
 Ce dossier documente le setup APK privee (non publiee) pour synchroniser Samsung Health vers FitAI.
 
+Version actuelle APK:
+- Ouverture directe de `https://fitai-pro-zeta.vercel.app` en WebView au demarrage.
+- Onglet `FitAI Pro` (site complet).
+- Onglet `Sync Health` (ecran sync Samsung Health).
+
 ## 1) Ce qui est deja pret cote backend FitAI
 
 - Endpoint sync: `POST /api/health/samsung/sync`
