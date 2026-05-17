@@ -48,6 +48,7 @@ export default async function WorkoutPage() {
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}
               fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+              className="ghost-btn"
             />
           </div>
         </WorkoutCard>
@@ -59,6 +60,7 @@ export default async function WorkoutPage() {
             label={`Ouvrir ${spotifyIntegration.appName}`}
             deepLinkUrl={spotifyIntegration.deepLinkUrl}
             fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+            className="ghost-btn"
           />
         </WorkoutCard>
       ) : (
@@ -69,6 +71,7 @@ export default async function WorkoutPage() {
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}
               fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
+              className="ghost-btn"
             />
           </WorkoutCard>
           <GuidedWorkoutClient

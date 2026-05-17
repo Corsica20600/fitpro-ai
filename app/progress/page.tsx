@@ -154,6 +154,7 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
             label={`Ouvrir ${samsungHealthIntegration.appName}`}
             deepLinkUrl={samsungHealthIntegration.deepLinkUrl}
             fallbackWebUrl={samsungHealthIntegration.fallbackWebUrl}
+            className="ghost-btn"
           />
         </div>
       </section>

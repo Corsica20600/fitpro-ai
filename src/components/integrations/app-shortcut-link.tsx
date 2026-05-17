@@ -14,18 +14,25 @@ export function AppShortcutLink({
   className?: string;
 }) {
   const onClick = useCallback(() => {
-    const startedAt = Date.now();
+    let appOpened = false;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        appOpened = true;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     const timeout = window.setTimeout(() => {
-      // If user stayed on page, app likely not installed: fallback to web URL.
-      if (Date.now() - startedAt < 1400) {
+      if (!appOpened) {
         window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
       }
-    }, 900);
+      document.removeEventListener("visibilitychange", onVisibility);
+    }, 1200);
 
     try {
       window.location.href = deepLinkUrl;
     } finally {
-      window.setTimeout(() => window.clearTimeout(timeout), 2000);
+      window.setTimeout(() => window.clearTimeout(timeout), 2500);
     }
   }, [deepLinkUrl, fallbackWebUrl]);
 
@@ -35,4 +42,3 @@ export function AppShortcutLink({
     </button>
   );
 }
-
