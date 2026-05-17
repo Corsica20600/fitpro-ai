@@ -149,3 +149,28 @@ Flux attendu:
 2. Lire les mesures (steps, FC, sommeil...).
 3. Construire `List<SamsungMetricRecord>`.
 4. Appeler `SamsungSyncApi.push(...)`.
+
+## 9) Samsung Health Data SDK (AAR officielle)
+
+Si le SDK Samsung Health n'est pas resolu depuis Maven, place l'AAR officielle ici:
+
+- `android-private/fitai-android/app/libs/`
+
+Exemple de fichier:
+
+- `android-private/fitai-android/app/libs/samsung-health-data-sdk.aar`
+
+Le projet est deja configure pour charger automatiquement tous les `.aar` de `app/libs` via:
+
+- `implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))`
+
+Ensuite rebuild:
+
+```bash
+cd android-private/fitai-android
+./gradlew clean :app:assembleDebug
+```
+
+Notes:
+- Appareil Samsung reel requis.
+- Si l'AAR n'est pas presente, l'app reste fonctionnelle et bascule en fallback mock.

@@ -11,8 +11,8 @@ android {
         applicationId = "com.fitai.proapp"
         minSdk = 29
         targetSdk = 34
-        versionCode = 6
-        versionName = "0.4.2"
+        versionCode = 7
+        versionName = "0.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -23,8 +23,8 @@ android {
             ?: System.getenv("FITAI_SYNC_TOKEN")
             ?: System.getenv("SAMSUNG_SYNC_TOKEN")
             ?: ""
-        buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
-        buildConfigField("String", "FITAI_SYNC_TOKEN", "\"$syncToken\"")
+        buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"https://fitai-pro-zeta.vercel.app\"")
+        buildConfigField("String", "FITAI_SYNC_TOKEN", "\"Erwan20620@/\"")
     }
 
     buildTypes {
@@ -50,6 +50,7 @@ android {
 }
 
 dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

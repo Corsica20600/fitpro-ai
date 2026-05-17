@@ -7,6 +7,6 @@ export const samsungHealthIntegration = {
 
 export const spotifyIntegration = {
   appName: "Spotify",
-  deepLinkUrl: "spotify://",
+  deepLinkUrl: "intent://#Intent;action=android.intent.action.VIEW;scheme=spotify;package=com.spotify.music;end",
   fallbackWebUrl: "https://open.spotify.com/",
 };

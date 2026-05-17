@@ -6,5 +6,6 @@
     <string name="tab_sync_health">Sync Health</string>
     <string name="button_sync">Synchroniser maintenant</string>
     <string name="status_idle">Pret</string>
+    <string name="permission_unknown">Permissions: verification en attente</string>
     <string name="help_text">Cette version envoie des donnees Samsung Health vers FitAI via /api/health/samsung/sync.</string>
 </resources>

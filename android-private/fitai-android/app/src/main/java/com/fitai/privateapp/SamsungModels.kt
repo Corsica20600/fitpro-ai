@@ -12,3 +12,15 @@ data class SyncResult(
     val message: String,
 )
 
+data class HealthPermissionState(
+    val sdkAvailable: Boolean,
+    val permissionsGranted: Boolean,
+    val usingMockFallback: Boolean,
+    val message: String,
+)
+
+data class HealthReadResult(
+    val records: List<SamsungMetricRecord>,
+    val usingMockFallback: Boolean,
+    val message: String,
+)

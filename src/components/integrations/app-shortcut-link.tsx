@@ -24,12 +24,6 @@ export function AppShortcutLink({
       return;
     }
 
-    // On Android browser (not embedded WebView), opening external page is safer than intent.
-    if (!isLikelyWebView && deepLinkUrl.startsWith("intent://")) {
-      window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
     let appOpened = false;
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
@@ -45,8 +39,13 @@ export function AppShortcutLink({
       document.removeEventListener("visibilitychange", onVisibility);
     }, 1200);
 
+    const targetDeepLink =
+      deepLinkUrl.startsWith("intent://") && !isLikelyWebView
+        ? fallbackWebUrl
+        : deepLinkUrl;
+
     try {
-      window.location.assign(deepLinkUrl);
+      window.location.assign(targetDeepLink);
     } catch {
       window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
     } finally {
