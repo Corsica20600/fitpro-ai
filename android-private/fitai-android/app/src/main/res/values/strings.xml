@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitAI Private</string>
+    <string name="title_sync">Samsung Health Sync (Prive)</string>
+    <string name="button_sync">Synchroniser maintenant</string>
+    <string name="status_idle">Pret</string>
+    <string name="help_text">Cette version envoie des donnees Samsung Health vers FitAI via /api/health/samsung/sync.</string>
+</resources>
+
