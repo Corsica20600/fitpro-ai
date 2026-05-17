@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
@@ -608,6 +609,9 @@ export function GuidedWorkoutClient({
         >
           Valider
         </PrimaryAction>
+        <Link href={`/exercises/${exercise.slug}`} className="outline-link">
+          Voir la fiche exercice
+        </Link>
         <button
           type="button"
           className="outline-link"
