@@ -14,6 +14,22 @@ export function AppShortcutLink({
   className?: string;
 }) {
   const onClick = useCallback(() => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isAndroid = ua.includes("android");
+    const isLikelyWebView = ua.includes("wv") || ua.includes("version/");
+
+    // On non-Android contexts, always use web fallback to avoid unsupported-scheme crashes.
+    if (!isAndroid) {
+      window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // On Android browser (not embedded WebView), opening external page is safer than intent.
+    if (!isLikelyWebView && deepLinkUrl.startsWith("intent://")) {
+      window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     let appOpened = false;
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
@@ -30,7 +46,9 @@ export function AppShortcutLink({
     }, 1200);
 
     try {
-      window.location.href = deepLinkUrl;
+      window.location.assign(deepLinkUrl);
+    } catch {
+      window.open(fallbackWebUrl, "_blank", "noopener,noreferrer");
     } finally {
       window.setTimeout(() => window.clearTimeout(timeout), 2500);
     }

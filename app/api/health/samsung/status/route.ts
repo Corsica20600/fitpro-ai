@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
+import { getSamsungAutoSyncPreference } from "@/src/server/samsung-health-preferences";
 
 export async function GET() {
   const profile = await getOrCreateDemoProfile();
@@ -13,10 +14,12 @@ export async function GET() {
     orderBy: { measuredAt: "desc" },
   });
 
+  const autoSyncEnabled = await getSamsungAutoSyncPreference();
+
   return NextResponse.json({
     ok: true,
     configured: Boolean(process.env.SAMSUNG_SYNC_TOKEN?.trim()),
     lastSyncMetricAt: latest?.measuredAt?.toISOString() ?? null,
+    autoSyncEnabled,
   });
 }
-

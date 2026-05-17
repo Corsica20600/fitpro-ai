@@ -1,6 +1,8 @@
 package com.fitai.privateapp
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebResourceRequest
@@ -18,6 +20,10 @@ class MainActivity : AppCompatActivity() {
     private val samsungHealthProvider = SamsungHealthProviderMock()
     private val fitAiUrl = "https://fitai-pro-zeta.vercel.app"
     private val allowedHosts = setOf("fitai-pro-zeta.vercel.app")
+    private val colorActiveBg = Color.parseColor("#2F6DE0")
+    private val colorInactiveBg = Color.parseColor("#2A2E36")
+    private val colorActiveText = Color.parseColor("#FFFFFF")
+    private val colorInactiveText = Color.parseColor("#C9CED8")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,20 +70,28 @@ class MainActivity : AppCompatActivity() {
     private fun showFitAi() {
         binding.webViewFitAi.visibility = View.VISIBLE
         binding.syncContainer.visibility = View.GONE
-        binding.buttonTabFitAi.alpha = 1f
-        binding.buttonTabSync.alpha = 0.65f
-        binding.buttonTabFitAi.isEnabled = false
-        binding.buttonTabSync.isEnabled = true
+        styleTabs(isFitAiActive = true)
     }
 
     private fun showSync() {
         binding.webViewFitAi.visibility = View.GONE
         binding.webLoading.visibility = View.GONE
         binding.syncContainer.visibility = View.VISIBLE
-        binding.buttonTabFitAi.alpha = 0.65f
-        binding.buttonTabSync.alpha = 1f
+        styleTabs(isFitAiActive = false)
+    }
+
+    private fun styleTabs(isFitAiActive: Boolean) {
+        val fitAiBg = if (isFitAiActive) colorActiveBg else colorInactiveBg
+        val syncBg = if (isFitAiActive) colorInactiveBg else colorActiveBg
+        val fitAiText = if (isFitAiActive) colorActiveText else colorInactiveText
+        val syncText = if (isFitAiActive) colorInactiveText else colorActiveText
+
+        binding.buttonTabFitAi.backgroundTintList = ColorStateList.valueOf(fitAiBg)
+        binding.buttonTabSync.backgroundTintList = ColorStateList.valueOf(syncBg)
+        binding.buttonTabFitAi.setTextColor(fitAiText)
+        binding.buttonTabSync.setTextColor(syncText)
         binding.buttonTabFitAi.isEnabled = true
-        binding.buttonTabSync.isEnabled = false
+        binding.buttonTabSync.isEnabled = true
     }
 
     @Deprecated("Deprecated in Java")

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
-import { AppShortcutLink } from "@/src/components/integrations/app-shortcut-link";
-import { samsungHealthIntegration } from "@/src/lib/integrations";
+import { SamsungHealthCard } from "@/src/components/integrations/samsung-health-card";
 
 function formatDuration(seconds: number) {
   if (!seconds || seconds <= 0) return "0 min";
@@ -140,24 +139,7 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
         </div>
       </section>
 
-      <section className="card">
-        <h2 className="section-title">Samsung Health</h2>
-        <p className="muted">
-          Connecte Samsung Health pour comparer tes tendances (activite, cardio, sommeil) avec tes performances FitAI.
-        </p>
-        <div className="chips">
-          <span className="chip">Statut: Non connecte</span>
-          <span className="chip">Sync auto: Bientot</span>
-        </div>
-        <div className="stack" style={{ marginTop: 10 }}>
-          <AppShortcutLink
-            label={`Ouvrir ${samsungHealthIntegration.appName}`}
-            deepLinkUrl={samsungHealthIntegration.deepLinkUrl}
-            fallbackWebUrl={samsungHealthIntegration.fallbackWebUrl}
-            className="ghost-btn"
-          />
-        </div>
-      </section>
+      <SamsungHealthCard />
 
       <section className="card">
         <h2 className="section-title">Historique compact</h2>
