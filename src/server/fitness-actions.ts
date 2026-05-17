@@ -427,6 +427,50 @@ export async function replaceProgramExerciseAction(formData: FormData) {
   revalidatePath("/programs");
 }
 
+export async function reorderProgramExercisesAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const dayId = String(formData.get("dayId") ?? "").trim();
+  const draggedExerciseId = String(formData.get("draggedExerciseId") ?? "").trim();
+  const targetExerciseId = String(formData.get("targetExerciseId") ?? "").trim();
+  if (!programId || !dayId || !draggedExerciseId || !targetExerciseId || draggedExerciseId === targetExerciseId) return;
+
+  const day = await prisma.programDay.findFirst({
+    where: {
+      id: dayId,
+      programId,
+      program: { userProfileId: profile.id },
+    },
+    select: { id: true },
+  });
+  if (!day) return;
+
+  const dayExercises = await prisma.programExercise.findMany({
+    where: { programDayId: dayId },
+    orderBy: { orderIndex: "asc" },
+    select: { id: true },
+  });
+
+  const orderedIds = dayExercises.map((item) => item.id);
+  const fromIndex = orderedIds.indexOf(draggedExerciseId);
+  const toIndex = orderedIds.indexOf(targetExerciseId);
+  if (fromIndex < 0 || toIndex < 0) return;
+
+  orderedIds.splice(fromIndex, 1);
+  orderedIds.splice(toIndex, 0, draggedExerciseId);
+
+  await prisma.$transaction(
+    orderedIds.map((id, idx) =>
+      prisma.programExercise.update({
+        where: { id },
+        data: { orderIndex: idx + 1 },
+      }),
+    ),
+  );
+
+  revalidatePath("/programs");
+}
+
 export async function applyWeeklyTemplateAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programId = String(formData.get("programId") ?? "").trim();

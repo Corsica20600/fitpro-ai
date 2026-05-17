@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { connection } from "next/server";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { getHistoryVisualFallback, getWorkoutHistorySummaryForDemoUser } from "@/src/server/fitness-queries";
@@ -57,10 +58,12 @@ export default async function HistoryPage() {
         {sessions.length === 0 ? (
           <section className="card history-empty">
             {historyVisual?.image && (
-              <img
+              <Image
                 src={historyVisual.image}
                 alt={historyVisual.title}
                 className="history-empty-image"
+                width={1200}
+                height={500}
               />
             )}
             <p className="muted">Aucune seance pour l&apos;instant.</p>
@@ -72,7 +75,7 @@ export default async function HistoryPage() {
             return (
               <Link key={session.id} href={`/history/${session.id}`} className="card history-item">
                 {cover ? (
-                  <img src={cover} alt={session.title} className="history-item-image" />
+                  <Image src={cover} alt={session.title} className="history-item-image" width={1200} height={500} />
                 ) : null}
                 <p className="eyebrow">{formatDate(session.startedAt ?? session.createdAt)} · {session.status === "COMPLETED" ? "Terminee" : "Brouillon"}</p>
                 <h2 className="section-title">{session.title}</h2>

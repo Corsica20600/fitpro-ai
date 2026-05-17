@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type MediaLike = {
   type: "IMAGE" | "THUMBNAIL" | "ANIMATION";
@@ -81,12 +82,12 @@ export function ExerciseVisual({
   if (!animationFailed && hasFrameAnimation && activeFrameSrc) {
     return (
       <div className={`exercise-visual ${compact ? "compact" : ""} ${className}`.trim()}>
-        <img
+        <Image
           className="exercise-visual-media exercise-visual-media-contain"
           src={activeFrameSrc}
           alt={title}
-          loading="lazy"
-          decoding="async"
+          width={960}
+          height={540}
           onError={() => setAnimationFailed(true)}
         />
         <button
@@ -121,12 +122,12 @@ export function ExerciseVisual({
   if (!animationFailed && animSrc && isGifOrWebp) {
     return (
       <div className={`exercise-visual ${compact ? "compact" : ""} ${className}`.trim()}>
-        <img
+        <Image
           className="exercise-visual-media"
           src={animSrc}
           alt={title}
-          loading="lazy"
-          decoding="async"
+          width={960}
+          height={540}
           onError={() => setAnimationFailed(true)}
         />
       </div>
@@ -144,12 +145,12 @@ export function ExerciseVisual({
   if (!imageFailed && imageSrc) {
     return (
       <div className={`exercise-visual ${compact ? "compact" : ""} ${className}`.trim()}>
-        <img
+        <Image
           className="exercise-visual-media"
           src={imageSrc}
           alt={title}
-          loading="lazy"
-          decoding="async"
+          width={960}
+          height={540}
           onError={() => setImageFailed(true)}
         />
       </div>

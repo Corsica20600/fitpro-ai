@@ -1,5 +1,6 @@
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
+import { DayExercisesReorder } from "@/src/components/programs/day-exercises-reorder";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import {
@@ -7,6 +8,7 @@ import {
   createSimpleProgramAction,
   deleteProgramExerciseAction,
   replaceProgramExerciseAction,
+  reorderProgramExercisesAction,
   renameProgramDayAction,
   setProgramStatusAction,
   updateProgramExerciseAction,
@@ -122,8 +124,18 @@ export default async function ProgramsPage() {
                     {day.exercises.length === 0 ? (
                       <p className="muted">Aucun exercice pour ce jour.</p>
                     ) : (
-                      <div className="program-day-list">
-                        {day.exercises.map((ex) => (
+                      <>
+                        <DayExercisesReorder
+                          programId={program.id}
+                          dayId={day.id}
+                          exercises={day.exercises.map((ex) => ({
+                            id: ex.id,
+                            name: ex.exercise.nameFr || ex.exercise.name,
+                          }))}
+                          action={reorderProgramExercisesAction}
+                        />
+                        <div className="program-day-list">
+                          {day.exercises.map((ex) => (
                           <article key={ex.id} className="program-day-item">
                             <ExerciseVisual
                               media={
@@ -188,8 +200,9 @@ export default async function ProgramsPage() {
                               </form>
                             </div>
                           </article>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </details>
                 ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 
 type MediaItem = {
   type: "IMAGE" | "THUMBNAIL" | "ANIMATION";
@@ -38,10 +39,12 @@ export function ExerciseMediaPreview({
 
   return (
     <div className="exercise-media">
-      <img
+      <Image
         src={imgSrc}
         alt="exercise thumbnail"
         className="exercise-thumb"
+        width={640}
+        height={360}
         onError={() => setImgSrc("/media/exercises/fallback-thumb.svg")}
       />
       <div className="exercise-media-meta">

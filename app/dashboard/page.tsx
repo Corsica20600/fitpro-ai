@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { connection } from "next/server";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { HeroVisual } from "@/src/components/ui/hero-visual";
@@ -36,7 +37,7 @@ export default async function DashboardPage() {
       <WorkoutCard className="dashboard-program-card" light>
         <p className="eyebrow">Programme du jour</p>
         <div className="dashboard-program-main">
-          <img src={heroImage} alt={heroTitle} className="dashboard-program-image" />
+          <Image src={heroImage} alt={heroTitle} className="dashboard-program-image" width={320} height={190} />
           <div>
             <h2>{selectedProgram?.name ?? "Aucun programme"}</h2>
             <p>{selectedProgramStatus ? `Statut: ${selectedProgramStatus}` : "Cree ton premier programme dans Plans"}</p>

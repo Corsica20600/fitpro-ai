@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 export function HeroVisual({
   title,
@@ -17,7 +18,7 @@ export function HeroVisual({
 }) {
   return (
     <section className={`hero-visual ${className}`.trim()}>
-      <img src={imageSrc} alt={imageAlt} className="hero-visual-media" />
+      <Image src={imageSrc} alt={imageAlt} className="hero-visual-media" fill priority />
       <div className="hero-visual-overlay">
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
         <h1>{title}</h1>

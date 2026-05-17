@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import { AddToProgramForm } from "@/src/components/exercise/add-to-program-form";
@@ -134,10 +135,12 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
       {detailInfographic ? (
         <section className="card">
           <p className="eyebrow">Guide visuel complet</p>
-          <img
+          <Image
             src={detailInfographic}
             alt={`Guide visuel complet ${displayName}`}
             className="exercise-guide-infographic"
+            width={1280}
+            height={720}
           />
         </section>
       ) : null}
