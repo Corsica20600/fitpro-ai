@@ -427,46 +427,41 @@ export async function replaceProgramExerciseAction(formData: FormData) {
   revalidatePath("/programs");
 }
 
-export async function reorderProgramExercisesAction(formData: FormData) {
+export async function moveProgramExercisePositionAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programId = String(formData.get("programId") ?? "").trim();
-  const dayId = String(formData.get("dayId") ?? "").trim();
-  const draggedExerciseId = String(formData.get("draggedExerciseId") ?? "").trim();
-  const targetExerciseId = String(formData.get("targetExerciseId") ?? "").trim();
-  if (!programId || !dayId || !draggedExerciseId || !targetExerciseId || draggedExerciseId === targetExerciseId) return;
+  const programExerciseId = String(formData.get("programExerciseId") ?? "").trim();
+  const direction = String(formData.get("direction") ?? "").trim();
+  if (!programId || !programExerciseId || !["up", "down"].includes(direction)) return;
 
-  const day = await prisma.programDay.findFirst({
+  const current = await prisma.programExercise.findFirst({
     where: {
-      id: dayId,
-      programId,
-      program: { userProfileId: profile.id },
+      id: programExerciseId,
+      programDay: { programId, program: { userProfileId: profile.id } },
     },
-    select: { id: true },
+    select: { id: true, programDayId: true, orderIndex: true },
   });
-  if (!day) return;
+  if (!current) return;
 
-  const dayExercises = await prisma.programExercise.findMany({
-    where: { programDayId: dayId },
-    orderBy: { orderIndex: "asc" },
-    select: { id: true },
+  const swapWith = await prisma.programExercise.findFirst({
+    where: {
+      programDayId: current.programDayId,
+      orderIndex: direction === "up" ? current.orderIndex - 1 : current.orderIndex + 1,
+    },
+    select: { id: true, orderIndex: true },
   });
+  if (!swapWith) return;
 
-  const orderedIds = dayExercises.map((item) => item.id);
-  const fromIndex = orderedIds.indexOf(draggedExerciseId);
-  const toIndex = orderedIds.indexOf(targetExerciseId);
-  if (fromIndex < 0 || toIndex < 0) return;
-
-  orderedIds.splice(fromIndex, 1);
-  orderedIds.splice(toIndex, 0, draggedExerciseId);
-
-  await prisma.$transaction(
-    orderedIds.map((id, idx) =>
-      prisma.programExercise.update({
-        where: { id },
-        data: { orderIndex: idx + 1 },
-      }),
-    ),
-  );
+  await prisma.$transaction([
+    prisma.programExercise.update({
+      where: { id: current.id },
+      data: { orderIndex: swapWith.orderIndex },
+    }),
+    prisma.programExercise.update({
+      where: { id: swapWith.id },
+      data: { orderIndex: current.orderIndex },
+    }),
+  ]);
 
   revalidatePath("/programs");
 }
