@@ -3,7 +3,6 @@ package com.fitai.privateapp
 import android.app.Activity
 import android.content.Context
 import java.time.Instant
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 interface SamsungHealthProvider {
@@ -43,7 +42,10 @@ class SamsungHealthProviderMock : SamsungHealthProvider {
 }
 
 private class SamsungHealthProviderSdk(private val context: Context) : SamsungHealthProvider {
-    private val legacyRoot = "com.samsung.android.sdk.healthdata"
+    private val sdkRoot = "com.samsung.android.sdk.health.data"
+    private val dataTypeRoot = "$sdkRoot.request"
+    private val permissionRoot = "$sdkRoot.permission"
+    private val dataRoot = "$sdkRoot.data"
 
     override suspend fun ensurePermissions(activity: Activity): HealthPermissionState {
         if (!isSdkAvailable()) {
@@ -51,11 +53,20 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
                 sdkAvailable = false,
                 permissionsGranted = false,
                 usingMockFallback = true,
-                message = "AAR Samsung Health Data SDK absent.",
+                message = "AAR Samsung Health Data SDK absente ou incompatible.",
             )
         }
 
         return try {
+            if (!isSamsungHealthInstalled()) {
+                return HealthPermissionState(
+                    sdkAvailable = true,
+                    permissionsGranted = false,
+                    usingMockFallback = true,
+                    message = "Samsung Health n'est pas installe.",
+                )
+            }
+
             val store = getStoreOrNull()
                 ?: return HealthPermissionState(
                     sdkAvailable = true,
@@ -64,17 +75,8 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
                     message = "Impossible d'ouvrir le store Samsung Health.",
                 )
 
-            val connected = connectStore(store)
-            if (!connected) {
-                return HealthPermissionState(
-                    sdkAvailable = true,
-                    permissionsGranted = false,
-                    usingMockFallback = false,
-                    message = "Connexion Samsung Health impossible.",
-                )
-            }
-
-            val (permissionKeys, allGrantedNow) = buildPermissionKeysAndCheck(store)
+            val permissions = buildPermissions()
+            val allGrantedNow = getGrantedPermissions(store, permissions)
             if (allGrantedNow) {
                 return HealthPermissionState(
                     sdkAvailable = true,
@@ -84,7 +86,7 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
                 )
             }
 
-            val requested = requestPermissions(store, permissionKeys, activity)
+            val requested = requestPermissions(store, permissions, activity)
             HealthPermissionState(
                 sdkAvailable = true,
                 permissionsGranted = requested,
@@ -104,6 +106,13 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
     override suspend fun readLatestMetrics(): HealthReadResult {
         if (!isSdkAvailable()) {
             return SamsungHealthProviderMock().readLatestMetrics()
+        }
+        if (!isSamsungHealthInstalled()) {
+            return HealthReadResult(
+                records = SamsungHealthProviderMock().readLatestMetrics().records,
+                usingMockFallback = true,
+                message = "Samsung Health indisponible: fallback mock utilise.",
+            )
         }
 
         val now = Instant.now().toString()
@@ -130,164 +139,176 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
     }
 
     fun isSdkAvailable(): Boolean {
-        return runCatching { Class.forName("$legacyRoot.HealthDataService") }.isSuccess &&
-            runCatching { Class.forName("$legacyRoot.HealthPermissionManager") }.isSuccess
+        return runCatching { Class.forName("$sdkRoot.HealthDataService") }.isSuccess &&
+            runCatching { Class.forName("$sdkRoot.HealthDataStore") }.isSuccess &&
+            runCatching { Class.forName("$permissionRoot.Permission") }.isSuccess
+    }
+
+    private fun isSamsungHealthInstalled(): Boolean {
+        return try {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo("com.sec.android.app.shealth", 0)
+            true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun getStoreOrNull(): Any? {
-        val serviceClass = Class.forName("$legacyRoot.HealthDataService")
+        val serviceClass = Class.forName("$sdkRoot.HealthDataService")
         val getStore = serviceClass.getMethod("getStore", Context::class.java)
         return getStore.invoke(null, context.applicationContext)
     }
 
-    private fun connectStore(store: Any): Boolean {
-        val latch = CountDownLatch(1)
-        var ok = false
-        runCatching {
-            val storeClass = Class.forName("$legacyRoot.HealthDataStore")
-            val listenerClass = Class.forName("$legacyRoot.HealthDataStore\$ConnectionListener")
-            val proxy = java.lang.reflect.Proxy.newProxyInstance(
-                listenerClass.classLoader,
-                arrayOf(listenerClass),
-            ) { _, method, _ ->
-                when (method.name) {
-                    "onConnected" -> {
-                        ok = true
-                        latch.countDown()
-                    }
-                    "onConnectionFailed", "onDisconnected" -> {
-                        ok = false
-                        latch.countDown()
-                    }
-                }
-                null
-            }
-            storeClass.getMethod("setConnectionListener", listenerClass).invoke(store, proxy)
-            storeClass.getMethod("connectService").invoke(store)
-            latch.await(6, TimeUnit.SECONDS)
-        }.onFailure {
-            ok = false
-        }
-        return ok
-    }
+    private fun buildPermissions(): Set<Any> {
+        val permissionClass = Class.forName("$permissionRoot.Permission")
+        val accessTypeClass = Class.forName("$permissionRoot.AccessType")
+        val dataTypesClass = Class.forName("$dataTypeRoot.DataTypes")
+        val read = java.lang.Enum.valueOf(accessTypeClass as Class<out Enum<*>>, "READ")
+        val ofMethod = permissionClass.getMethod("of", Class.forName("$dataTypeRoot.DataType"), accessTypeClass)
 
-    private fun buildPermissionKeysAndCheck(store: Any): Pair<Set<Any>, Boolean> {
-        val keyClass = Class.forName("$legacyRoot.HealthPermissionManager\$PermissionKey")
-        val typeClass = Class.forName("$legacyRoot.HealthPermissionManager\$PermissionType")
-        val readType = typeClass.enumConstants.firstOrNull { it.toString() == "READ" }
-            ?: error("PermissionType.READ introuvable")
+        val steps = dataTypesClass.getField("STEPS").get(null)
+        val hr = dataTypesClass.getField("HEART_RATE").get(null)
+        val exercise = dataTypesClass.getField("EXERCISE").get(null)
+        val sleep = dataTypesClass.getField("SLEEP").get(null)
 
-        val stepType = getHealthDataType("StepCount")
-        val hrType = getHealthDataType("HeartRate")
-        val exType = getHealthDataType("Exercise")
-        val sleepType = getHealthDataType("Sleep")
-
-        val keys = linkedSetOf(
-            keyClass.getConstructor(String::class.java, typeClass).newInstance(stepType, readType),
-            keyClass.getConstructor(String::class.java, typeClass).newInstance(hrType, readType),
-            keyClass.getConstructor(String::class.java, typeClass).newInstance(exType, readType),
-            keyClass.getConstructor(String::class.java, typeClass).newInstance(sleepType, readType),
+        return linkedSetOf(
+            ofMethod.invoke(null, steps, read),
+            ofMethod.invoke(null, hr, read),
+            ofMethod.invoke(null, exercise, read),
+            ofMethod.invoke(null, sleep, read),
         )
-
-        val pmClass = Class.forName("$legacyRoot.HealthPermissionManager")
-        val pm = pmClass.getConstructor(Class.forName("$legacyRoot.HealthDataStore")).newInstance(store)
-        val resultMap = pmClass.getMethod("isPermissionAcquired", Set::class.java).invoke(pm, keys) as? Map<*, *>
-        val granted = resultMap?.values?.all { it == true } == true
-        return keys to granted
     }
 
-    private fun requestPermissions(store: Any, permissionKeys: Set<Any>, activity: Activity): Boolean {
-        val pmClass = Class.forName("$legacyRoot.HealthPermissionManager")
-        val pm = pmClass.getConstructor(Class.forName("$legacyRoot.HealthDataStore")).newInstance(store)
-        val holder = pmClass.getMethod("requestPermissions", Set::class.java, Activity::class.java)
-            .invoke(pm, permissionKeys, activity)
-        val holderClass = Class.forName("$legacyRoot.HealthResultHolder")
-        val result = holderClass.getMethod("await").invoke(holder)
-        val resultClass = Class.forName("$legacyRoot.HealthPermissionManager\$PermissionResult")
-        val resultMap = resultClass.getMethod("getResultMap").invoke(result) as? Map<*, *>
-        return resultMap?.values?.all { it == true } == true
+    private fun getGrantedPermissions(store: Any, requested: Set<Any>): Boolean {
+        val storeClass = Class.forName("$sdkRoot.HealthDataStore")
+        val async = storeClass.getMethod("getGrantedPermissionsAsync", Set::class.java).invoke(store, requested)
+        val grantedSet = asyncGet(async) as? Set<*> ?: emptySet<Any>()
+        return grantedSet.containsAll(requested)
     }
 
-    private fun getHealthDataType(simpleClass: String): String {
-        val constantsClass = Class.forName("$legacyRoot.HealthConstants\$$simpleClass")
-        val field = constantsClass.getField("HEALTH_DATA_TYPE")
-        return field.get(null) as String
+    private fun requestPermissions(store: Any, permissions: Set<Any>, activity: Activity): Boolean {
+        val storeClass = Class.forName("$sdkRoot.HealthDataStore")
+        val async = storeClass.getMethod("requestPermissionsAsync", Set::class.java, Activity::class.java)
+            .invoke(store, permissions, activity)
+        val grantedSet = asyncGet(async) as? Set<*> ?: emptySet<Any>()
+        return grantedSet.containsAll(permissions)
     }
+
+    private fun asyncGet(asyncFuture: Any): Any? {
+        return asyncFuture.javaClass.getMethod("get", Long::class.javaPrimitiveType, TimeUnit::class.java)
+            .invoke(asyncFuture, 10L, TimeUnit.SECONDS)
+    }
+
+    private fun tryReadLatestSleepMinutes(): Double? = runCatching {
+        val item = queryLatestDataPoint("SLEEP") ?: return null
+        val sleepTypeClass = Class.forName("$dataTypeRoot.DataType\$SleepType")
+        val durationField = sleepTypeClass.getField("DURATION").get(null)
+        val getValue = item.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
+        val duration = getValue.invoke(item, durationField) ?: return null
+        val toMinutes = duration.javaClass.getMethod("toMinutes")
+        (toMinutes.invoke(duration) as Number).toDouble()
+    }.getOrNull()
 
     private fun tryReadLatestStepCount(): Double? = runCatching {
-        queryLatestNumeric("StepCount", "count")
+        val stepsTypeClass = Class.forName("$dataTypeRoot.DataType\$StepsType")
+        val totalOperation = stepsTypeClass.getField("TOTAL").get(null)
+        queryLatestAggregate(totalOperation)?.toDouble()
     }.getOrNull()
 
     private fun tryReadLatestHeartRate(): Double? = runCatching {
-        queryLatestNumeric("HeartRate", "heart_rate")
+        val item = queryLatestDataPoint("HEART_RATE") ?: return null
+        val hrTypeClass = Class.forName("$dataTypeRoot.DataType\$HeartRateType")
+        val hrField = hrTypeClass.getField("HEART_RATE").get(null)
+        val getValue = item.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
+        val value = getValue.invoke(item, hrField) as? Number ?: return null
+        value.toDouble()
     }.getOrNull()
 
     private fun tryReadLatestCalories(): Double? = runCatching {
-        queryLatestNumeric("Exercise", "calorie")
+        val item = queryLatestDataPoint("EXERCISE") ?: return null
+        val sessions = readExerciseSessions(item)
+        sessions.firstOrNull()?.let { first ->
+            val getCalories = first.javaClass.getMethod("getCalories")
+            (getCalories.invoke(first) as Number).toDouble()
+        } ?: queryExerciseAggregateCalories()
     }.getOrNull()
 
     private fun tryReadLatestDistance(): Double? = runCatching {
-        queryLatestNumeric("Exercise", "distance")
+        val item = queryLatestDataPoint("EXERCISE") ?: return null
+        val sessions = readExerciseSessions(item)
+        sessions.firstOrNull()?.let { first ->
+            val getDistance = first.javaClass.getMethod("getDistance")
+            (getDistance.invoke(first) as? Number)?.toDouble()
+        }
     }.getOrNull()
 
-    private fun tryReadLatestSleepMinutes(): Double? = runCatching {
-        val start = queryLatestLong("Sleep", "start_time")
-        val end = queryLatestLong("Sleep", "end_time")
-        if (start != null && end != null && end > start) (end - start) / 60000.0 else null
-    }.getOrNull()
-
-    private fun queryLatestNumeric(constantClass: String, fieldName: String): Double? {
-        val value = queryLatestAny(constantClass, fieldName) ?: return null
-        return when (value) {
-            is Number -> value.toDouble()
-            else -> value.toString().toDoubleOrNull()
-        }
+    private fun queryExerciseAggregateCalories(): Double? {
+        val exTypeClass = Class.forName("$dataTypeRoot.DataType\$ExerciseType")
+        val op = exTypeClass.getField("TOTAL_CALORIES").get(null)
+        return queryLatestAggregate(op)?.toDouble()
     }
 
-    private fun queryLatestLong(constantClass: String, fieldName: String): Long? {
-        val value = queryLatestAny(constantClass, fieldName) ?: return null
-        return when (value) {
-            is Number -> value.toLong()
-            else -> value.toString().toLongOrNull()
-        }
+    private fun readExerciseSessions(dataPoint: Any): List<Any> {
+        val exTypeClass = Class.forName("$dataTypeRoot.DataType\$ExerciseType")
+        val sessionsField = exTypeClass.getField("SESSIONS").get(null)
+        val getValue = dataPoint.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
+        @Suppress("UNCHECKED_CAST")
+        return (getValue.invoke(dataPoint, sessionsField) as? List<Any>).orEmpty()
     }
 
-    private fun queryLatestAny(constantClass: String, fieldName: String): Any? {
+    private fun queryLatestAggregate(operation: Any): Number? {
         val store = getStoreOrNull() ?: return null
-        if (!connectStore(store)) return null
+        val getBuilder = operation.javaClass.getMethod("getRequestBuilder")
+        val builder = getBuilder.invoke(operation) ?: return null
+        applyTimeFilterAndOrdering(builder)
+        val request = builder.javaClass.getMethod("build").invoke(builder)
+        val storeClass = Class.forName("$sdkRoot.HealthDataStore")
+        val async = storeClass.getMethod("aggregateDataAsync", Class.forName("$dataTypeRoot.AggregateRequest"))
+            .invoke(store, request)
+        val response = asyncGet(async) ?: return null
+        val dataList = response.javaClass.getMethod("getDataList").invoke(response) as? List<*> ?: return null
+        val first = dataList.firstOrNull() ?: return null
+        val value = first.javaClass.getMethod("getValue").invoke(first) ?: return null
+        return value as? Number
+    }
 
-        val resolverClass = Class.forName("$legacyRoot.HealthDataResolver")
-        val requestClass = Class.forName("$legacyRoot.HealthDataResolver\$ReadRequest")
-        val builderClass = Class.forName("$legacyRoot.HealthDataResolver\$ReadRequest\$Builder")
-        val sortOrderClass = Class.forName("$legacyRoot.HealthDataResolver\$SortOrder")
+    private fun queryLatestDataPoint(dataTypeFieldName: String): Any? {
+        val store = getStoreOrNull() ?: return null
+        val dataTypesClass = Class.forName("$dataTypeRoot.DataTypes")
+        val dataType = dataTypesClass.getField(dataTypeFieldName).get(null) ?: return null
+        val readBuilder = dataType.javaClass.getMethod("getReadDataRequestBuilder").invoke(dataType) ?: return null
+        applyTimeFilterAndOrdering(readBuilder)
+        val request = readBuilder.javaClass.getMethod("build").invoke(readBuilder)
 
-        val resolver = resolverClass.getConstructor(Class.forName("$legacyRoot.HealthDataStore")).newInstance(store)
-        val dataType = getHealthDataType(constantClass)
-        val builder = builderClass.getConstructor(String::class.java).newInstance(dataType)
+        val storeClass = Class.forName("$sdkRoot.HealthDataStore")
+        val async = storeClass.getMethod("readDataAsync", Class.forName("$dataTypeRoot.ReadDataRequest"))
+            .invoke(store, request)
+        val response = asyncGet(async) ?: return null
+        val dataList = response.javaClass.getMethod("getDataList").invoke(response) as? List<*> ?: return null
+        return dataList.firstOrNull()
+    }
 
-        val sortMethod = builderClass.getMethod("setSort", String::class.java, sortOrderClass)
-        val descOrder = sortOrderClass.enumConstants.firstOrNull { it.toString() == "DESC" }
-        if (descOrder != null) {
-            sortMethod.invoke(builder, "update_time", descOrder)
+    private fun applyTimeFilterAndOrdering(builder: Any) {
+        runCatching {
+            val orderingClass = Class.forName("$dataTypeRoot.Ordering")
+            val desc = java.lang.Enum.valueOf(orderingClass as Class<out Enum<*>>, "DESC")
+            builder.javaClass.getMethod("setOrdering", orderingClass).invoke(builder, desc)
         }
-        val setResultCount = builderClass.getMethod("setResultCount", Int::class.javaPrimitiveType)
-        setResultCount.invoke(builder, 1)
-        val build = builderClass.getMethod("build")
-        val request = build.invoke(builder)
-
-        val readMethod = resolverClass.getMethod("read", requestClass)
-        val holder = readMethod.invoke(resolver, request)
-        val holderClass = Class.forName("$legacyRoot.HealthResultHolder")
-        val result = holderClass.getMethod("await").invoke(holder)
-        val resultClass = Class.forName("$legacyRoot.HealthDataResolver\$ReadResult")
-        val count = resultClass.getMethod("getCount").invoke(result) as Int
-        if (count <= 0) return null
-        val getData = resultClass.getMethod("getResult", Int::class.javaPrimitiveType)
-        val row = getData.invoke(result, 0)
-        val rowClass = Class.forName("$legacyRoot.HealthData")
-        return runCatching { rowClass.getMethod("getDouble", String::class.java).invoke(row, fieldName) }.getOrNull()
-            ?: runCatching { rowClass.getMethod("getLong", String::class.java).invoke(row, fieldName) }.getOrNull()
-            ?: runCatching { rowClass.getMethod("getFloat", String::class.java).invoke(row, fieldName) }.getOrNull()
-            ?: runCatching { rowClass.getMethod("getInt", String::class.java).invoke(row, fieldName) }.getOrNull()
+        runCatching {
+            builder.javaClass.getMethod("setLimit", Int::class.javaPrimitiveType).invoke(builder, 1)
+        }
+        runCatching {
+            val instantFilterClass = Class.forName("$dataTypeRoot.InstantTimeFilter")
+            val sinceMethod = instantFilterClass.getMethod("since", Instant::class.java)
+            val filter = sinceMethod.invoke(null, Instant.now().minusSeconds(60L * 60L * 24L * 30L))
+            builder.javaClass.getMethod("setInstantTimeFilter", instantFilterClass).invoke(builder, filter)
+        }
+        runCatching {
+            val localFilterClass = Class.forName("$dataTypeRoot.LocalTimeFilter")
+            val sinceMethod = localFilterClass.getMethod("since", java.time.LocalDateTime::class.java)
+            val filter = sinceMethod.invoke(null, java.time.LocalDateTime.now().minusDays(30))
+            builder.javaClass.getMethod("setLocalTimeFilter", localFilterClass).invoke(builder, filter)
+        }
     }
 }
