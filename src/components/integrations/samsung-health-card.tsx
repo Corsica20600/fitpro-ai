@@ -39,6 +39,7 @@ export function SamsungHealthCard() {
   }, []);
 
   async function onToggleAutoSync() {
+    if (!configured) return;
     const next = !autoSyncEnabled;
     setSaving(true);
     try {
@@ -60,6 +61,11 @@ export function SamsungHealthCard() {
       <p className="muted">
         Connecte Samsung Health pour comparer tes tendances (activite, cardio, sommeil) avec tes performances FitAI.
       </p>
+      {!configured ? (
+        <p className="muted" style={{ color: "#fca5a5" }}>
+          Token Samsung Sync manquant cote serveur. Active d&apos;abord `SAMSUNG_SYNC_TOKEN`.
+        </p>
+      ) : null}
       <div className="chips">
         <span className="chip">Statut: {configured ? "Configure" : "Non configure"}</span>
         <span className="chip">
@@ -68,7 +74,7 @@ export function SamsungHealthCard() {
         <span className="chip">Derniere sync: {lastSyncMetricAt ? new Date(lastSyncMetricAt).toLocaleString("fr-FR") : "Jamais"}</span>
       </div>
       <div className="grid-2" style={{ marginTop: 10 }}>
-        <button className="ghost-btn" type="button" onClick={onToggleAutoSync} disabled={saving || loading}>
+        <button className="ghost-btn" type="button" onClick={onToggleAutoSync} disabled={saving || loading || !configured}>
           {saving ? "..." : autoSyncEnabled ? "Desactiver sync auto" : "Activer sync auto"}
         </button>
         <AppShortcutLink
@@ -81,4 +87,3 @@ export function SamsungHealthCard() {
     </section>
   );
 }
-

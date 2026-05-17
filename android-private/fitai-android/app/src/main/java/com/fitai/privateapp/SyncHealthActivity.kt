@@ -25,6 +25,10 @@ class SyncHealthActivity : AppCompatActivity() {
     }
 
     private fun syncNow() {
+        if (BuildConfig.FITAI_SYNC_TOKEN.isBlank()) {
+            binding.textStatus.text = "Erreur: FITAI_SYNC_TOKEN manquant"
+            return
+        }
         binding.buttonSync.isEnabled = false
         binding.textStatus.text = "Sync en cours..."
 
@@ -52,4 +56,3 @@ class SyncHealthActivity : AppCompatActivity() {
         return true
     }
 }
-

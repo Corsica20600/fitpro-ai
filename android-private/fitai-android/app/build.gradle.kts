@@ -16,8 +16,13 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?) ?: "https://fitai-pro-zeta.vercel.app"
-        val syncToken = (project.findProperty("FITAI_SYNC_TOKEN") as String?) ?: ""
+        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?)
+            ?: System.getenv("FITAI_SYNC_BASE_URL")
+            ?: "https://fitai-pro-zeta.vercel.app"
+        val syncToken = (project.findProperty("FITAI_SYNC_TOKEN") as String?)
+            ?: System.getenv("FITAI_SYNC_TOKEN")
+            ?: System.getenv("SAMSUNG_SYNC_TOKEN")
+            ?: ""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
         buildConfigField("String", "FITAI_SYNC_TOKEN", "\"$syncToken\"")
     }
