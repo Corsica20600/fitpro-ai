@@ -11,8 +11,8 @@ android {
         applicationId = "com.fitai.privateapp"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -51,4 +51,3 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
-

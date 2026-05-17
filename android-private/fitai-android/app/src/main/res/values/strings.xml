@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FitAI Private</string>
+    <string name="app_name">FitAI Pro</string>
     <string name="title_sync">Samsung Health Sync (Prive)</string>
     <string name="tab_fitai_pro">FitAI Pro</string>
     <string name="tab_sync_health">Sync Health</string>

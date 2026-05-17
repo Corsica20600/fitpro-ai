@@ -1,44 +1,44 @@
 package com.fitai.privateapp
 
 import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.fitai.privateapp.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val samsungHealthProvider = SamsungHealthProviderMock()
     private val fitAiUrl = "https://fitai-pro-zeta.vercel.app"
     private val allowedHosts = setOf("fitai-pro-zeta.vercel.app")
     private val samsungFallbackUrl = "https://www.samsung.com/global/galaxy/apps/samsung-health/"
-    private val colorActiveBg = Color.parseColor("#2F6DE0")
-    private val colorInactiveBg = Color.parseColor("#2A2E36")
-    private val colorActiveText = Color.parseColor("#FFFFFF")
-    private val colorInactiveText = Color.parseColor("#C9CED8")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.textConfig.text = "API: ${BuildConfig.FITAI_SYNC_BASE_URL}"
-        binding.buttonSync.setOnClickListener { syncNow() }
-        binding.buttonTabFitAi.setOnClickListener { showFitAi() }
-        binding.buttonTabSync.setOnClickListener { showSync() }
+        supportActionBar?.hide()
+        binding.buttonOpenSync.setOnClickListener {
+            startActivity(Intent(this, SyncHealthActivity::class.java))
+        }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.webViewFitAi.canGoBack()) {
+                    binding.webViewFitAi.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
         setupWebView()
-        showFitAi()
     }
 
     private fun setupWebView() {
@@ -75,29 +75,28 @@ class MainActivity : AppCompatActivity() {
         val scheme = uri.scheme?.lowercase().orEmpty()
         val host = uri.host?.lowercase().orEmpty()
 
-        // Keep FitAI URLs inside WebView.
         if ((scheme == "http" || scheme == "https") && allowedHosts.any { host == it || host.endsWith(".$it") }) {
             return false
         }
 
-        // External HTTP(S): open in browser without crashing app.
         if (scheme == "http" || scheme == "https") {
             return openExternalSafely(Intent(Intent.ACTION_VIEW, uri))
         }
 
-        // intent:// links (Samsung Health, etc.)
         if (scheme == "intent") {
             val intent = runCatching { Intent.parseUri(rawUrl, Intent.URI_INTENT_SCHEME) }.getOrNull()
-            if (intent != null && openExternalSafely(intent)) {
-                return true
+            if (intent != null && openExternalSafely(intent)) return true
+            if (!openExternalSafely(Intent(Intent.ACTION_VIEW, Uri.parse(samsungFallbackUrl)))) {
+                Toast.makeText(this, "Samsung Health indisponible sur cet appareil.", Toast.LENGTH_SHORT).show()
             }
-            // Fallback to Samsung page if intent is not resolvable.
-            openExternalSafely(Intent(Intent.ACTION_VIEW, Uri.parse(samsungFallbackUrl)))
             return true
         }
 
-        // Other custom schemes (spotify://, shealth://, ...)
-        return openExternalSafely(Intent(Intent.ACTION_VIEW, uri))
+        val opened = openExternalSafely(Intent(Intent.ACTION_VIEW, uri))
+        if (!opened) {
+            Toast.makeText(this, "Application non disponible pour ce lien.", Toast.LENGTH_SHORT).show()
+        }
+        return true
     }
 
     private fun openExternalSafely(intent: Intent): Boolean {
@@ -110,65 +109,6 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {
             false
-        }
-    }
-
-    private fun showFitAi() {
-        binding.webViewFitAi.visibility = View.VISIBLE
-        binding.syncContainer.visibility = View.GONE
-        styleTabs(isFitAiActive = true)
-    }
-
-    private fun showSync() {
-        binding.webViewFitAi.visibility = View.GONE
-        binding.webLoading.visibility = View.GONE
-        binding.syncContainer.visibility = View.VISIBLE
-        styleTabs(isFitAiActive = false)
-    }
-
-    private fun styleTabs(isFitAiActive: Boolean) {
-        val fitAiBg = if (isFitAiActive) colorActiveBg else colorInactiveBg
-        val syncBg = if (isFitAiActive) colorInactiveBg else colorActiveBg
-        val fitAiText = if (isFitAiActive) colorActiveText else colorInactiveText
-        val syncText = if (isFitAiActive) colorInactiveText else colorActiveText
-
-        binding.buttonTabFitAi.backgroundTintList = ColorStateList.valueOf(fitAiBg)
-        binding.buttonTabSync.backgroundTintList = ColorStateList.valueOf(syncBg)
-        binding.buttonTabFitAi.setTextColor(fitAiText)
-        binding.buttonTabSync.setTextColor(syncText)
-        binding.buttonTabFitAi.isEnabled = true
-        binding.buttonTabSync.isEnabled = true
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (binding.webViewFitAi.visibility == View.VISIBLE && binding.webViewFitAi.canGoBack()) {
-            binding.webViewFitAi.goBack()
-            return
-        }
-        super.onBackPressed()
-    }
-
-    private fun syncNow() {
-        binding.buttonSync.isEnabled = false
-        binding.textStatus.text = "Sync en cours..."
-
-        lifecycleScope.launch {
-            val records = samsungHealthProvider.readLatestMetrics()
-            val result = withContext(Dispatchers.IO) {
-                SamsungSyncApi.push(
-                    baseUrl = "https://fitai-pro-zeta.vercel.app/",
-                    token = "Erwan20620@/",
-                    records = records,
-                )
-            }
-
-            binding.buttonSync.isEnabled = true
-            binding.textStatus.text = if (result.ok) {
-                "OK: ${result.message}"
-            } else {
-                "Erreur: ${result.message}"
-            }
         }
     }
 }

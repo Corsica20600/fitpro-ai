@@ -7,9 +7,9 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
         android:allowBackup="true"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FitAiPrivate">
         <activity
@@ -20,6 +20,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SyncHealthActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
