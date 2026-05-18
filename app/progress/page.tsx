@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
-import { SamsungHealthCard } from "@/src/components/integrations/samsung-health-card";
 
 function formatDuration(seconds: number) {
   if (!seconds || seconds <= 0) return "0 min";
@@ -138,8 +137,6 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
           </span>
         </div>
       </section>
-
-      <SamsungHealthCard />
 
       <section className="card">
         <h2 className="section-title">Historique compact</h2>
