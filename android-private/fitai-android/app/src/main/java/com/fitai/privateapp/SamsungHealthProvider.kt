@@ -2,6 +2,8 @@ package com.fitai.privateapp
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
@@ -42,10 +44,18 @@ class SamsungHealthProviderMock : SamsungHealthProvider {
 }
 
 private class SamsungHealthProviderSdk(private val context: Context) : SamsungHealthProvider {
+    companion object {
+        private const val TAG = "FITAI_HEALTH"
+        private const val LAST_24_HOURS_SECONDS = 60L * 60L * 24L
+        private const val STEPS_DATA_TYPE_ID = "com.samsung.health.step_count"
+        private const val HEART_RATE_DATA_TYPE_ID = "com.samsung.health.heart_rate"
+    }
+
     private val sdkRoot = "com.samsung.android.sdk.health.data"
     private val dataTypeRoot = "$sdkRoot.request"
     private val permissionRoot = "$sdkRoot.permission"
     private val dataRoot = "$sdkRoot.data"
+    private var storeCache: Any? = null
 
     override suspend fun ensurePermissions(activity: Activity): HealthPermissionState {
         if (!isSdkAvailable()) {
@@ -67,12 +77,12 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
                 )
             }
 
-            val store = getStoreOrNull()
+            val store = getConnectedStoreOrNull()
                 ?: return HealthPermissionState(
                     sdkAvailable = true,
                     permissionsGranted = false,
                     usingMockFallback = false,
-                    message = "Impossible d'ouvrir le store Samsung Health.",
+                    message = "Samsung Health connection failed.",
                 )
 
             val permissions = buildPermissions()
@@ -94,11 +104,12 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
                 message = if (requested) "Permissions Samsung Health accordees." else "Permissions Samsung Health refusees.",
             )
         } catch (e: Exception) {
+            Log.e(TAG, "ensurePermissions failed", e)
             HealthPermissionState(
                 sdkAvailable = true,
                 permissionsGranted = false,
                 usingMockFallback = false,
-                message = "Erreur Samsung Health: ${e.message ?: "inconnue"}",
+                message = "Samsung Health permission error: ${e.message ?: e.javaClass.simpleName}",
             )
         }
     }
@@ -117,23 +128,39 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
 
         val now = Instant.now().toString()
         val records = mutableListOf<SamsungMetricRecord>()
-        tryReadLatestStepCount()?.let { records += SamsungMetricRecord("steps", it, now, "Samsung Health") }
-        tryReadLatestHeartRate()?.let { records += SamsungMetricRecord("heart_rate", it, now, "Samsung Health") }
-        tryReadLatestCalories()?.let { records += SamsungMetricRecord("calories", it, now, "Samsung Health") }
-        tryReadLatestDistance()?.let { records += SamsungMetricRecord("distance_m", it, now, "Samsung Health") }
-        tryReadLatestSleepMinutes()?.let { records += SamsungMetricRecord("sleep_minutes", it, now, "Samsung Health") }
+        val errors = mutableListOf<String>()
 
-        return if (records.isEmpty()) {
-            HealthReadResult(
-                records = emptyList(),
-                usingMockFallback = false,
-                message = "Aucune donnee Samsung Health trouvee.",
-            )
-        } else {
+        runCatching { tryReadLatestStepCount() }
+            .onSuccess { it?.let { value -> records += SamsungMetricRecord("steps", value, now, "Samsung Health") } }
+            .onFailure { throwable ->
+                Log.e(TAG, "Steps query failed", throwable)
+                errors += "steps: ${throwable.message ?: throwable.javaClass.simpleName}"
+            }
+
+        runCatching { tryReadLatestHeartRate() }
+            .onSuccess { it?.let { value -> records += SamsungMetricRecord("heart_rate", value, now, "Samsung Health") } }
+            .onFailure { throwable ->
+                Log.e(TAG, "Heart rate query failed", throwable)
+                errors += "heart_rate: ${throwable.message ?: throwable.javaClass.simpleName}"
+            }
+
+        return if (records.isNotEmpty()) {
             HealthReadResult(
                 records = records,
                 usingMockFallback = false,
                 message = "Donnees Samsung Health lues (${records.size} mesures).",
+            )
+        } else if (errors.isNotEmpty()) {
+            HealthReadResult(
+                records = emptyList(),
+                usingMockFallback = false,
+                message = "Samsung Health query failed: ${errors.joinToString("; ")}",
+            )
+        } else {
+            HealthReadResult(
+                records = emptyList(),
+                usingMockFallback = false,
+                message = "No data available",
             )
         }
     }
@@ -155,28 +182,51 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
     }
 
     private fun getStoreOrNull(): Any? {
+        storeCache?.let { return it }
         val serviceClass = Class.forName("$sdkRoot.HealthDataService")
         val getStore = serviceClass.getMethod("getStore", Context::class.java)
-        return getStore.invoke(null, context.applicationContext)
+        return getStore.invoke(null, context.applicationContext)?.also { storeCache = it }
+    }
+
+    private suspend fun getConnectedStoreOrNull(): Any? {
+        val store = getStoreOrNull() ?: return null
+        if (waitForConnection(store)) return store
+        return null
+    }
+
+    private suspend fun waitForConnection(store: Any): Boolean {
+        val storeClass = Class.forName("$sdkRoot.HealthDataStore")
+        val method = storeClass.getMethod("getGrantedPermissionsAsync", Set::class.java)
+        repeat(8) { attempt ->
+            val isConnected = runCatching {
+                val async = method.invoke(store, emptySet<Any>())
+                asyncGet(async)
+                true
+            }.getOrElse { throwable ->
+                Log.e(TAG, "Waiting for Samsung Health connection failed (attempt ${attempt + 1})", throwable)
+                false
+            }
+            if (isConnected) {
+                return true
+            }
+            delay(250)
+        }
+        Log.e(TAG, "Samsung Health connection not ready after retries")
+        return false
     }
 
     private fun buildPermissions(): Set<Any> {
         val permissionClass = Class.forName("$permissionRoot.Permission")
         val accessTypeClass = Class.forName("$permissionRoot.AccessType")
-        val dataTypesClass = Class.forName("$dataTypeRoot.DataTypes")
         val read = java.lang.Enum.valueOf(accessTypeClass as Class<out Enum<*>>, "READ")
         val ofMethod = permissionClass.getMethod("of", Class.forName("$dataTypeRoot.DataType"), accessTypeClass)
 
-        val steps = dataTypesClass.getField("STEPS").get(null)
-        val hr = dataTypesClass.getField("HEART_RATE").get(null)
-        val exercise = dataTypesClass.getField("EXERCISE").get(null)
-        val sleep = dataTypesClass.getField("SLEEP").get(null)
+        val steps = resolveDataTypeFromId(STEPS_DATA_TYPE_ID)
+        val hr = resolveDataTypeFromId(HEART_RATE_DATA_TYPE_ID)
 
         return linkedSetOf(
-            ofMethod.invoke(null, steps, read),
-            ofMethod.invoke(null, hr, read),
-            ofMethod.invoke(null, exercise, read),
-            ofMethod.invoke(null, sleep, read),
+            ofMethod.invoke(null, steps, read)!!,
+            ofMethod.invoke(null, hr, read)!!,
         )
     }
 
@@ -200,65 +250,28 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
             .invoke(asyncFuture, 10L, TimeUnit.SECONDS)
     }
 
-    private fun tryReadLatestSleepMinutes(): Double? = runCatching {
-        val item = queryLatestDataPoint("SLEEP") ?: return null
-        val sleepTypeClass = Class.forName("$dataTypeRoot.DataType\$SleepType")
-        val durationField = sleepTypeClass.getField("DURATION").get(null)
-        val getValue = item.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
-        val duration = getValue.invoke(item, durationField) ?: return null
-        val toMinutes = duration.javaClass.getMethod("toMinutes")
-        (toMinutes.invoke(duration) as Number).toDouble()
-    }.getOrNull()
-
-    private fun tryReadLatestStepCount(): Double? = runCatching {
+    private suspend fun tryReadLatestStepCount(): Double? {
+        val stepsType = resolveDataTypeFromId(STEPS_DATA_TYPE_ID)
+        if (stepsType.javaClass.getMethod("getName").invoke(stepsType)?.toString().isNullOrBlank()) {
+            Log.e(TAG, "Invalid Samsung steps data type: $STEPS_DATA_TYPE_ID")
+            return null
+        }
         val stepsTypeClass = Class.forName("$dataTypeRoot.DataType\$StepsType")
         val totalOperation = stepsTypeClass.getField("TOTAL").get(null)
-        queryLatestAggregate(totalOperation)?.toDouble()
-    }.getOrNull()
+        return queryLatestAggregate(totalOperation)?.toDouble()
+    }
 
-    private fun tryReadLatestHeartRate(): Double? = runCatching {
-        val item = queryLatestDataPoint("HEART_RATE") ?: return null
+    private suspend fun tryReadLatestHeartRate(): Double? {
+        val item = queryLatestDataPoint(HEART_RATE_DATA_TYPE_ID) ?: return null
         val hrTypeClass = Class.forName("$dataTypeRoot.DataType\$HeartRateType")
         val hrField = hrTypeClass.getField("HEART_RATE").get(null)
         val getValue = item.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
         val value = getValue.invoke(item, hrField) as? Number ?: return null
-        value.toDouble()
-    }.getOrNull()
-
-    private fun tryReadLatestCalories(): Double? = runCatching {
-        val item = queryLatestDataPoint("EXERCISE") ?: return null
-        val sessions = readExerciseSessions(item)
-        sessions.firstOrNull()?.let { first ->
-            val getCalories = first.javaClass.getMethod("getCalories")
-            (getCalories.invoke(first) as Number).toDouble()
-        } ?: queryExerciseAggregateCalories()
-    }.getOrNull()
-
-    private fun tryReadLatestDistance(): Double? = runCatching {
-        val item = queryLatestDataPoint("EXERCISE") ?: return null
-        val sessions = readExerciseSessions(item)
-        sessions.firstOrNull()?.let { first ->
-            val getDistance = first.javaClass.getMethod("getDistance")
-            (getDistance.invoke(first) as? Number)?.toDouble()
-        }
-    }.getOrNull()
-
-    private fun queryExerciseAggregateCalories(): Double? {
-        val exTypeClass = Class.forName("$dataTypeRoot.DataType\$ExerciseType")
-        val op = exTypeClass.getField("TOTAL_CALORIES").get(null)
-        return queryLatestAggregate(op)?.toDouble()
+        return value.toDouble()
     }
 
-    private fun readExerciseSessions(dataPoint: Any): List<Any> {
-        val exTypeClass = Class.forName("$dataTypeRoot.DataType\$ExerciseType")
-        val sessionsField = exTypeClass.getField("SESSIONS").get(null)
-        val getValue = dataPoint.javaClass.getMethod("getValue", Class.forName("$dataRoot.Field"))
-        @Suppress("UNCHECKED_CAST")
-        return (getValue.invoke(dataPoint, sessionsField) as? List<Any>).orEmpty()
-    }
-
-    private fun queryLatestAggregate(operation: Any): Number? {
-        val store = getStoreOrNull() ?: return null
+    private suspend fun queryLatestAggregate(operation: Any): Number? {
+        val store = getConnectedStoreOrNull() ?: return null
         val getBuilder = operation.javaClass.getMethod("getRequestBuilder")
         val builder = getBuilder.invoke(operation) ?: return null
         applyTimeFilterAndOrdering(builder)
@@ -273,10 +286,9 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
         return value as? Number
     }
 
-    private fun queryLatestDataPoint(dataTypeFieldName: String): Any? {
-        val store = getStoreOrNull() ?: return null
-        val dataTypesClass = Class.forName("$dataTypeRoot.DataTypes")
-        val dataType = dataTypesClass.getField(dataTypeFieldName).get(null) ?: return null
+    private suspend fun queryLatestDataPoint(dataTypeId: String): Any? {
+        val store = getConnectedStoreOrNull() ?: return null
+        val dataType = resolveDataTypeFromId(dataTypeId)
         val readBuilder = dataType.javaClass.getMethod("getReadDataRequestBuilder").invoke(dataType) ?: return null
         applyTimeFilterAndOrdering(readBuilder)
         val request = readBuilder.javaClass.getMethod("build").invoke(readBuilder)
@@ -287,6 +299,18 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
         val response = asyncGet(async) ?: return null
         val dataList = response.javaClass.getMethod("getDataList").invoke(response) as? List<*> ?: return null
         return dataList.firstOrNull()
+    }
+
+    private fun resolveDataTypeFromId(dataTypeId: String): Any {
+        val dataTypesClass = Class.forName("$dataTypeRoot.DataTypes")
+        val fieldName = when (dataTypeId) {
+            STEPS_DATA_TYPE_ID -> "STEPS"
+            HEART_RATE_DATA_TYPE_ID -> "HEART_RATE"
+            else -> throw IllegalArgumentException("Unsupported Samsung Health data type id: $dataTypeId")
+        }
+        val dataType = dataTypesClass.getField(fieldName).get(null)
+            ?: throw IllegalStateException("DataType field not found for $dataTypeId")
+        return dataType
     }
 
     private fun applyTimeFilterAndOrdering(builder: Any) {
@@ -301,13 +325,13 @@ private class SamsungHealthProviderSdk(private val context: Context) : SamsungHe
         runCatching {
             val instantFilterClass = Class.forName("$dataTypeRoot.InstantTimeFilter")
             val sinceMethod = instantFilterClass.getMethod("since", Instant::class.java)
-            val filter = sinceMethod.invoke(null, Instant.now().minusSeconds(60L * 60L * 24L * 30L))
+            val filter = sinceMethod.invoke(null, Instant.now().minusSeconds(LAST_24_HOURS_SECONDS))
             builder.javaClass.getMethod("setInstantTimeFilter", instantFilterClass).invoke(builder, filter)
         }
         runCatching {
             val localFilterClass = Class.forName("$dataTypeRoot.LocalTimeFilter")
             val sinceMethod = localFilterClass.getMethod("since", java.time.LocalDateTime::class.java)
-            val filter = sinceMethod.invoke(null, java.time.LocalDateTime.now().minusDays(30))
+            val filter = sinceMethod.invoke(null, java.time.LocalDateTime.now().minusHours(24))
             builder.javaClass.getMethod("setLocalTimeFilter", localFilterClass).invoke(builder, filter)
         }
     }
