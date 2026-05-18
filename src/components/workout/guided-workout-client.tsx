@@ -98,6 +98,7 @@ export function GuidedWorkoutClient({
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restChoice, setRestChoice] = useState(initialRestChoice);
   const [restRemaining, setRestRemaining] = useState(0);
+  const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [completedSets, setCompletedSets] = useState<CompletedSet[]>(
     existingSets.map((item) => ({
       id: item.id,
@@ -121,6 +122,27 @@ export function GuidedWorkoutClient({
   const prevRestRemainingRef = useRef<number>(0);
   const skipRestRequestedRef = useRef(false);
   const surfaceTapReadyAtRef = useRef<number>(0);
+
+  const computeRemainingFromEndsAt = useCallback((endsAt: number) => {
+    return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+  }, []);
+
+  const clearRestTimer = useCallback(() => {
+    setRestEndsAt(null);
+    setRestRemaining(0);
+  }, []);
+
+  const startRestTimer = useCallback((restDurationSeconds: number) => {
+    const duration = Math.max(0, Math.floor(restDurationSeconds));
+    if (duration <= 0) {
+      clearRestTimer();
+      return;
+    }
+    const restStartedAt = Date.now();
+    const endsAt = restStartedAt + duration * 1000;
+    setRestEndsAt(endsAt);
+    setRestRemaining(computeRemainingFromEndsAt(endsAt));
+  }, [clearRestTimer, computeRemainingFromEndsAt]);
 
   const unlockRestAudio = useCallback(() => {
     try {
@@ -168,12 +190,25 @@ export function GuidedWorkoutClient({
   }, [exercises]);
 
   useEffect(() => {
-    if (restRemaining <= 0) return;
-    const timer = window.setTimeout(() => {
-      setRestRemaining((value) => Math.max(0, value - 1));
-    }, 1000);
-    return () => window.clearTimeout(timer);
-  }, [restRemaining]);
+    if (restEndsAt == null) return;
+    const refresh = () => {
+      const remainingSeconds = computeRemainingFromEndsAt(restEndsAt);
+      setRestRemaining(remainingSeconds);
+      if (remainingSeconds <= 0) {
+        setRestEndsAt(null);
+      }
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 250);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [restEndsAt, computeRemainingFromEndsAt]);
 
   const playRestFinishedBeep = useCallback(() => {
     try {
@@ -283,6 +318,12 @@ export function GuidedWorkoutClient({
           if (prev > 0 && restFromWatch === 0) return prev;
           return restFromWatch;
         });
+        if (restFromWatch > 0) {
+          const syncedEndsAt = Date.now() + restFromWatch * 1000;
+          setRestEndsAt(syncedEndsAt);
+        } else {
+          setRestEndsAt(null);
+        }
 
         const exerciseFromWatch = exercises[Math.max(0, Math.min(exercises.length - 1, exerciseIndexFromWatch))];
         if (!exerciseFromWatch) return;
@@ -370,7 +411,7 @@ export function GuidedWorkoutClient({
       ? Math.max(0, Math.min(exercises.length - 1, exerciseIndex + 1))
       : exerciseIndex;
     const optimisticSetIndex = isLastSetForExercise ? 1 : (setIndex + 1);
-    setRestRemaining(restChoice);
+    startRestTimer(restChoice);
     if (isLastSetForExercise && exerciseIndex < exercises.length - 1) {
       setExerciseIndex(optimisticExerciseIndex);
       setRestChoice(getPlannedRestForIndex(optimisticExerciseIndex));
@@ -392,6 +433,12 @@ export function GuidedWorkoutClient({
           if (prev > 0 && strictRest === 0) return prev;
           return strictRest;
         });
+        if (strictRest > 0) {
+          const strictEndsAt = Date.now() + strictRest * 1000;
+          setRestEndsAt(strictEndsAt);
+        } else {
+          setRestEndsAt(null);
+        }
         lastSyncedWatchPositionRef.current = `${strictExerciseIndex}:${strictSetIndex}:${strictRest}`;
       }
     } catch {
@@ -411,7 +458,7 @@ export function GuidedWorkoutClient({
     unlockRestAudio();
     skipRestRequestedRef.current = true;
     prevRestRemainingRef.current = 0;
-    setRestRemaining(0);
+    clearRestTimer();
     lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:0`;
     pushSyncState(exerciseIndex, Math.max(1, nextSetIndex), 0);
     try {
@@ -422,7 +469,7 @@ export function GuidedWorkoutClient({
       });
       if (response.ok) {
         skipRestRequestedRef.current = false;
-        setRestRemaining(0);
+        clearRestTimer();
       }
     } catch {
       // Local skip remains useful even if the watch sync endpoint is unavailable.

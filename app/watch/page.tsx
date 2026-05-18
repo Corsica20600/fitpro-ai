@@ -22,6 +22,8 @@ type ApiResponse = {
 
 export default function WatchPage() {
   const [state, setState] = useState<WatchState | null>(null);
+  const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
+  const [displayRestRemaining, setDisplayRestRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,10 +34,22 @@ export default function WatchPage() {
       const data = (await response.json()) as ApiResponse;
       if (!response.ok || !data.payload) {
         setState(null);
+        setRestEndsAt(null);
+        setDisplayRestRemaining(0);
         setError(data.error ?? "Aucune seance active.");
         return;
       }
       setState(data.payload);
+      const nextRemaining = Math.max(0, Math.floor(data.payload.restRemaining ?? 0));
+      if (nextRemaining > 0) {
+        const restStartedAt = Date.now();
+        const nextRestEndsAt = restStartedAt + nextRemaining * 1000;
+        setRestEndsAt(nextRestEndsAt);
+        setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
+      } else {
+        setRestEndsAt(null);
+        setDisplayRestRemaining(0);
+      }
       setError(null);
     } catch {
       setError("Connexion impossible.");
@@ -57,6 +71,27 @@ export default function WatchPage() {
     };
   }, [refreshState]);
 
+  useEffect(() => {
+    if (restEndsAt == null) return;
+    const refresh = () => {
+      const remainingSeconds = Math.max(0, Math.ceil((restEndsAt - Date.now()) / 1000));
+      setDisplayRestRemaining(remainingSeconds);
+      if (remainingSeconds <= 0) {
+        setRestEndsAt(null);
+      }
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 250);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [restEndsAt]);
+
   const perform = useCallback(
     async (path: string, body?: Record<string, unknown>) => {
       if (!state || busy) return;
@@ -73,6 +108,16 @@ export default function WatchPage() {
           return;
         }
         setState(data.payload);
+        const nextRemaining = Math.max(0, Math.floor(data.payload.restRemaining ?? 0));
+        if (nextRemaining > 0) {
+          const restStartedAt = Date.now();
+          const nextRestEndsAt = restStartedAt + nextRemaining * 1000;
+          setRestEndsAt(nextRestEndsAt);
+          setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
+        } else {
+          setRestEndsAt(null);
+          setDisplayRestRemaining(0);
+        }
         setError(null);
       } catch {
         setError("Erreur reseau.");
@@ -96,7 +141,7 @@ export default function WatchPage() {
         {loading ? <p style={styles.text}>Chargement...</p> : null}
         {!loading ? <p style={styles.exercise}>{state?.exerciseName ?? "Aucune seance active"}</p> : null}
         <p style={styles.text}>{subtitle}</p>
-        <p style={styles.rest}>Repos: {state?.restRemaining ?? 0}s</p>
+        <p style={styles.rest}>Repos: {displayRestRemaining}s</p>
         {error ? <p style={styles.error}>{error}</p> : null}
 
         <div style={styles.grid}>
