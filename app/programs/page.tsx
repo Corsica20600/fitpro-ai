@@ -1,12 +1,12 @@
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
+import { ReorderExerciseButtons } from "@/src/components/programs/reorder-exercise-buttons";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import {
   addExerciseToProgramDayAction,
   createSimpleProgramAction,
   deleteProgramExerciseAction,
-  moveProgramExercisePositionAction,
   replaceProgramExerciseAction,
   renameProgramDayAction,
   setProgramStatusAction,
@@ -144,7 +144,15 @@ export default async function ProgramsPage() {
                               className="program-day-item-visual"
                             />
                             <div>
-                              <p className="program-day-item-title">{ex.exercise.nameFr || ex.exercise.name}</p>
+                              <div className="program-day-item-head">
+                                <p className="program-day-item-title">{ex.exercise.nameFr || ex.exercise.name}</p>
+                                <ReorderExerciseButtons
+                                  programId={program.id}
+                                  exerciseId={ex.id}
+                                  isFirst={idx === 0}
+                                  isLast={idx === day.exercises.length - 1}
+                                />
+                              </div>
                               <p className="muted">
                                 {ex.sets} series · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
                               </p>
@@ -176,20 +184,6 @@ export default async function ProgramsPage() {
                                   <button className="ghost-btn chip danger" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
                                 </div>
                               </form>
-                              <div className="grid-2" style={{ marginTop: 8 }}>
-                                <form action={moveProgramExercisePositionAction}>
-                                  <input type="hidden" name="programId" value={program.id} />
-                                  <input type="hidden" name="programExerciseId" value={ex.id} />
-                                  <input type="hidden" name="direction" value="up" />
-                                  <button className="ghost-btn" type="submit" disabled={idx === 0}>Monter</button>
-                                </form>
-                                <form action={moveProgramExercisePositionAction}>
-                                  <input type="hidden" name="programId" value={program.id} />
-                                  <input type="hidden" name="programExerciseId" value={ex.id} />
-                                  <input type="hidden" name="direction" value="down" />
-                                  <button className="ghost-btn" type="submit" disabled={idx === day.exercises.length - 1}>Descendre</button>
-                                </form>
-                              </div>
                               <form action={replaceProgramExerciseAction} className="form-grid" style={{ marginTop: 8 }}>
                                 <input type="hidden" name="programId" value={program.id} />
                                 <input type="hidden" name="programExerciseId" value={ex.id} />
