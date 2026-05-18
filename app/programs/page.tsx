@@ -1,8 +1,7 @@
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
-import { ReorderExerciseButtons } from "@/src/components/programs/reorder-exercise-buttons";
-import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { ProgramDayExercisesEditor } from "@/src/components/programs/program-day-exercises-editor";
 import {
   addExerciseToProgramDayAction,
   createSimpleProgramAction,
@@ -125,82 +124,41 @@ export default async function ProgramsPage() {
                     {day.exercises.length === 0 ? (
                       <p className="muted">Aucun exercice pour ce jour.</p>
                     ) : (
-                      <div className="program-day-list">
-                        {day.exercises.map((ex, idx) => (
-                          <article key={ex.id} className="program-day-item">
-                            <ExerciseVisual
-                              media={
-                                ex.exercise.media?.map((m) => ({
-                                  type: m.type,
-                                  publicUrl: m.publicUrl,
-                                  url: m.url,
-                                  format: String(m.format || "").toLowerCase(),
-                                })) ?? []
-                              }
-                              fallbackImage={ex.exercise.fallbackThumbnailPath || ex.exercise.fallbackImagePath}
-                              fallbackAnimation={ex.exercise.primaryAnimationPath}
-                              title={ex.exercise.nameFr || ex.exercise.name}
-                              compact
-                              className="program-day-item-visual"
-                            />
-                            <div>
-                              <div className="program-day-item-head">
-                                <p className="program-day-item-title">{ex.exercise.nameFr || ex.exercise.name}</p>
-                                <ReorderExerciseButtons
-                                  programId={program.id}
-                                  exerciseId={ex.id}
-                                  isFirst={idx === 0}
-                                  isLast={idx === day.exercises.length - 1}
-                                />
-                              </div>
-                              <p className="muted">
-                                {ex.sets} series · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
-                              </p>
-                              <form action={updateProgramExerciseAction} className="form-grid" style={{ marginTop: 8 }}>
-                                <input type="hidden" name="programId" value={program.id} />
-                                <input type="hidden" name="programExerciseId" value={ex.id} />
-                                <div className="grid-2">
-                                  <div>
-                                    <label className="field-label">Series</label>
-                                    <input name="sets" type="number" defaultValue={ex.sets} className="input" />
-                                  </div>
-                                  <div>
-                                    <label className="field-label">Repetitions</label>
-                                    <input name="repetitions" type="number" defaultValue={ex.repsMin ?? 10} className="input" />
-                                  </div>
-                                </div>
-                                <div className="grid-2">
-                                  <div>
-                                    <label className="field-label">Repos (sec)</label>
-                                    <input name="restSeconds" type="number" defaultValue={ex.restSeconds ?? 60} className="input" />
-                                  </div>
-                                  <div>
-                                    <label className="field-label">Poids (kg)</label>
-                                    <input name="targetWeightKg" type="number" defaultValue={Number(ex.repsText?.replace(/[^\d.,]/g, "").replace(",", ".") || 0)} className="input" />
-                                  </div>
-                                </div>
-                                <div className="grid-2">
-                                  <PrimaryButton type="submit">Modifier</PrimaryButton>
-                                  <button className="ghost-btn chip danger" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
-                                </div>
-                              </form>
-                              <form action={replaceProgramExerciseAction} className="form-grid" style={{ marginTop: 8 }}>
-                                <input type="hidden" name="programId" value={program.id} />
-                                <input type="hidden" name="programExerciseId" value={ex.id} />
-                                <label className="field-label">Remplacer par</label>
-                                <select name="exerciseId" className="input" defaultValue={ex.exerciseId}>
-                                  {exerciseOptions.map((opt) => (
-                                    <option key={opt.id} value={opt.id}>
-                                      {(opt.nameFr || opt.name)} · {(opt.primaryMusclesFr[0] || opt.primaryMuscles[0] || "Full body")}
-                                    </option>
-                                  ))}
-                                </select>
-                                <PrimaryButton type="submit">Remplacer l&apos;exercice</PrimaryButton>
-                              </form>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
+                      <ProgramDayExercisesEditor
+                        programId={program.id}
+                        initialExercises={day.exercises.map((ex) => ({
+                          id: ex.id,
+                          exerciseId: ex.exerciseId,
+                          sets: ex.sets,
+                          repsMin: ex.repsMin,
+                          repsText: ex.repsText,
+                          restSeconds: ex.restSeconds,
+                          exercise: {
+                            id: ex.exercise.id,
+                            name: ex.exercise.name,
+                            nameFr: ex.exercise.nameFr,
+                            fallbackThumbnailPath: ex.exercise.fallbackThumbnailPath,
+                            fallbackImagePath: ex.exercise.fallbackImagePath,
+                            primaryAnimationPath: ex.exercise.primaryAnimationPath,
+                            media: ex.exercise.media?.map((m) => ({
+                              type: m.type,
+                              publicUrl: m.publicUrl,
+                              url: m.url,
+                              format: String(m.format || "").toLowerCase(),
+                            })) ?? [],
+                          },
+                        }))}
+                        exerciseOptions={exerciseOptions.map((opt) => ({
+                          id: opt.id,
+                          name: opt.name,
+                          nameFr: opt.nameFr,
+                          primaryMuscles: opt.primaryMuscles,
+                          primaryMusclesFr: opt.primaryMusclesFr,
+                        }))}
+                        updateAction={updateProgramExerciseAction}
+                        deleteAction={deleteProgramExerciseAction}
+                        replaceAction={replaceProgramExerciseAction}
+                      />
                     )}
                   </details>
                 ))}

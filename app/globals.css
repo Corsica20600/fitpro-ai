@@ -345,6 +345,20 @@ button, input, select { font-family: inherit; }
   opacity: .42;
 }
 
+.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.program-day-item.is-dragging {
+  z-index: 3;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, .55), 0 0 0 1px rgba(118, 165, 238, .45);
+}
+
 .exercise-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
