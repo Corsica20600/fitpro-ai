@@ -66,7 +66,7 @@ export default async function ProgramsPage() {
             </select>
           </div>
 
-          <PrimaryButton type="submit">Creer programme</PrimaryButton>
+          <PrimaryButton type="submit">Créer programme</PrimaryButton>
         </form>
       </section>
 
@@ -75,7 +75,7 @@ export default async function ProgramsPage() {
       <section className="stack">
         {programs.length === 0 ? (
           <section className="card">
-            <p className="muted">Aucun programme. Cree ton premier plan.</p>
+            <p className="muted">Aucun programme. Crée ton premier plan.</p>
           </section>
         ) : (
           programs.map((program) => (
@@ -84,9 +84,9 @@ export default async function ProgramsPage() {
               <h2 className="section-title">{program.name}</h2>
               <div className="chips">
                 <span className={`chip ${program.status === "ACTIVE" ? "success" : program.status === "ARCHIVED" ? "danger" : "warning"}`}>
-                  Statut: {statusToFr(program.status)}
+                  Statut : {statusToFr(program.status)}
                 </span>
-                <span className="chip violet">Seance unique</span>
+                <span className="chip violet">Séance unique</span>
               </div>
               <div className="grid-2" style={{ marginTop: 10 }}>
                 <form action={setProgramStatusAction}>
@@ -109,12 +109,12 @@ export default async function ProgramsPage() {
                       <span>{day.title || program.name}</span>
                       <span className="chip orange">{day.exercises.length} exos</span>
                     </summary>
-                    <p className="eyebrow">Seance du programme</p>
+                    <p className="eyebrow">Séance du programme</p>
                     <form action={renameProgramDayAction} className="form-grid">
                       <input type="hidden" name="programId" value={program.id} />
                       <input type="hidden" name="dayId" value={day.id} />
 
-                      <label className="field-label">Nom de la seance</label>
+                      <label className="field-label">Nom de la séance</label>
                       <input name="title" defaultValue={day.title} className="input" />
                       <label className="field-label">Focus</label>
                       <input name="focus" defaultValue={day.focus || ""} className="input" placeholder="Ex: Haut du corps" />

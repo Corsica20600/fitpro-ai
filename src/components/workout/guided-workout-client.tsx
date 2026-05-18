@@ -114,6 +114,7 @@ export function GuidedWorkoutClient({
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
+  const [justValidated, setJustValidated] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
@@ -248,6 +249,12 @@ export function GuidedWorkoutClient({
     }
     prevRestRemainingRef.current = restRemaining;
   }, [restRemaining, playRestFinishedBeep]);
+
+  useEffect(() => {
+    if (!justValidated) return;
+    const t = window.setTimeout(() => setJustValidated(false), 420);
+    return () => window.clearTimeout(t);
+  }, [justValidated]);
 
   useEffect(() => {
     const nav = navigator as WakeLockNavigator;
@@ -401,6 +408,10 @@ export function GuidedWorkoutClient({
     if (!response.ok) return;
     const data = await response.json();
     const saved = data.set as CompletedSet;
+    setJustValidated(true);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate?.(28);
+    }
 
     setCompletedSets((prev) => {
       const withoutSame = prev.filter((item) => !(item.exerciseId === saved.exerciseId && item.setIndex === saved.setIndex));
@@ -506,15 +517,16 @@ export function GuidedWorkoutClient({
   if (summary) {
     return (
       <section className="card stack" style={{ minHeight: "60vh", placeContent: "center", textAlign: "center", gap: "14px" }}>
-        <p className="eyebrow">Seance terminee</p>
+        <p className="eyebrow">Séance terminée</p>
         <h2 className="section-title" style={{ fontSize: "1.25rem", margin: 0 }}>Bon travail</h2>
+        <p className="muted">Volume solide aujourd’hui.</p>
         <div className="chips" style={{ justifyContent: "center" }}>
-          <span className="chip warning">Duree: {formatDuration(summary.durationSeconds)}</span>
+          <span className="chip warning">Durée : {formatDuration(summary.durationSeconds)}</span>
           <span className="chip violet">Exercices: {summary.exercisesCount}</span>
-          <span className="chip">Series: {summary.setsCount}</span>
+          <span className="chip">Séries : {summary.setsCount}</span>
           <span className="chip success">Volume: {Math.round(summary.volumeTotal)} kg</span>
         </div>
-        <PrimaryAction type="button" onClick={() => router.push("/dashboard")}>Terminer</PrimaryAction>
+        <PrimaryAction type="button" className="premium-glow" onClick={() => router.push("/dashboard")}>Terminer</PrimaryAction>
         <button type="button" className="outline-link" onClick={() => router.push("/workout")}>Recommencer</button>
       </section>
     );
@@ -572,7 +584,8 @@ export function GuidedWorkoutClient({
     return (
       <section className="card workout-rest-screen">
         <p className="eyebrow">Repos</p>
-        <span className="chip warning">Recuperation en cours</span>
+        <span className="chip warning">Récupération en cours</span>
+        <p className="muted">Repos terminé, on repart.</p>
         <div className="workout-rest-timer-xl">
           {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
         </div>
@@ -584,10 +597,10 @@ export function GuidedWorkoutClient({
   if (isWorkoutDone) {
     return (
       <section className="card workout-active-screen">
-        <p className="eyebrow">Seance complete</p>
+        <p className="eyebrow">Séance complète</p>
         <span className="chip success">Objectif atteint</span>
-        <h2 className="workout-active-title">Terminer la seance</h2>
-        <PrimaryAction type="button" className="workout-validate-main" onClick={onCompleteWorkout} disabled={ending}>
+        <h2 className="workout-active-title">Terminer la séance</h2>
+        <PrimaryAction type="button" className="workout-validate-main premium-glow" onClick={onCompleteWorkout} disabled={ending}>
           {ending ? "..." : "Valider"}
         </PrimaryAction>
       </section>
@@ -596,7 +609,7 @@ export function GuidedWorkoutClient({
 
   return (
     <section
-      className="workout-hero workout-active-screen"
+      className={`workout-hero workout-active-screen ${justValidated ? "validated-flash" : ""}`}
       onClick={handleSurfaceTap}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -609,7 +622,12 @@ export function GuidedWorkoutClient({
       />
       <div className="workout-hero-body workout-active-body">
         <h2 className="workout-active-title">{exercise.nameFr || exercise.name}</h2>
-        <p className="workout-active-set">Serie {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
+        <p className="workout-active-set">Série {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
+        <p className="muted">
+          {Math.min(nextSetIndex, setRows.length) === setRows.length
+            ? "Dernière série, propre et contrôlée."
+            : "Garde le tempo, contrôle la descente."}
+        </p>
         <div className="workout-active-reps">
           <span>Reps</span>
           <div className="workout-reps-control">
@@ -652,11 +670,11 @@ export function GuidedWorkoutClient({
         </div>
         <PrimaryAction
           type="button"
-          className="workout-validate-main"
+          className="workout-validate-main premium-glow"
           onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)}
           disabled={!activeSet}
         >
-          Valider
+          Série terminée
         </PrimaryAction>
         <Link href={`/exercises/${exercise.slug}`} className="outline-link">
           Voir la fiche exercice
@@ -667,7 +685,7 @@ export function GuidedWorkoutClient({
           onClick={onCompleteWorkout}
           disabled={ending}
         >
-          {ending ? "..." : "Finir la seance"}
+          {ending ? "..." : "Finir la séance"}
         </button>
       </div>
     </section>

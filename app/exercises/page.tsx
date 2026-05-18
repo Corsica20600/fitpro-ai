@@ -56,7 +56,7 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
 
       <section className="card">
         <Link href="/workout">
-          <PrimaryButton>Demarrer une seance guidee</PrimaryButton>
+          <PrimaryButton className="premium-glow">Démarrer une séance guidée</PrimaryButton>
         </Link>
       </section>
 
@@ -69,7 +69,7 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
               {filters.muscles.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
             <select name="equipment" defaultValue={equipment} className="input">
-              <option value="">Tout le materiel</option>
+              <option value="">Tout le matériel</option>
               {filters.equipment.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
             <PrimaryButton type="submit">Filtrer</PrimaryButton>
@@ -100,16 +100,16 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
                   <span className="chip">{levelToFr(exercise.difficulty)}</span>
                 </div>
               </div>
-              <Link href={`/exercises/${exercise.slug}`} className="outline-link">Voir detail</Link>
+              <Link href={`/exercises/${exercise.slug}`} className="outline-link">Voir détail</Link>
             </article>
           )})}
         </section>
 
         {result.exercises.length === 0 && (
           <section className="card">
-            <h3 className="section-title">Aucun exercice trouve</h3>
+            <h3 className="section-title">Aucun exercice trouvé</h3>
             <p className="muted">Essayez une autre recherche ou retirez un filtre.</p>
-            <Link href="/exercises" className="outline-link">Reinitialiser les filtres</Link>
+            <Link href="/exercises" className="outline-link">Réinitialiser les filtres</Link>
           </section>
         )}
 
@@ -119,7 +119,7 @@ export default async function ExercisesPage(props: PageProps<"/exercises">) {
             className={`ghost-btn ${result.page <= 1 ? "disabled" : ""}`}
             aria-disabled={result.page <= 1}
           >
-            Page precedente
+            Page précédente
           </Link>
           <Link
             href={withQuery(Math.min(result.totalPages, result.page + 1), search, muscle, equipment)}

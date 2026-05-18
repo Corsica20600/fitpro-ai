@@ -1825,6 +1825,41 @@ body {
   color: #9fb2d5;
 }
 
+@keyframes premiumGlowPulse {
+  0%, 100% {
+    box-shadow:
+      0 12px 26px rgba(20, 94, 255, .34),
+      inset 0 1px 0 rgba(214, 233, 255, .24);
+  }
+  50% {
+    box-shadow:
+      0 14px 30px rgba(53, 212, 255, .34),
+      0 0 0 1px rgba(103, 184, 255, .28),
+      inset 0 1px 0 rgba(226, 241, 255, .28);
+  }
+}
+
+.premium-glow {
+  animation: premiumGlowPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes validatedFlash {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(53, 212, 255, .34),
+      0 0 0 0 rgba(31, 215, 157, .22);
+  }
+  100% {
+    box-shadow:
+      0 0 0 14px rgba(53, 212, 255, 0),
+      0 0 0 24px rgba(31, 215, 157, 0);
+  }
+}
+
+.validated-flash {
+  animation: validatedFlash .42s ease-out;
+}
+
 @media (max-width: 640px) {
   .hero h1,
   .exercise-pro-header h1 {

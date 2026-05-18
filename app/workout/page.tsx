@@ -17,8 +17,8 @@ export default async function WorkoutPage() {
     ? lastPerformedProgramId
     : (programs.find((program) => program.status === "ACTIVE")?.id ?? "");
   const heroTitle = currentSession
-    ? (heroExercise?.nameFr || heroExercise?.name || currentSession.title || "Seance du jour")
-    : "Seance guidee";
+    ? (heroExercise?.nameFr || heroExercise?.name || currentSession.title || "Séance du jour")
+    : "Séance guidée";
   const heroImage = heroExercise?.fallbackImagePath || heroExercise?.fallbackThumbnailPath || "/media/exercises/air-bike/0.jpg";
 
   return (
@@ -33,7 +33,7 @@ export default async function WorkoutPage() {
 
       {!currentSession ? (
         <WorkoutCard light>
-          <h2 className="section-title">Demarrer une seance</h2>
+          <h2 className="section-title">Démarrer une séance</h2>
           <form action={startWorkoutSessionAction} className="form-grid">
             <select name="programId" className="input" defaultValue={defaultProgramId ?? ""}>
               <option value="">Sans programme</option>
@@ -41,10 +41,10 @@ export default async function WorkoutPage() {
                 <option key={program.id} value={program.id}>{program.name}</option>
               ))}
             </select>
-            <PrimaryAction type="submit">Demarrer</PrimaryAction>
+            <PrimaryAction type="submit" className="premium-glow">Démarrer</PrimaryAction>
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
-            <span className="chip warning">Conseil: lance ta playlist avant la premiere serie</span>
+            <span className="chip warning">Conseil : lance ta playlist avant la première série.</span>
             <AppShortcutLink
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}
@@ -56,7 +56,7 @@ export default async function WorkoutPage() {
       ) : sessionExercises.length === 0 ? (
         <WorkoutCard light>
           <h2 className="section-title">Aucun exercice disponible</h2>
-          <p className="muted">Importez d&apos;abord des exercices pour lancer une seance guidee.</p>
+          <p className="muted">Importe d&apos;abord des exercices pour lancer une séance guidée.</p>
           <span className="chip danger">Action requise: ajoute au moins un exercice</span>
           <AppShortcutLink
             label={`Ouvrir ${spotifyIntegration.appName}`}
@@ -70,6 +70,7 @@ export default async function WorkoutPage() {
           <WorkoutCard light>
             <p className="eyebrow">Focus musique</p>
             <span className="chip orange">Mode focus actif</span>
+            <p className="muted">Garde le tempo, contrôle la descente.</p>
             <AppShortcutLink
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}

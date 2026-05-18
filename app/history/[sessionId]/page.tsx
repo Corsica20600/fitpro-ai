@@ -29,17 +29,17 @@ export default async function HistorySessionDetailPage(props: { params: Promise<
   return (
     <div className="stack">
       <section className="hero mini compact">
-        <p className="eyebrow">Detail seance</p>
+        <p className="eyebrow">Détail séance</p>
         <h1>{session.title}</h1>
         <p className="muted">{formatDate(session.startedAt ?? session.createdAt)}</p>
       </section>
 
       <section className="card">
         <div className="chips">
-          <span className="chip">Statut: {session.status === "COMPLETED" ? "Terminee" : "Brouillon"}</span>
-          <span className="chip">Duree: {formatDuration(session.durationSeconds)}</span>
+          <span className="chip">Statut: {session.status === "COMPLETED" ? "Terminée" : "Brouillon"}</span>
+          <span className="chip">Durée: {formatDuration(session.durationSeconds)}</span>
           <span className="chip">Exercices: {totalExercises}</span>
-          <span className="chip">Series: {totalSets}</span>
+          <span className="chip">Séries: {totalSets}</span>
           <span className="chip">Volume total: {Math.round(totalVolume)} kg</span>
         </div>
       </section>
@@ -51,12 +51,12 @@ export default async function HistorySessionDetailPage(props: { params: Promise<
             <p className="muted">{exercise.primaryMuscle}</p>
             <div className="chips">
               <span className="chip">Volume exo: {Math.round(exercise.totalVolume)} kg</span>
-              <span className="chip">Series: {exercise.sets.length}</span>
+              <span className="chip">Séries: {exercise.sets.length}</span>
             </div>
             <div className="stack mt-10">
               {exercise.sets.map((set) => (
                 <div key={set.id} className="set-row">
-                  <div className="set-row-left">Serie {set.setIndex}</div>
+                  <div className="set-row-left">Série {set.setIndex}</div>
                   <div className="set-row-fields set-row-fields-3">
                     <input className="set-input set-input-readonly" readOnly value={set.reps ?? "-"} />
                     <input className="set-input set-input-readonly" readOnly value={set.weightKg ?? "-"} />
@@ -72,7 +72,7 @@ export default async function HistorySessionDetailPage(props: { params: Promise<
 
       <section className="card action-stack">
         <Link href="/history" className="outline-link">Retour historique</Link>
-        <Link href="/workout" className="primary-button">Demarrer une seance</Link>
+        <Link href="/workout" className="primary-button premium-glow">Démarrer une séance</Link>
       </section>
     </div>
   );

@@ -57,7 +57,7 @@ export function AddToProgramForm({
 
       {days.length > 1 ? (
         <>
-          <label className="field-label">Seance du programme</label>
+          <label className="field-label">Séance du programme</label>
           <select
             name="dayId"
             className="input"
@@ -66,7 +66,7 @@ export function AddToProgramForm({
           >
             {days.map((day) => (
               <option key={day.id} value={day.id}>
-                {day.title || `Seance ${day.dayIndex}`}
+                {day.title || `Séance ${day.dayIndex}`}
               </option>
             ))}
           </select>
@@ -77,11 +77,11 @@ export function AddToProgramForm({
 
       <div className="grid-2">
         <div>
-          <label className="field-label">Series</label>
+          <label className="field-label">Séries</label>
           <input className="input" type="number" name="sets" min={1} max={12} defaultValue={3} />
         </div>
         <div>
-          <label className="field-label">Repetitions</label>
+          <label className="field-label">Répétitions</label>
           <input className="input" type="number" name="repetitions" min={1} max={60} defaultValue={10} />
         </div>
       </div>

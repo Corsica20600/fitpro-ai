@@ -101,8 +101,8 @@ function SortableExerciseCard({
           <button
             type="button"
             className="reorder-btn drag-handle"
-            aria-label={`Deplacer ${ex.exercise.nameFr || ex.exercise.name}`}
-            title="Glisser pour reordonner"
+            aria-label={`Déplacer ${ex.exercise.nameFr || ex.exercise.name}`}
+            title="Glisser pour réordonner"
             {...attributes}
             {...listeners}
           >
@@ -112,18 +112,18 @@ function SortableExerciseCard({
           </button>
         </div>
         <p className="muted">
-          {ex.sets} series · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
+          {ex.sets} séries · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
         </p>
         <form action={updateAction} className="form-grid" style={{ marginTop: 8 }}>
           <input type="hidden" name="programId" value={programId} />
           <input type="hidden" name="programExerciseId" value={ex.id} />
           <div className="grid-2">
             <div>
-              <label className="field-label">Series</label>
+              <label className="field-label">Séries</label>
               <input name="sets" type="number" defaultValue={ex.sets} className="input" />
             </div>
             <div>
-              <label className="field-label">Repetitions</label>
+              <label className="field-label">Répétitions</label>
               <input name="repetitions" type="number" defaultValue={ex.repsMin ?? 10} className="input" />
             </div>
           </div>
@@ -156,7 +156,7 @@ function SortableExerciseCard({
           <PrimaryButton type="submit">Remplacer l&apos;exercice</PrimaryButton>
         </form>
         <div className="chips" style={{ marginTop: 8 }}>
-          <span className="chip muted">Position: {idx + 1}/{total}</span>
+          <span className="chip muted">Position : {idx + 1}/{total}</span>
         </div>
       </div>
     </article>

@@ -70,12 +70,13 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
 
       <section className="card">
         <h2 className="section-title">Stats principales</h2>
+        <p className="muted">Volume solide aujourd&apos;hui.</p>
         <div className="chips">
-          <span className="chip violet">Seances semaine: {data.headline.weeklySessions}</span>
+          <span className="chip violet">Séances semaine: {data.headline.weeklySessions}</span>
           <span className="chip success">Volume semaine: {Math.round(data.headline.weeklyVolume)} kg</span>
-          <span className="chip">Series totales: {data.headline.totalSets}</span>
-          <span className="chip warning">Duree moyenne: {formatDuration(data.headline.averageDuration)}</span>
-          <span className="chip orange">Exo le plus travaille: {data.headline.mostWorkedExercise}</span>
+          <span className="chip">Séries totales: {data.headline.totalSets}</span>
+          <span className="chip warning">Durée moyenne: {formatDuration(data.headline.averageDuration)}</span>
+          <span className="chip orange">Exo le plus travaillé: {data.headline.mostWorkedExercise}</span>
         </div>
       </section>
 
@@ -83,10 +84,10 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
         <h2 className="section-title">Visualisation</h2>
         <div className="progress-visual-grid">
           <div className="progress-block">
-            <p className="eyebrow">Dernieres seances</p>
+            <p className="eyebrow">Dernières séances</p>
             <div className="progress-bars">
               {sessionsForChart.length === 0 ? (
-                <p className="muted">Pas assez de donnees.</p>
+                <p className="muted">Pas assez de données.</p>
               ) : (
                 sessionsForChart.map((session) => (
                   <div key={session.id} className="progress-bar-row">
@@ -101,7 +102,7 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
             </div>
           </div>
           <div className="progress-block">
-            <p className="eyebrow">Repartition 7 jours</p>
+            <p className="eyebrow">Répartition 7 jours</p>
             <div className="progress-donut-wrap">
               <div className="progress-donut" style={{ background: donutGradient }}>
                 <div className="progress-donut-center">
@@ -111,7 +112,7 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
               </div>
               <div className="progress-legend">
                 {donutSegments.length === 0 ? (
-                  <span><i style={{ background: "#1d2b4a" }} /> Pas de volume recent</span>
+                  <span><i style={{ background: "#1d2b4a" }} /> Pas de volume récent</span>
                 ) : donutSegments.map((segment) => (
                   <span key={segment.exerciseId}>
                     <i style={{ background: segment.color }} /> {segment.name} ({Math.round(segment.volume)} kg)
@@ -133,7 +134,7 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
             Record volume exo: {data.records.bestExerciseVolume ? `${Math.round(data.records.bestExerciseVolume.volume)} kg (${data.records.bestExerciseVolume.name})` : "N/A"}
           </span>
           <span className="chip">
-            Meilleure seance: {data.records.bestSession ? `${Math.round(data.records.bestSession.volume)} kg (${data.records.bestSession.title})` : "N/A"}
+            Meilleure séance: {data.records.bestSession ? `${Math.round(data.records.bestSession.volume)} kg (${data.records.bestSession.title})` : "N/A"}
           </span>
         </div>
       </section>
@@ -142,11 +143,11 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
         <h2 className="section-title">Historique compact</h2>
         <div className="stack">
           {data.recentSessions.length === 0 ? (
-            <p className="muted">Aucune seance enregistree.</p>
+            <p className="muted">Aucune séance enregistrée.</p>
           ) : (
             data.recentSessions.map((session) => (
               <Link key={session.id} href={`/history/${session.id}`} className="outline-link">
-                {formatDate(session.date)} · {session.status === "COMPLETED" ? "Terminee" : "Brouillon"} · {session.setCount} series · {Math.round(session.volume)} kg
+                {formatDate(session.date)} · {session.status === "COMPLETED" ? "Terminée" : "Brouillon"} · {session.setCount} séries · {Math.round(session.volume)} kg
               </Link>
             ))
           )}

@@ -94,7 +94,7 @@ export function ProgramExercisePicker({
       <p className="eyebrow">Ajouter un exercice</p>
       {days.length > 1 ? (
         <>
-          <label className="field-label" htmlFor={`day-${programId}`}>Seance cible</label>
+          <label className="field-label" htmlFor={`day-${programId}`}>Séance cible</label>
           <select
             id={`day-${programId}`}
             className="input"
@@ -103,7 +103,7 @@ export function ProgramExercisePicker({
           >
             {days.map((day) => (
               <option key={day.id} value={day.id}>
-                {day.title || `Seance ${day.dayIndex}`}
+                {day.title || `Séance ${day.dayIndex}`}
               </option>
             ))}
           </select>
@@ -156,11 +156,11 @@ export function ProgramExercisePicker({
                 <input type="hidden" name="exerciseId" value={exercise.id} />
 
                 <div className="grid-2">
-                  <WheelNumber label="Series" name="sets" min={1} max={12} defaultValue={3} />
+                  <WheelNumber label="Séries" name="sets" min={1} max={12} defaultValue={3} />
                   <WheelNumber label="Repos (sec)" name="restSeconds" min={15} max={300} defaultValue={60} />
                 </div>
                 <div className="grid-2">
-                  <WheelNumber label="Repetitions" name="repetitions" min={1} max={60} defaultValue={10} />
+                  <WheelNumber label="Répétitions" name="repetitions" min={1} max={60} defaultValue={10} />
                   <WheelNumber label="Poids (kg)" name="targetWeightKg" min={0} max={300} defaultValue={0} />
                 </div>
 

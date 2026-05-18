@@ -24,13 +24,14 @@ export default async function DashboardPage() {
   const progressPercent = currentSession ? Math.min(100, Math.max(6, Math.round((currentExerciseIndex / Math.max(1, totalExercises)) * 100))) : 0;
   const heroTitle = activeExercise?.nameFr || activeExercise?.name || "Move Today";
   const heroImage = activeExercise?.fallbackImagePath || activeExercise?.fallbackThumbnailPath || "/media/exercises/air-bike/0.jpg";
-  const startLabel = currentSession ? "Demarrer" : "Demarrer";
+  const startLabel = "Démarrer";
+  const coachLine = currentSession ? "Séance du jour prête." : "Prêt à lancer une séance propre et efficace.";
 
   return (
     <AppShell className="stack dashboard-premium-screen">
       <HeroVisual title={heroTitle} imageSrc={heroImage} imageAlt={heroTitle} eyebrow="FitAI Pro" className="dashboard-premium-hero">
         <Link href="/workout" prefetch={false} className="dashboard-premium-action">
-          <PrimaryAction className="dashboard-premium-cta">{startLabel}</PrimaryAction>
+          <PrimaryAction className="dashboard-premium-cta premium-glow">{startLabel}</PrimaryAction>
         </Link>
       </HeroVisual>
 
@@ -40,7 +41,8 @@ export default async function DashboardPage() {
           <Image src={heroImage} alt={heroTitle} className="dashboard-program-image" width={320} height={190} />
           <div>
             <h2>{selectedProgram?.name ?? "Aucun programme"}</h2>
-            <p>{selectedProgramStatus ? `Statut: ${selectedProgramStatus}` : "Cree ton premier programme dans Plans"}</p>
+            <p>{selectedProgramStatus ? `Statut : ${selectedProgramStatus}` : "Crée ton premier programme dans Plans"}</p>
+            <p className="muted">{coachLine}</p>
           </div>
         </div>
       </WorkoutCard>
@@ -49,14 +51,14 @@ export default async function DashboardPage() {
         <>
           <section className="dashboard-quick-chips">
             <span className="dashboard-quick-chip">Exercice {`${currentExerciseIndex}/${totalExercises}`}</span>
-            <span className="dashboard-quick-chip">Serie {currentSetIndex}</span>
+            <span className="dashboard-quick-chip">Série {currentSetIndex}</span>
             <span className="dashboard-quick-chip">Repos {`${restSeconds}s`}</span>
-            <span className="dashboard-quick-chip">Progress {`${progressPercent}%`}</span>
+            <span className="dashboard-quick-chip">Progression {`${progressPercent}%`}</span>
           </section>
 
           <section className="dashboard-progress-bar-card">
             <div className="dashboard-progress-head">
-              <span>Progression seance</span>
+              <span>Progression séance</span>
               <strong>{progressPercent}%</strong>
             </div>
             <div className="dashboard-progress-track">

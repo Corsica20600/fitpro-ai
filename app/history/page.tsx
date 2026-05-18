@@ -28,18 +28,19 @@ export default async function HistoryPage() {
     getHistoryVisualFallback(),
   ]);
 
+  const sessionsLabel = `${sessions.length} ${sessions.length > 1 ? "séances enregistrées" : "séance enregistrée"}`;
   return (
     <div className="stack">
       <section className="hero mini compact">
         <p className="eyebrow">Historique</p>
-        <h1>{sessions.length} seances enregistrees</h1>
+        <h1>{sessionsLabel}</h1>
       </section>
 
       <section className="card">
         <h2 className="section-title">Stats semaine</h2>
         <div className="chips">
           <span className="chip">Volume: {Math.round(stats.weeklyVolume)} kg</span>
-          <span className="chip">Seances: {stats.weeklySessionsCount}</span>
+          <span className="chip">Séances: {stats.weeklySessionsCount}</span>
           <span className="chip">
             Meilleure: {stats.bestRecentSession ? `${Math.round(stats.bestRecentSession.totalVolume)} kg` : "N/A"}
           </span>
@@ -49,7 +50,7 @@ export default async function HistoryPage() {
       {sessions.length > 0 && (
         <section className="card">
           <Link href="/workout">
-            <PrimaryButton>Demarrer une nouvelle seance</PrimaryButton>
+            <PrimaryButton className="premium-glow">Démarrer une nouvelle séance</PrimaryButton>
           </Link>
         </section>
       )}
@@ -66,8 +67,8 @@ export default async function HistoryPage() {
                 height={500}
               />
             )}
-            <p className="muted">Aucune seance pour l&apos;instant.</p>
-            <Link href="/workout" className="outline-link mt-10">Demarrer une seance</Link>
+            <p className="muted">Aucune séance pour l&apos;instant.</p>
+            <Link href="/workout" className="outline-link mt-10">Démarrer une séance</Link>
           </section>
         ) : (
           sessions.map((session) => {
@@ -77,11 +78,11 @@ export default async function HistoryPage() {
                 {cover ? (
                   <Image src={cover} alt={session.title} className="history-item-image" width={1200} height={500} />
                 ) : null}
-                <p className="eyebrow">{formatDate(session.startedAt ?? session.createdAt)} · {session.status === "COMPLETED" ? "Terminee" : "Brouillon"}</p>
+                <p className="eyebrow">{formatDate(session.startedAt ?? session.createdAt)} · {session.status === "COMPLETED" ? "Terminée" : "Brouillon"}</p>
                 <h2 className="section-title">{session.title}</h2>
                 <div className="chips">
                   <span className="chip violet">Exercices: {session.exerciseCount}</span>
-                  <span className="chip">Series: {session.setsCount}</span>
+                  <span className="chip">Séries: {session.setsCount}</span>
                   <span className="chip success">Volume: {Math.round(session.totalVolume)} kg</span>
                   <span className="chip warning">Duree: {formatDuration(session.durationSeconds)}</span>
                 </div>

@@ -36,7 +36,7 @@ export default function WatchPage() {
         setState(null);
         setRestEndsAt(null);
         setDisplayRestRemaining(0);
-        setError(data.error ?? "Aucune seance active.");
+        setError(data.error ?? "Aucune séance active.");
         return;
       }
       setState(data.payload);
@@ -104,7 +104,7 @@ export default function WatchPage() {
         });
         const data = (await response.json()) as ApiResponse;
         if (!response.ok || !data.payload) {
-          setError(data.error ?? "Action refusee.");
+          setError(data.error ?? "Action refusée.");
           return;
         }
         setState(data.payload);
@@ -129,9 +129,9 @@ export default function WatchPage() {
   );
 
   const subtitle = useMemo(() => {
-    if (!state) return "Demarre une seance sur FitAI.";
+    if (!state) return "Démarre une séance sur FitAI.";
     const weightPart = state.weight == null ? "-" : `${state.weight} kg`;
-    return `Exo ${state.exerciseIndex}/${state.totalExercises} · Serie ${state.setIndex}/${state.totalSets} · ${state.targetReps} reps · ${weightPart}`;
+    return `Exo ${state.exerciseIndex}/${state.totalExercises} · Série ${state.setIndex}/${state.totalSets} · ${state.targetReps} reps · ${weightPart}`;
   }, [state]);
 
   return (
@@ -139,9 +139,9 @@ export default function WatchPage() {
       <section style={styles.card}>
         <h1 style={styles.title}>FitAI Watch</h1>
         {loading ? <p style={styles.text}>Chargement...</p> : null}
-        {!loading ? <p style={styles.exercise}>{state?.exerciseName ?? "Aucune seance active"}</p> : null}
+        {!loading ? <p style={styles.exercise}>{state?.exerciseName ?? "Aucune séance active"}</p> : null}
         <p style={styles.text}>{subtitle}</p>
-        <p style={styles.rest}>Repos: {displayRestRemaining}s</p>
+        <p style={styles.rest}>Repos : {displayRestRemaining}s</p>
         {error ? <p style={styles.error}>{error}</p> : null}
 
         <div style={styles.grid}>
@@ -149,13 +149,13 @@ export default function WatchPage() {
             actualReps: state?.targetReps ?? 10,
             weight: state?.weight ?? 0,
           })}>
-            Valider serie
+            Valider série
           </button>
           <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/skip-rest")}>
             Skip repos
           </button>
           <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/previous-exercise")}>
-            Exo precedent
+            Exo précédent
           </button>
           <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/next-exercise")}>
             Exo suivant

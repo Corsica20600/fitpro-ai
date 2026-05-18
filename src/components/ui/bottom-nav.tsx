@@ -33,7 +33,7 @@ const nav = [
   },
   {
     href: "/workout",
-    label: "Seance",
+    label: "Séance",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2a1 1 0 0 1 1 1v6.4l5.6 5.6a1 1 0 1 1-1.4 1.4L12 11.2V3a1 1 0 0 1 1-1m0 20a9 9 0 1 1 0-18 9 9 0 0 1 0 18m0-2a7 7 0 1 0 0-14 7 7 0 0 0 0 14" />
@@ -51,7 +51,7 @@ const nav = [
   },
   {
     href: "/progress",
-    label: "Progres",
+    label: "Progrès",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M3 19h18v2H3zm2-3 4-5 3 3 5-7 2 1.4-6.3 8.8-2.9-2.9L6.6 18z" />
