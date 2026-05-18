@@ -1515,3 +1515,279 @@ body {
   line-height: .92;
   letter-spacing: .04em;
 }
+
+/* Premium fitness theme override */
+:root {
+  --bg: #05070d;
+  --bg-soft: #0a1020;
+  --bg-elev: #111a2f;
+  --card: #0f182a;
+  --card-2: #0b1324;
+  --text: #f8fbff;
+  --muted: #9db0d4;
+  --line: #28416b;
+  --line-soft: #1a2a47;
+  --accent: #2a86ff;
+  --accent-2: #35d4ff;
+  --success: #1fd79d;
+  --warning: #ffcf52;
+  --danger: #ff5a6e;
+  --violet: #8f7cff;
+  --orange: #ff9a4d;
+  --radius-card: 22px;
+  --radius-ui: 16px;
+  --shadow-card: 0 18px 40px rgba(0, 0, 0, .55);
+}
+
+body {
+  background:
+    radial-gradient(980px 600px at 90% -10%, rgba(42, 134, 255, .2), transparent 62%),
+    radial-gradient(780px 520px at -15% 4%, rgba(53, 212, 255, .12), transparent 62%),
+    radial-gradient(860px 520px at 50% 120%, rgba(31, 215, 157, .08), transparent 65%),
+    linear-gradient(180deg, rgba(34, 75, 150, .07), transparent 30%),
+    var(--bg);
+}
+
+.app-shell {
+  max-width: 520px;
+  padding: 10px 14px calc(112px + env(safe-area-inset-bottom));
+}
+
+.hero {
+  border-color: rgba(91, 142, 231, .45);
+  background:
+    radial-gradient(160% 120% at 8% 0%, rgba(42, 134, 255, .35), transparent 55%),
+    linear-gradient(125deg, rgba(14, 29, 55, .96), rgba(9, 20, 39, .84));
+  box-shadow: 0 16px 34px rgba(1, 9, 23, .62);
+}
+
+.card {
+  border-color: rgba(74, 114, 181, .34);
+  background:
+    linear-gradient(165deg, rgba(46, 88, 166, .14), rgba(10, 17, 31, 0) 32%),
+    linear-gradient(180deg, var(--card), var(--card-2));
+  box-shadow:
+    inset 0 1px 0 rgba(168, 202, 255, .08),
+    0 14px 34px rgba(0, 0, 0, .5);
+}
+
+.section-title {
+  color: #f4f8ff;
+  font-size: 1.03rem;
+  font-weight: 800;
+}
+
+.primary-button {
+  color: #f8fbff;
+  background: linear-gradient(135deg, #2f8fff, #2a6bff);
+  box-shadow:
+    0 14px 30px rgba(23, 96, 255, .4),
+    inset 0 1px 0 rgba(220, 236, 255, .35),
+    inset 0 -2px 0 rgba(0, 0, 0, .25);
+}
+
+.primary-action {
+  border-radius: 20px;
+}
+
+.ghost-btn,
+.outline-link {
+  border-color: rgba(100, 139, 204, .42);
+  background: linear-gradient(180deg, rgba(17, 28, 49, .94), rgba(12, 21, 40, .94));
+  color: #d9e8ff;
+}
+
+.outline-link:hover,
+.ghost-btn:hover {
+  border-color: rgba(130, 169, 236, .72);
+  background: linear-gradient(180deg, rgba(22, 36, 62, .98), rgba(16, 28, 52, .98));
+}
+
+.chips { gap: 8px; }
+
+.chip {
+  border-color: rgba(109, 146, 207, .42);
+  background: linear-gradient(180deg, rgba(18, 31, 53, .94), rgba(14, 24, 43, .94));
+  color: #e8f1ff;
+  font-size: .72rem;
+  padding: 7px 11px;
+}
+
+.chip.success,
+.status-success {
+  border-color: rgba(31, 215, 157, .56);
+  background: linear-gradient(180deg, rgba(10, 61, 45, .92), rgba(8, 43, 33, .92));
+  color: #bfffe7;
+}
+
+.chip.warning,
+.status-warning {
+  border-color: rgba(255, 207, 82, .56);
+  background: linear-gradient(180deg, rgba(72, 57, 16, .92), rgba(56, 42, 10, .92));
+  color: #ffe7a5;
+}
+
+.chip.danger,
+.status-danger {
+  border-color: rgba(255, 90, 110, .58);
+  background: linear-gradient(180deg, rgba(83, 26, 39, .92), rgba(58, 17, 27, .92));
+  color: #ffd0d8;
+}
+
+.chip.violet {
+  border-color: rgba(143, 124, 255, .58);
+  background: linear-gradient(180deg, rgba(52, 39, 96, .92), rgba(37, 28, 71, .92));
+  color: #ddd4ff;
+}
+
+.chip.orange {
+  border-color: rgba(255, 154, 77, .58);
+  background: linear-gradient(180deg, rgba(86, 46, 15, .92), rgba(61, 31, 10, .92));
+  color: #ffe1c4;
+}
+
+.app-topbar {
+  margin-bottom: 6px;
+  background: linear-gradient(180deg, rgba(5, 8, 16, .96), rgba(5, 8, 16, .6), transparent);
+}
+
+.app-brand-main {
+  letter-spacing: -.03em;
+  text-shadow: 0 8px 20px rgba(8, 26, 56, .4);
+}
+
+.app-brand-pro {
+  color: var(--accent);
+}
+
+.bottom-nav {
+  width: min(520px, calc(100vw - 26px));
+  border-radius: 22px;
+  border-color: rgba(90, 136, 213, .42);
+  background:
+    linear-gradient(180deg, rgba(6, 11, 22, .96), rgba(6, 11, 22, .92)),
+    radial-gradient(95% 120% at 50% -15%, rgba(47, 143, 255, .34), transparent 70%);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, .48);
+}
+
+.bottom-nav-item {
+  border-radius: 14px;
+  color: #92abd3;
+}
+
+.bottom-nav-item.active {
+  border-color: rgba(106, 161, 248, .65);
+  background: linear-gradient(140deg, rgba(47, 143, 255, .52), rgba(24, 84, 196, .48));
+}
+
+.history-item-image {
+  height: 138px;
+  border-radius: 16px;
+}
+
+.dashboard-quick-chip {
+  border-color: rgba(119, 164, 235, .36);
+  background: linear-gradient(180deg, rgba(16, 30, 55, .96), rgba(12, 23, 44, .96));
+}
+
+.dashboard-progress-track {
+  border-color: rgba(87, 129, 198, .4);
+  background: rgba(8, 15, 31, .95);
+}
+
+.dashboard-progress-track span {
+  background: linear-gradient(90deg, #2f8fff, #36d2ff);
+  box-shadow: 0 0 16px rgba(47, 143, 255, .44);
+}
+
+.progress-bar-track {
+  border-color: rgba(91, 133, 199, .45);
+  background: rgba(8, 15, 31, .95);
+}
+
+.progress-bar-track i {
+  background: linear-gradient(90deg, #2f8fff, #35d4ff);
+  box-shadow: 0 0 12px rgba(47, 143, 255, .36);
+}
+
+.progress-donut-center {
+  background: linear-gradient(180deg, #0f1a2f, #0b1425);
+  border-color: rgba(93, 139, 208, .4);
+}
+
+.exercise-pro-header {
+  border-color: rgba(96, 141, 217, .45);
+  background:
+    radial-gradient(130% 150% at 0% 0%, rgba(47, 143, 255, .25), transparent 58%),
+    linear-gradient(135deg, rgba(17, 35, 66, .94), rgba(12, 22, 41, .94));
+}
+
+.exercise-step-badge {
+  box-shadow: 0 10px 20px rgba(27, 110, 243, .35);
+}
+
+.workout-card {
+  border-color: rgba(88, 130, 199, .36);
+  background: linear-gradient(180deg, rgba(16, 28, 51, .96), rgba(10, 20, 38, .96));
+}
+
+.workout-card.light {
+  border-color: rgba(88, 130, 199, .36);
+  background: linear-gradient(180deg, rgba(16, 28, 51, .96), rgba(10, 20, 38, .96));
+  color: #f3f8ff;
+}
+
+.workout-card.light .muted {
+  color: #a5b7da;
+}
+
+.workout-reps-control strong {
+  color: #f7fbff;
+  text-shadow: 0 10px 20px rgba(0, 0, 0, .42);
+}
+
+.workout-validate-main {
+  background: linear-gradient(135deg, #2f8fff, #2a6bff);
+  box-shadow:
+    0 16px 34px rgba(20, 94, 255, .45),
+    inset 0 1px 0 rgba(210, 231, 255, .32);
+}
+
+.workout-rest-screen .outline-link {
+  border-color: rgba(255, 207, 82, .5);
+  color: #ffe6a2;
+  background: linear-gradient(180deg, rgba(72, 57, 16, .4), rgba(56, 42, 10, .4));
+}
+
+.workout-rest-timer-xl {
+  color: #f8fbff;
+  text-shadow:
+    0 0 24px rgba(53, 212, 255, .32),
+    0 0 14px rgba(42, 134, 255, .4);
+}
+
+.muted {
+  color: #9fb2d5;
+}
+
+@media (max-width: 640px) {
+  .hero h1,
+  .exercise-pro-header h1 {
+    font-size: clamp(1.42rem, 7.2vw, 1.9rem);
+  }
+
+  .card {
+    border-radius: 20px;
+    padding: 13px;
+  }
+
+  .primary-button,
+  .ghost-btn,
+  .outline-link {
+    min-height: 46px;
+  }
+
+  .bottom-nav-item {
+    font-size: .63rem;
+  }
+}

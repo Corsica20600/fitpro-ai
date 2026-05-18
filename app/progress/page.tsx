@@ -71,11 +71,11 @@ export default async function ProgressPage(props: { searchParams: Promise<Record
       <section className="card">
         <h2 className="section-title">Stats principales</h2>
         <div className="chips">
-          <span className="chip">Seances semaine: {data.headline.weeklySessions}</span>
-          <span className="chip">Volume semaine: {Math.round(data.headline.weeklyVolume)} kg</span>
+          <span className="chip violet">Seances semaine: {data.headline.weeklySessions}</span>
+          <span className="chip success">Volume semaine: {Math.round(data.headline.weeklyVolume)} kg</span>
           <span className="chip">Series totales: {data.headline.totalSets}</span>
-          <span className="chip">Duree moyenne: {formatDuration(data.headline.averageDuration)}</span>
-          <span className="chip">Exo le plus travaille: {data.headline.mostWorkedExercise}</span>
+          <span className="chip warning">Duree moyenne: {formatDuration(data.headline.averageDuration)}</span>
+          <span className="chip orange">Exo le plus travaille: {data.headline.mostWorkedExercise}</span>
         </div>
       </section>
 

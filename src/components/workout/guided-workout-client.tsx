@@ -509,10 +509,10 @@ export function GuidedWorkoutClient({
         <p className="eyebrow">Seance terminee</p>
         <h2 className="section-title" style={{ fontSize: "1.25rem", margin: 0 }}>Bon travail</h2>
         <div className="chips" style={{ justifyContent: "center" }}>
-          <span className="chip">Duree: {formatDuration(summary.durationSeconds)}</span>
-          <span className="chip">Exercices: {summary.exercisesCount}</span>
+          <span className="chip warning">Duree: {formatDuration(summary.durationSeconds)}</span>
+          <span className="chip violet">Exercices: {summary.exercisesCount}</span>
           <span className="chip">Series: {summary.setsCount}</span>
-          <span className="chip">Volume: {Math.round(summary.volumeTotal)} kg</span>
+          <span className="chip success">Volume: {Math.round(summary.volumeTotal)} kg</span>
         </div>
         <PrimaryAction type="button" onClick={() => router.push("/dashboard")}>Terminer</PrimaryAction>
         <button type="button" className="outline-link" onClick={() => router.push("/workout")}>Recommencer</button>
@@ -572,6 +572,7 @@ export function GuidedWorkoutClient({
     return (
       <section className="card workout-rest-screen">
         <p className="eyebrow">Repos</p>
+        <span className="chip warning">Recuperation en cours</span>
         <div className="workout-rest-timer-xl">
           {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
         </div>
@@ -584,6 +585,7 @@ export function GuidedWorkoutClient({
     return (
       <section className="card workout-active-screen">
         <p className="eyebrow">Seance complete</p>
+        <span className="chip success">Objectif atteint</span>
         <h2 className="workout-active-title">Terminer la seance</h2>
         <PrimaryAction type="button" className="workout-validate-main" onClick={onCompleteWorkout} disabled={ending}>
           {ending ? "..." : "Valider"}

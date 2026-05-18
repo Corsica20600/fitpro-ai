@@ -80,10 +80,10 @@ export default async function HistoryPage() {
                 <p className="eyebrow">{formatDate(session.startedAt ?? session.createdAt)} · {session.status === "COMPLETED" ? "Terminee" : "Brouillon"}</p>
                 <h2 className="section-title">{session.title}</h2>
                 <div className="chips">
-                  <span className="chip">Exercices: {session.exerciseCount}</span>
+                  <span className="chip violet">Exercices: {session.exerciseCount}</span>
                   <span className="chip">Series: {session.setsCount}</span>
-                  <span className="chip">Volume: {Math.round(session.totalVolume)} kg</span>
-                  <span className="chip">Duree: {formatDuration(session.durationSeconds)}</span>
+                  <span className="chip success">Volume: {Math.round(session.totalVolume)} kg</span>
+                  <span className="chip warning">Duree: {formatDuration(session.durationSeconds)}</span>
                 </div>
               </Link>
             );

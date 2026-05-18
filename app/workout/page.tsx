@@ -44,6 +44,7 @@ export default async function WorkoutPage() {
             <PrimaryAction type="submit">Demarrer</PrimaryAction>
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
+            <span className="chip warning">Conseil: lance ta playlist avant la premiere serie</span>
             <AppShortcutLink
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}
@@ -56,6 +57,7 @@ export default async function WorkoutPage() {
         <WorkoutCard light>
           <h2 className="section-title">Aucun exercice disponible</h2>
           <p className="muted">Importez d&apos;abord des exercices pour lancer une seance guidee.</p>
+          <span className="chip danger">Action requise: ajoute au moins un exercice</span>
           <AppShortcutLink
             label={`Ouvrir ${spotifyIntegration.appName}`}
             deepLinkUrl={spotifyIntegration.deepLinkUrl}
@@ -67,6 +69,7 @@ export default async function WorkoutPage() {
         <>
           <WorkoutCard light>
             <p className="eyebrow">Focus musique</p>
+            <span className="chip orange">Mode focus actif</span>
             <AppShortcutLink
               label={`Ouvrir ${spotifyIntegration.appName}`}
               deepLinkUrl={spotifyIntegration.deepLinkUrl}

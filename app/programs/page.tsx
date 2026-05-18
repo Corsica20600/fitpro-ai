@@ -84,8 +84,10 @@ export default async function ProgramsPage() {
               <p className="eyebrow">{goalToFr(program.goal)} · {levelToFr(program.level)}</p>
               <h2 className="section-title">{program.name}</h2>
               <div className="chips">
-                <span className="chip">Statut: {statusToFr(program.status)}</span>
-                <span className="chip">Seance unique</span>
+                <span className={`chip ${program.status === "ACTIVE" ? "success" : program.status === "ARCHIVED" ? "danger" : "warning"}`}>
+                  Statut: {statusToFr(program.status)}
+                </span>
+                <span className="chip violet">Seance unique</span>
               </div>
               <div className="grid-2" style={{ marginTop: 10 }}>
                 <form action={setProgramStatusAction}>
@@ -98,7 +100,7 @@ export default async function ProgramsPage() {
                 <form action={setProgramStatusAction}>
                   <input type="hidden" name="programId" value={program.id} />
                   <input type="hidden" name="status" value="ARCHIVED" />
-                  <button className="ghost-btn" type="submit">Archiver</button>
+                  <button className="ghost-btn chip danger" type="submit">Archiver</button>
                 </form>
               </div>
               <div className="stack" style={{ marginTop: 16 }}>
@@ -106,7 +108,7 @@ export default async function ProgramsPage() {
                   <details key={day.id} className="card">
                     <summary className="day-summary">
                       <span>{day.title || program.name}</span>
-                      <span className="chip">{day.exercises.length} exos</span>
+                      <span className="chip orange">{day.exercises.length} exos</span>
                     </summary>
                     <p className="eyebrow">Seance du programme</p>
                     <form action={renameProgramDayAction} className="form-grid">
@@ -171,7 +173,7 @@ export default async function ProgramsPage() {
                                 </div>
                                 <div className="grid-2">
                                   <PrimaryButton type="submit">Modifier</PrimaryButton>
-                                  <button className="ghost-btn" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
+                                  <button className="ghost-btn chip danger" type="submit" formAction={deleteProgramExerciseAction}>Retirer</button>
                                 </div>
                               </form>
                               <div className="grid-2" style={{ marginTop: 8 }}>

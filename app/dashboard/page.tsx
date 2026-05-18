@@ -68,8 +68,10 @@ export default async function DashboardPage() {
 
       {selectedProgram ? (
         <section className="dashboard-mini-stats">
-          <span className="chip">Programme: {selectedProgram.name}</span>
-          <span className="chip">Statut: {selectedProgramStatus ?? "Inconnu"}</span>
+          <span className="chip violet">Programme: {selectedProgram.name}</span>
+          <span className={`chip ${selectedProgram?.status === "ACTIVE" ? "success" : selectedProgram?.status === "ARCHIVED" ? "danger" : "warning"}`}>
+            Statut: {selectedProgramStatus ?? "Inconnu"}
+          </span>
         </section>
       ) : null}
     </AppShell>
