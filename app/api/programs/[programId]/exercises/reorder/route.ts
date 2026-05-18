@@ -52,14 +52,25 @@ export async function PATCH(
     return NextResponse.json({ ok: true, updated: unchanged });
   }
 
+  // Avoid unique constraint collision on (programDayId, orderIndex) during swap.
+  const maxInDay = await prisma.programExercise.aggregate({
+    where: { programDayId: current.programDayId },
+    _max: { orderIndex: true },
+  });
+  const tempOrderIndex = (maxInDay._max.orderIndex ?? 0) + 1000;
+
   await prisma.$transaction([
     prisma.programExercise.update({
       where: { id: current.id },
-      data: { orderIndex: sibling.orderIndex },
+      data: { orderIndex: tempOrderIndex },
     }),
     prisma.programExercise.update({
       where: { id: sibling.id },
       data: { orderIndex: current.orderIndex },
+    }),
+    prisma.programExercise.update({
+      where: { id: current.id },
+      data: { orderIndex: sibling.orderIndex },
     }),
   ]);
 
@@ -71,4 +82,3 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true, updated });
 }
-

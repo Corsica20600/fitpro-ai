@@ -187,11 +187,14 @@ export function ProgramDayExercisesEditor({
   const ids = useMemo(() => exercises.map((item) => item.id), [exercises]);
 
   async function persistMove(exerciseId: string, direction: "up" | "down") {
-    await fetch(`/api/programs/${encodeURIComponent(programId)}/exercises/reorder`, {
+    const res = await fetch(`/api/programs/${encodeURIComponent(programId)}/exercises/reorder`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ exerciseId, direction }),
     });
+    if (!res.ok) {
+      throw new Error(`reorder_failed_${res.status}`);
+    }
   }
 
   async function onDragEnd(event: DragEndEvent) {
@@ -245,4 +248,3 @@ export function ProgramDayExercisesEditor({
     </DndContext>
   );
 }
-
