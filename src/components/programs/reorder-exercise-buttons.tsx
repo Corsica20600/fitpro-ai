@@ -37,11 +37,12 @@ export function ReorderExerciseButtons({
     <div className="reorder-controls" aria-label="Reordonner exercice">
       <button
         type="button"
-        className="reorder-btn"
-        disabled={isFirst || busy !== null}
+        className={`reorder-btn ${isFirst ? "is-disabled" : ""}`}
+        disabled={busy !== null}
         onClick={() => void move("up")}
         aria-label="Monter l'exercice"
-        title="Monter"
+        aria-disabled={isFirst}
+        title={isFirst ? "Premier exercice (impossible de monter)" : "Monter"}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 5.5 5.8 11.7a1 1 0 1 0 1.4 1.4L11 9.3V18a1 1 0 1 0 2 0V9.3l3.8 3.8a1 1 0 1 0 1.4-1.4z" />
@@ -49,11 +50,12 @@ export function ReorderExerciseButtons({
       </button>
       <button
         type="button"
-        className="reorder-btn"
-        disabled={isLast || busy !== null}
+        className={`reorder-btn ${isLast ? "is-disabled" : ""}`}
+        disabled={busy !== null}
         onClick={() => void move("down")}
         aria-label="Descendre l'exercice"
-        title="Descendre"
+        aria-disabled={isLast}
+        title={isLast ? "Dernier exercice (impossible de descendre)" : "Descendre"}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 18.5 18.2 12.3a1 1 0 1 0-1.4-1.4L13 14.7V6a1 1 0 1 0-2 0v8.7l-3.8-3.8a1 1 0 1 0-1.4 1.4z" />
@@ -62,4 +64,3 @@ export function ReorderExerciseButtons({
     </div>
   );
 }
-

@@ -341,6 +341,10 @@ button, input, select { font-family: inherit; }
   cursor: not-allowed;
 }
 
+.reorder-btn.is-disabled {
+  opacity: .42;
+}
+
 .exercise-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
