@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
   closestCenter,
   DndContext,
@@ -61,6 +61,7 @@ function SortableExerciseCard({
   updateAction,
   deleteAction,
   replaceAction,
+  onReplace,
 }: {
   ex: DayExercise;
   idx: number;
@@ -70,6 +71,7 @@ function SortableExerciseCard({
   updateAction: (formData: FormData) => void | Promise<void>;
   deleteAction: (formData: FormData) => void | Promise<void>;
   replaceAction: (formData: FormData) => void | Promise<void>;
+  onReplace: (programExerciseId: string, exerciseId: string) => Promise<void>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.id });
   const style = {
@@ -77,6 +79,20 @@ function SortableExerciseCard({
     transition,
     opacity: isDragging ? 0.92 : 1,
   };
+
+  const [replaceExerciseId, setReplaceExerciseId] = useState(ex.exerciseId);
+  const [replacing, setReplacing] = useState(false);
+
+  async function handleReplaceSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!replaceExerciseId || replaceExerciseId === ex.exerciseId || replacing) return;
+    setReplacing(true);
+    try {
+      await onReplace(ex.id, replaceExerciseId);
+    } finally {
+      setReplacing(false);
+    }
+  }
 
   return (
     <article ref={setNodeRef} style={style} className={`program-day-item ${isDragging ? "is-dragging" : ""}`}>
@@ -142,18 +158,25 @@ function SortableExerciseCard({
             <button className="ghost-btn chip danger" type="submit" formAction={deleteAction}>Retirer</button>
           </div>
         </form>
-        <form action={replaceAction} className="form-grid" style={{ marginTop: 8 }}>
+        <form action={replaceAction} onSubmit={(event) => { void handleReplaceSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>
           <input type="hidden" name="programId" value={programId} />
           <input type="hidden" name="programExerciseId" value={ex.id} />
           <label className="field-label">Remplacer par</label>
-          <select name="exerciseId" className="input" defaultValue={ex.exerciseId}>
+          <select
+            name="exerciseId"
+            className="input"
+            value={replaceExerciseId}
+            onChange={(event) => setReplaceExerciseId(event.target.value)}
+          >
             {exerciseOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>
                 {(opt.nameFr || opt.name)} · {(opt.primaryMusclesFr[0] || opt.primaryMuscles[0] || "Full body")}
               </option>
             ))}
           </select>
-          <PrimaryButton type="submit">Remplacer l&apos;exercice</PrimaryButton>
+          <PrimaryButton type="submit" disabled={replacing || replaceExerciseId === ex.exerciseId}>
+            {replacing ? "Remplacement..." : "Remplacer l&apos;exercice"}
+          </PrimaryButton>
         </form>
         <div className="chips" style={{ marginTop: 8 }}>
           <span className="chip muted">Position : {idx + 1}/{total}</span>
@@ -179,6 +202,10 @@ export function ProgramDayExercisesEditor({
   replaceAction: (formData: FormData) => void | Promise<void>;
 }) {
   const [exercises, setExercises] = useState(initialExercises);
+  const [replaceFeedback, setReplaceFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
@@ -221,6 +248,47 @@ export function ProgramDayExercisesEditor({
     }
   }
 
+  async function onReplace(programExerciseId: string, exerciseId: string) {
+    setReplaceFeedback(null);
+    const response = await fetch(
+      `/api/programs/${encodeURIComponent(programId)}/exercises/${encodeURIComponent(programExerciseId)}/replace`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ exerciseId }),
+      },
+    );
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      setReplaceFeedback({
+        type: "error",
+        message: payload.error || "Impossible de remplacer cet exercice.",
+      });
+      return;
+    }
+
+    const payload = await response.json() as {
+      programExerciseId: string;
+      exerciseId: string;
+      exercise: DayExercise["exercise"];
+    };
+
+    setExercises((prev) =>
+      prev.map((item) => (
+        item.id === payload.programExerciseId
+          ? {
+              ...item,
+              exerciseId: payload.exerciseId,
+              exercise: payload.exercise,
+            }
+          : item
+      )),
+    );
+    setReplaceFeedback({ type: "success", message: "Exercice remplacé." });
+    window.setTimeout(() => setReplaceFeedback(null), 1800);
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -230,6 +298,15 @@ export function ProgramDayExercisesEditor({
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className="program-day-list">
+          {replaceFeedback ? (
+            <p
+              className={replaceFeedback.type === "success" ? "status-success" : "status-danger"}
+              role="status"
+              aria-live="polite"
+            >
+              {replaceFeedback.message}
+            </p>
+          ) : null}
           {exercises.map((ex, idx) => (
             <SortableExerciseCard
               key={ex.id}
@@ -241,6 +318,7 @@ export function ProgramDayExercisesEditor({
               updateAction={updateAction}
               deleteAction={deleteAction}
               replaceAction={replaceAction}
+              onReplace={onReplace}
             />
           ))}
         </div>
