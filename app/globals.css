@@ -1881,3 +1881,15 @@ body {
     font-size: .63rem;
   }
 }
+
+/* Hide Vercel floating overlays/badges on mobile */
+@media (max-width: 900px) {
+  #vercel-live-feedback,
+  [data-vercel-toolbar],
+  [id*="vercel"][style*="position: fixed"],
+  [class*="vercel"][style*="position: fixed"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}

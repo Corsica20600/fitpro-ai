@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
@@ -38,6 +39,7 @@ function statusToFr(status: string) {
 }
 
 export default async function ProgramsPage() {
+  await connection();
   const [programs, exerciseOptions] = await Promise.all([
     getProgramsForDemoUser(),
     getExerciseOptionsForPrograms(2000),
