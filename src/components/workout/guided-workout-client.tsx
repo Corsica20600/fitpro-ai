@@ -317,12 +317,11 @@ export function GuidedWorkoutClient({
           return prev === next ? prev : next;
         });
         setRestChoice(getPlannedRestForIndex(exerciseIndexFromWatch));
-        setRestRemaining((prev) => {
+        setRestRemaining(() => {
           if (restFromWatch === 0 && skipRestRequestedRef.current) {
             skipRestRequestedRef.current = false;
             return 0;
           }
-          if (prev > 0 && restFromWatch === 0) return prev;
           return restFromWatch;
         });
         if (restFromWatch > 0) {
@@ -440,8 +439,11 @@ export function GuidedWorkoutClient({
         }
         setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
         setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
-        setRestRemaining((prev) => {
-          if (prev > 0 && strictRest === 0) return prev;
+        setRestRemaining(() => {
+          if (strictRest === 0 && skipRestRequestedRef.current) {
+            skipRestRequestedRef.current = false;
+            return 0;
+          }
           return strictRest;
         });
         if (strictRest > 0) {
@@ -540,6 +542,10 @@ export function GuidedWorkoutClient({
   const activeReps = activeSet ? Math.max(1, repsByKey[activeKey] ?? activeSet.plannedReps) : 10;
   const weightFromCompleted = activeSet?.existing?.actualWeightKg ?? null;
   const activeWeight = activeSet ? Math.max(0, weightByKey[activeKey] ?? weightFromCompleted ?? exercise.plannedWeightKg ?? 0) : 0;
+  const currentExercisePosition = Math.max(1, Math.min(exercises.length, exerciseIndex + 1));
+  const totalExercises = Math.max(1, exercises.length);
+  const currentSetPosition = Math.max(1, Math.min(setRows.length || 1, nextSetIndex));
+  const currentSetTargetReps = activeSet?.plannedReps ?? (setRows[0]?.plannedReps ?? 10);
 
   function canTapToValidate() {
     return Boolean(activeSet) && !ending && restRemaining <= 0 && !isWorkoutDone;
@@ -585,6 +591,10 @@ export function GuidedWorkoutClient({
       <section className="card workout-rest-screen">
         <p className="eyebrow">Repos</p>
         <span className="chip warning">Récupération en cours</span>
+        <p className="workout-active-set">
+          Exercice {currentExercisePosition}/{totalExercises} · Série {currentSetPosition}/{Math.max(1, setRows.length)}
+        </p>
+        <p className="muted">Ensuite: {exercise.nameFr || exercise.name} · Cible {currentSetTargetReps} reps</p>
         <p className="muted">Repos terminé, on repart.</p>
         <div className="workout-rest-timer-xl">
           {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
@@ -622,6 +632,7 @@ export function GuidedWorkoutClient({
       />
       <div className="workout-hero-body workout-active-body">
         <h2 className="workout-active-title">{exercise.nameFr || exercise.name}</h2>
+        <p className="workout-active-set">Exercice {currentExercisePosition}/{totalExercises}</p>
         <p className="workout-active-set">Série {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
         <p className="muted">
           {Math.min(nextSetIndex, setRows.length) === setRows.length

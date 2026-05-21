@@ -17,7 +17,7 @@ export default async function WorkoutPage() {
     ? lastPerformedProgramId
     : (programs.find((program) => program.status === "ACTIVE")?.id ?? "");
   const heroTitle = currentSession
-    ? (heroExercise?.nameFr || heroExercise?.name || currentSession.title || "Séance du jour")
+    ? (currentSession.title || "Séance du jour")
     : "Séance guidée";
   const heroImage = heroExercise?.fallbackImagePath || heroExercise?.fallbackThumbnailPath || "/media/exercises/air-bike/0.jpg";
 

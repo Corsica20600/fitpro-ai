@@ -175,7 +175,7 @@ function SortableExerciseCard({
             ))}
           </select>
           <PrimaryButton type="submit" disabled={replacing || replaceExerciseId === ex.exerciseId}>
-            {replacing ? "Remplacement..." : "Remplacer l&apos;exercice"}
+            {replacing ? "Remplacement..." : "Remplacer l'exercice"}
           </PrimaryButton>
         </form>
         <div className="chips" style={{ marginTop: 8 }}>
