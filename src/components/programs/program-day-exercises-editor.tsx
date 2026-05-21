@@ -155,7 +155,7 @@ function SortableExerciseCard({
           </div>
           <div className="grid-2">
             <PrimaryButton type="submit">Modifier</PrimaryButton>
-            <button className="ghost-btn chip danger" type="submit" formAction={deleteAction}>Retirer</button>
+            <button className="ghost-btn chip danger" type="submit" formAction={deleteAction} formNoValidate>Retirer</button>
           </div>
         </form>
         <form action={replaceAction} onSubmit={(event) => { void handleReplaceSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>

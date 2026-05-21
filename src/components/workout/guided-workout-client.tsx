@@ -75,8 +75,8 @@ type WakeLockNavigator = Navigator & {
   };
 };
 
-function buildPlannedReps(exercise: WorkoutExercise) {
-  const setsCount = Math.max(1, Math.min(8, exercise.plannedSets ?? PLANNED_REPS.length));
+function buildPlannedReps(exercise: WorkoutExercise, forcedSets?: number) {
+  const setsCount = Math.max(1, Math.min(12, forcedSets ?? exercise.plannedSets ?? PLANNED_REPS.length));
   const targetReps = exercise.plannedRepsMin ?? exercise.plannedRepsMax ?? null;
   return Array.from({ length: setsCount }, (_, idx) => targetReps ?? PLANNED_REPS[idx] ?? PLANNED_REPS[PLANNED_REPS.length - 1] ?? 10);
 }
@@ -114,6 +114,7 @@ export function GuidedWorkoutClient({
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
+  const [plannedSetsByExercise, setPlannedSetsByExercise] = useState<Record<string, number>>({});
   const [justValidated, setJustValidated] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -174,7 +175,7 @@ export function GuidedWorkoutClient({
 
   const exercise = exercises[exerciseIndex];
   const isActiveWorkoutSurface = restRemaining <= 0;
-  const plannedRepsForExercise = buildPlannedReps(exercise);
+  const plannedRepsForExercise = buildPlannedReps(exercise, plannedSetsByExercise[exercise.id]);
   const completedForExercise = completedSets
     .filter((item) => item.exerciseId === exercise.id)
     .sort((a, b) => a.setIndex - b.setIndex);
@@ -459,6 +460,40 @@ export function GuidedWorkoutClient({
     }
   }
 
+  async function onAdjustSets(delta: number) {
+    const currentSets = Math.max(1, setRows.length);
+    const minAllowedSets = Math.max(1, completedForExercise.length);
+    const desired = Math.max(minAllowedSets, Math.min(12, currentSets + delta));
+    if (desired === currentSets) return;
+
+    const previous = plannedSetsByExercise[exercise.id];
+    setPlannedSetsByExercise((prev) => ({ ...prev, [exercise.id]: desired }));
+
+    try {
+      const response = await fetch("/api/workout/adjust-sets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          exerciseId: exercise.id,
+          programExerciseId: exercise.programExerciseId,
+          nextSets: desired,
+        }),
+      });
+      if (!response.ok) throw new Error("adjust_failed");
+      const payload = await response.json() as { sets?: number };
+      const confirmed = Math.max(minAllowedSets, Math.min(12, Number(payload.sets ?? desired)));
+      setPlannedSetsByExercise((prev) => ({ ...prev, [exercise.id]: confirmed }));
+    } catch {
+      setPlannedSetsByExercise((prev) => {
+        const next = { ...prev };
+        if (previous == null) delete next[exercise.id];
+        else next[exercise.id] = previous;
+        return next;
+      });
+    }
+  }
+
   function goToExercise(nextIdx: number) {
     unlockRestAudio();
     const clamped = Math.max(0, Math.min(exercises.length - 1, nextIdx));
@@ -595,6 +630,11 @@ export function GuidedWorkoutClient({
           Exercice {currentExercisePosition}/{totalExercises} · Série {currentSetPosition}/{Math.max(1, setRows.length)}
         </p>
         <p className="muted">Ensuite: {exercise.nameFr || exercise.name} · Cible {currentSetTargetReps} reps</p>
+        <div className="workout-reps-control" style={{ justifyContent: "center", marginTop: 8 }}>
+          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
+          <strong>{Math.max(1, setRows.length)} séries</strong>
+          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
+        </div>
         <p className="muted">Repos terminé, on repart.</p>
         <div className="workout-rest-timer-xl">
           {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
@@ -634,6 +674,11 @@ export function GuidedWorkoutClient({
         <h2 className="workout-active-title">{exercise.nameFr || exercise.name}</h2>
         <p className="workout-active-set">Exercice {currentExercisePosition}/{totalExercises}</p>
         <p className="workout-active-set">Série {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
+        <div className="workout-reps-control" style={{ justifyContent: "center", marginTop: 6 }}>
+          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
+          <strong>{Math.max(1, setRows.length)} séries</strong>
+          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
+        </div>
         <p className="muted">
           {Math.min(nextSetIndex, setRows.length) === setRows.length
             ? "Dernière série, propre et contrôlée."
