@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# local external dataset clone (was previously a git submodule)
+data/external/free-exercise-db/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
