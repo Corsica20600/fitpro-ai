@@ -1886,10 +1886,19 @@ body {
 @media (max-width: 900px) {
   #vercel-live-feedback,
   [data-vercel-toolbar],
+  [data-vercel],
+  [data-vercel-live-feedback],
   [id*="vercel"][style*="position: fixed"],
-  [class*="vercel"][style*="position: fixed"] {
+  [class*="vercel"][style*="position: fixed"],
+  iframe[src*="vercel.app"],
+  iframe[src*="vercel.com"],
+  iframe[id*="vercel"],
+  iframe[name*="vercel"] {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 }

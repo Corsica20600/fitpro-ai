@@ -165,12 +165,18 @@ export default async function ProgramsPage() {
                   </details>
                 ))}
 
-                <ProgramExercisePicker
-                  programId={program.id}
-                  days={program.days.map((day) => ({ id: day.id, dayIndex: day.dayIndex, title: day.title }))}
-                  exercises={exerciseOptions}
-                  action={addExerciseToProgramDayAction}
-                />
+                <details className="card">
+                  <summary className="day-summary">
+                    <span>Ajouter un exercice</span>
+                    <span className="chip violet">Ouvrir</span>
+                  </summary>
+                  <ProgramExercisePicker
+                    programId={program.id}
+                    days={program.days.map((day) => ({ id: day.id, dayIndex: day.dayIndex, title: day.title }))}
+                    exercises={exerciseOptions}
+                    action={addExerciseToProgramDayAction}
+                  />
+                </details>
               </div>
             </section>
           ))
