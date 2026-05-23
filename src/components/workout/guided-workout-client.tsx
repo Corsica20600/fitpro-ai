@@ -630,7 +630,7 @@ export function GuidedWorkoutClient({
           Exercice {currentExercisePosition}/{totalExercises} · Série {currentSetPosition}/{Math.max(1, setRows.length)}
         </p>
         <p className="muted">Ensuite: {exercise.nameFr || exercise.name} · Cible {currentSetTargetReps} reps</p>
-        <div className="workout-reps-control" style={{ justifyContent: "center", marginTop: 8 }}>
+        <div className="workout-reps-control workout-sets-adjust" style={{ justifyContent: "center", marginTop: 8 }}>
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
           <strong>{Math.max(1, setRows.length)} séries</strong>
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
@@ -674,7 +674,7 @@ export function GuidedWorkoutClient({
         <h2 className="workout-active-title">{exercise.nameFr || exercise.name}</h2>
         <p className="workout-active-set">Exercice {currentExercisePosition}/{totalExercises}</p>
         <p className="workout-active-set">Série {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
-        <div className="workout-reps-control" style={{ justifyContent: "center", marginTop: 6 }}>
+        <div className="workout-reps-control workout-sets-adjust" style={{ justifyContent: "center", marginTop: 6 }}>
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
           <strong>{Math.max(1, setRows.length)} séries</strong>
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>

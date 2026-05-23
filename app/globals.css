@@ -1496,31 +1496,31 @@ body {
   min-height: calc(100vh - 150px);
   display: grid;
   align-content: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .workout-active-body {
   display: grid;
-  gap: 14px;
-  padding: 14px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .workout-active-title {
   margin: 0;
-  font-size: clamp(1.5rem, 7vw, 2.1rem);
-  line-height: 1.05;
+  font-size: clamp(1.2rem, 5.4vw, 1.75rem);
+  line-height: 1.1;
 }
 
 .workout-active-set {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: .96rem;
   font-weight: 800;
   color: #d6e4ff;
 }
 
 .workout-active-reps {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .workout-active-reps span {
@@ -1532,27 +1532,27 @@ body {
 
 .workout-reps-control {
   display: grid;
-  grid-template-columns: 64px 1fr 64px;
+  grid-template-columns: 52px 1fr 52px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .workout-reps-control strong {
   text-align: center;
-  font-size: clamp(2rem, 12vw, 3rem);
+  font-size: clamp(1.35rem, 8.2vw, 2.1rem);
   line-height: 1;
 }
 
 .workout-reps-control .ghost-btn {
-  min-height: 58px;
-  font-size: 1.6rem;
+  min-height: 46px;
+  font-size: 1.15rem;
   font-weight: 900;
 }
 
 .workout-validate-main {
-  min-height: 84px;
-  font-size: 1.2rem;
-  border-radius: 22px;
+  min-height: 66px;
+  font-size: 1rem;
+  border-radius: 18px;
 }
 
 .workout-rest-screen {
@@ -1560,15 +1560,30 @@ body {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 16px;
+  gap: 8px;
   text-align: center;
 }
 
 .workout-rest-timer-xl {
-  font-size: clamp(3rem, 20vw, 5rem);
+  font-size: clamp(1.7rem, 10.2vw, 2.5rem);
   font-weight: 900;
-  line-height: .92;
-  letter-spacing: .04em;
+  line-height: .98;
+  letter-spacing: .01em;
+}
+
+.workout-sets-adjust {
+  grid-template-columns: 46px minmax(0, 1fr) 46px;
+  gap: 6px;
+}
+
+.workout-sets-adjust .ghost-btn {
+  min-height: 40px;
+  font-size: 1rem;
+  border-radius: 14px;
+}
+
+.workout-sets-adjust strong {
+  font-size: clamp(1.2rem, 7.5vw, 1.75rem);
 }
 
 /* Premium fitness theme override */
@@ -1716,23 +1731,32 @@ body {
 }
 
 .bottom-nav {
-  width: min(520px, calc(100vw - 26px));
-  border-radius: 22px;
+  width: min(520px, calc(100vw - 24px));
+  border-radius: 18px;
   border-color: rgba(90, 136, 213, .42);
   background:
     linear-gradient(180deg, rgba(6, 11, 22, .96), rgba(6, 11, 22, .92)),
     radial-gradient(95% 120% at 50% -15%, rgba(47, 143, 255, .34), transparent 70%);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, .48);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, .42);
+  padding: 5px;
 }
 
 .bottom-nav-item {
-  border-radius: 14px;
+  border-radius: 12px;
   color: #92abd3;
+  gap: 3px;
+  padding: 6px 2px 5px;
+  font-size: .6rem;
 }
 
 .bottom-nav-item.active {
   border-color: rgba(106, 161, 248, .65);
   background: linear-gradient(140deg, rgba(47, 143, 255, .52), rgba(24, 84, 196, .48));
+}
+
+.bottom-nav-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .history-item-image {
