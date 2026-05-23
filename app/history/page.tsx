@@ -12,6 +12,8 @@ function formatDate(date: Date) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Paris",
   }).format(date);
 }
 
