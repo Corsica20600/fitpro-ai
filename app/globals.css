@@ -557,11 +557,15 @@ button, input, select { font-family: inherit; }
   border: 1px solid rgba(255, 255, 255, .42);
 }
 .exercise-step-title {
-  margin: 4px 0 8px;
+  margin: 0 0 8px 36px;
   font-size: .95rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .03em;
+  line-height: 1.2;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
 }
 .exercise-pro-panels {
   display: grid;
