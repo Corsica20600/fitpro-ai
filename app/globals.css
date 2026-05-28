@@ -566,6 +566,7 @@ button, input, select { font-family: inherit; }
   min-height: 28px;
   display: flex;
   align-items: center;
+  transform: translateY(-2px);
 }
 .exercise-pro-panels {
   display: grid;
