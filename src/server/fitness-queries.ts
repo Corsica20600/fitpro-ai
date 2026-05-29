@@ -564,7 +564,9 @@ export async function getWorkoutPageData() {
     });
 
     if (sessionProgram) {
-      const dayForToday = sessionProgram.days[0] ?? null;
+      const dayForToday = currentSession.programDayId
+        ? (sessionProgram.days.find((day) => day.id === currentSession.programDayId) ?? sessionProgram.days[0] ?? null)
+        : (sessionProgram.days[0] ?? null);
 
       if (dayForToday) {
         sessionExercises = dayForToday.exercises.map((programExercise) => ({

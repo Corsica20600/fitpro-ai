@@ -112,6 +112,7 @@ export function GuidedWorkoutClient({
   );
   const [ending, setEnding] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
+  const [completionError, setCompletionError] = useState<string | null>(null);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
   const [plannedSetsByExercise, setPlannedSetsByExercise] = useState<Record<string, number>>({});
@@ -527,12 +528,27 @@ export function GuidedWorkoutClient({
   async function onCompleteWorkout() {
     unlockRestAudio();
     setEnding(true);
+    setCompletionError(null);
     const response = await fetch("/api/workout/complete", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ sessionId }),
     });
     if (!response.ok) {
+      if (response.status === 409) {
+        const payload = await response.json() as {
+          error?: string;
+          missingSets?: Array<{ exerciseName?: string; missingSets?: number }>;
+        };
+        const topMissing = payload.missingSets?.slice(0, 3).map((item) => {
+          const name = item.exerciseName ?? "Exercice";
+          const missing = Math.max(1, Number(item.missingSets ?? 1));
+          return `${name} (${missing})`;
+        }) ?? [];
+        setCompletionError(topMissing.length > 0
+          ? `Séries manquantes: ${topMissing.join(", ")}${(payload.missingSets?.length ?? 0) > 3 ? "..." : ""}`
+          : "Séries manquantes détectées. Termine les séries avant de valider.");
+      }
       setEnding(false);
       return;
     }
@@ -743,6 +759,7 @@ export function GuidedWorkoutClient({
         >
           {ending ? "..." : "Finir la séance"}
         </button>
+        {completionError ? <p className="chip danger" style={{ margin: 0 }}>{completionError}</p> : null}
       </div>
     </section>
   );

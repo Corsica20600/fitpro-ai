@@ -52,7 +52,12 @@ async function resolveSession(sessionId?: string) {
   });
 }
 
-async function getOrderedExercisesForSession(session: { id: string; programId: string | null; sets: Array<{ exerciseId: string; exercise: { id: string; name: string; nameFr: string | null } }> }) {
+async function getOrderedExercisesForSession(session: {
+  id: string;
+  programId: string | null;
+  programDayId: string | null;
+  sets: Array<{ exerciseId: string; exercise: { id: string; name: string; nameFr: string | null } }>;
+}) {
   if (session.programId) {
     const program = await prisma.program.findUnique({
       where: { id: session.programId },
@@ -74,7 +79,9 @@ async function getOrderedExercisesForSession(session: { id: string; programId: s
     });
 
     if (program) {
-      const dayForToday = program.days[0] ?? null;
+      const dayForToday = session.programDayId
+        ? (program.days.find((day) => day.id === session.programDayId) ?? program.days[0] ?? null)
+        : (program.days[0] ?? null);
 
       if (dayForToday) {
         const fromProgramDay = dayForToday.exercises.map((item) => ({
