@@ -20,20 +20,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
   }
 
-  const payload = {
-    targetRepsMin: Number.isFinite(targetReps) && targetReps > 0 ? targetReps : null,
-    targetRepsMax: Number.isFinite(targetReps) && targetReps > 0 ? targetReps : null,
-    actualReps: Number.isFinite(actualReps as number) && (actualReps as number) > 0 ? (actualReps as number) : null,
-    actualWeightKg: Number.isFinite(actualWeightKg as number) && (actualWeightKg as number) >= 0 ? (actualWeightKg as number) : null,
-    restSeconds: Number.isFinite(restSeconds) ? Math.max(0, restSeconds) : 90,
-    isCompleted: true,
-    completedAt: new Date(),
-  };
-
   const existing = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: sessionId, exerciseId, setIndex },
     orderBy: { createdAt: "desc" },
   });
+  const latestPositiveWeightInSession = await prisma.workoutSet.findFirst({
+    where: {
+      workoutSessionId: sessionId,
+      exerciseId,
+      actualWeightKg: { gt: 0 },
+    },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    select: { actualWeightKg: true },
+  });
+  const latestPositiveWeightGlobal = await prisma.workoutSet.findFirst({
+    where: {
+      exerciseId,
+      actualWeightKg: { gt: 0 },
+    },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    select: { actualWeightKg: true },
+  });
+  const resolvedWeight = (() => {
+    const incoming = Number.isFinite(actualWeightKg as number) && (actualWeightKg as number) >= 0 ? (actualWeightKg as number) : null;
+    if (incoming != null && incoming > 0) return incoming;
+    if ((existing?.actualWeightKg ?? 0) > 0) return existing!.actualWeightKg!;
+    if ((latestPositiveWeightInSession?.actualWeightKg ?? 0) > 0) return latestPositiveWeightInSession!.actualWeightKg!;
+    if ((latestPositiveWeightGlobal?.actualWeightKg ?? 0) > 0) return latestPositiveWeightGlobal!.actualWeightKg!;
+    return incoming;
+  })();
+
+  const payload = {
+    targetRepsMin: Number.isFinite(targetReps) && targetReps > 0 ? targetReps : null,
+    targetRepsMax: Number.isFinite(targetReps) && targetReps > 0 ? targetReps : null,
+    actualReps: Number.isFinite(actualReps as number) && (actualReps as number) > 0 ? (actualReps as number) : null,
+    actualWeightKg: resolvedWeight,
+    restSeconds: Number.isFinite(restSeconds) ? Math.max(0, restSeconds) : 90,
+    isCompleted: true,
+    completedAt: new Date(),
+  };
   const syncedProgramExerciseId = await syncProgramExerciseTargets({
     workoutSessionId: sessionId,
     exerciseId,

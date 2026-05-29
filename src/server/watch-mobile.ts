@@ -186,11 +186,37 @@ export async function validateWatchSet(input: {
     orderBy: { createdAt: "desc" },
   });
 
+  const latestPositiveWeightInSession = await prisma.workoutSet.findFirst({
+    where: {
+      workoutSessionId: session.id,
+      exerciseId: currentExercise.exerciseId,
+      actualWeightKg: { gt: 0 },
+    },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    select: { actualWeightKg: true },
+  });
+  const latestPositiveWeightGlobal = await prisma.workoutSet.findFirst({
+    where: {
+      exerciseId: currentExercise.exerciseId,
+      actualWeightKg: { gt: 0 },
+    },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+    select: { actualWeightKg: true },
+  });
+  const resolvedWeight = (() => {
+    const incoming = input.weight == null ? null : Math.max(0, input.weight);
+    if (incoming != null && incoming > 0) return incoming;
+    if ((existing?.actualWeightKg ?? 0) > 0) return existing!.actualWeightKg!;
+    if ((latestPositiveWeightInSession?.actualWeightKg ?? 0) > 0) return latestPositiveWeightInSession!.actualWeightKg!;
+    if ((latestPositiveWeightGlobal?.actualWeightKg ?? 0) > 0) return latestPositiveWeightGlobal!.actualWeightKg!;
+    return incoming;
+  })();
+
   const payload = {
     targetRepsMin: currentExercise.targetReps,
     targetRepsMax: currentExercise.targetReps,
     actualReps: input.actualReps == null ? null : Math.max(1, Math.floor(input.actualReps)),
-    actualWeightKg: input.weight == null ? null : Math.max(0, input.weight),
+    actualWeightKg: resolvedWeight == null ? null : Math.max(0, resolvedWeight),
     restSeconds: currentExercise.restSeconds,
     isCompleted: true,
     completedAt: new Date(),

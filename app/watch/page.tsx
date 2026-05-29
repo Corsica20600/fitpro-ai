@@ -156,7 +156,7 @@ export default function WatchPage() {
         <div style={styles.grid}>
           <button style={styles.primary} disabled={!state || busy} onClick={() => void perform("/api/watch/validate-set", {
             actualReps: state?.targetReps ?? 10,
-            weight: state?.weight ?? 0,
+            weight: state?.weight ?? null,
           })}>
             Valider série
           </button>
