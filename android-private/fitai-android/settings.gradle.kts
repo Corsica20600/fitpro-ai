@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "FitAiPrivate"
 include(":app")
-
+include(":wear")

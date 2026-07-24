@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.fitai.wear-debug-48:/drawable-nodpi_fitai_favicon.png.flat",
+        "source": "com.fitai.wear-main-50:/drawable-nodpi/fitai_favicon.png"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\xml_full_backup_content.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\xml\\full_backup_content.xml"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\xml_data_extraction_rules.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\xml\\data_extraction_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-debug-48:\\drawable_ic_launcher_monochrome.xml.flat",
+        "source": "C:\\Users\\longi_vnjgmvk\\.gradle\\daemon\\9.0.0\\com.fitai.wear-main-50:\\drawable\\ic_launcher_monochrome.xml"
+    }
+]

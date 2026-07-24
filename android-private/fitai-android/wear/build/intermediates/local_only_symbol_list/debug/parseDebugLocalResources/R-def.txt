@@ -1,0 +1,9 @@
+R_DEF: Internal format may change without notice
+local
+color wear_background
+drawable fitai_favicon
+drawable ic_launcher_foreground
+string app_name
+style Theme.FitAiWear
+xml data_extraction_rules
+xml full_backup_content

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wear_background">#020713</color>
+    <string name="app_name">FitAI Pro Watch</string>
+    <style name="Theme.FitAiWear" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/wear_background</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+</resources>

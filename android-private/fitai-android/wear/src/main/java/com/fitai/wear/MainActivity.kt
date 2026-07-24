@@ -1,0 +1,398 @@
+package com.fitai.wear
+
+import android.os.Bundle
+import android.app.Activity
+import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.ButtonDefaults
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Scaffold
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.material.Vignette
+import androidx.wear.compose.material.VignettePosition
+import androidx.compose.runtime.collectAsState
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            FitAiWearApp()
+        }
+    }
+}
+
+@Composable
+private fun FitAiWearApp(viewModel: WatchViewModel = viewModel()) {
+    val state by viewModel.state.collectAsState()
+    val keepScreenOn = (state as? WatchScreenState.Ready)
+        ?.payload
+        ?.status != "COMPLETED" && state is WatchScreenState.Ready
+    KeepScreenOn(keepScreenOn)
+    MaterialTheme {
+        WatchChrome {
+            when (val current = state) {
+                WatchScreenState.Loading -> LoadingScreen()
+                is WatchScreenState.Empty -> EmptyScreen(current.message, viewModel::refresh)
+                is WatchScreenState.Ready -> ReadyScreen(current, viewModel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun KeepScreenOn(enabled: Boolean) {
+    val activity = LocalContext.current as? Activity
+    DisposableEffect(activity, enabled) {
+        if (enabled) {
+            activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+}
+
+@Composable
+private fun WatchChrome(content: @Composable () -> Unit) {
+    Scaffold(
+        timeText = { TimeText(modifier = Modifier.padding(top = 4.dp)) },
+        vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF173C7A),
+                            Color(0xFF07142C),
+                            Color(0xFF020713),
+                        ),
+                    ),
+                )
+                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 56.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("FitAI", fontSize = 24.sp, fontWeight = FontWeight.Black)
+        Text("Connexion...", color = Color(0xFFB7C9EA), fontSize = 13.sp)
+    }
+}
+
+@Composable
+private fun EmptyScreen(message: String, onRefresh: () -> Unit) {
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        item {
+            Text(
+                text = "Aucune séance",
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+            )
+        }
+        item {
+            Text(
+                text = message,
+                color = Color(0xFFB7C9EA),
+                textAlign = TextAlign.Center,
+                fontSize = 12.sp,
+                maxLines = 3,
+            )
+        }
+        item {
+            Spacer(Modifier.height(8.dp))
+            ActionChip("Actualiser", onClick = onRefresh, enabled = true)
+        }
+    }
+}
+
+@Composable
+private fun ReadyScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val payload = state.payload
+    val isResting = state.displayRestRemaining > 0
+    val isCompleted = payload.status == "COMPLETED"
+
+    when {
+        isCompleted -> CompletedScreen(state, viewModel::refresh)
+        isResting -> RestScreen(state, viewModel)
+        else -> ActiveSetScreen(state, viewModel)
+    }
+}
+
+@Composable
+private fun ActiveSetScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val payload = state.payload
+    val enabled = state.busyAction == null
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Header(payload.exerciseName, state.syncLabel, state.error)
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Série ${payload.setIndex}/${payload.totalSets}",
+                color = Color(0xFF9CCBFF),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = "${payload.targetReps}",
+                fontSize = 56.sp,
+                fontWeight = FontWeight.Black,
+                lineHeight = 56.sp,
+            )
+            Text(
+                text = "répétitions",
+                color = Color(0xFFEAF3FF),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = payload.weight?.let { "${trimWeight(it)} kg" } ?: "Poids à confirmer",
+                color = Color(0xFFB7C9EA),
+                fontSize = 13.sp,
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BigActionButton("Valider", enabled = enabled, onClick = viewModel::validateSet)
+            Spacer(Modifier.height(4.dp))
+            NavRow(state, viewModel)
+        }
+    }
+}
+
+@Composable
+private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val enabled = state.busyAction == null
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Header("Repos", state.syncLabel, state.error)
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Respire", color = Color(0xFFB7C9EA), fontSize = 14.sp)
+            Text(
+                text = formatRest(state.displayRestRemaining),
+                fontSize = if (state.displayRestRemaining >= 60) 48.sp else 68.sp,
+                fontWeight = FontWeight.Black,
+                lineHeight = 68.sp,
+            )
+            Text(
+                text = state.payload.exerciseName,
+                color = Color(0xFFB7C9EA),
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                RoundActionButton("+15 s", enabled, viewModel::addRest)
+                RoundActionButton("Passer", enabled, viewModel::skipRest)
+            }
+            Spacer(Modifier.height(4.dp))
+            NavRow(state, viewModel)
+        }
+    }
+}
+
+@Composable
+private fun CompletedScreen(state: WatchScreenState.Ready, onRefresh: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("Séance", fontSize = 18.sp, color = Color(0xFFB7C9EA))
+        Text("terminée", fontSize = 25.sp, fontWeight = FontWeight.Black)
+        Text(state.syncLabel, color = Color(0xFF56F0C2), fontSize = 12.sp)
+        Spacer(Modifier.height(10.dp))
+        ActionChip("Actualiser", onRefresh, enabled = state.busyAction == null)
+    }
+}
+
+@Composable
+private fun Header(title: String, syncLabel: String, error: String?) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = title.cleanExerciseTitle(),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Black,
+            lineHeight = 16.sp,
+        )
+        Text(
+            text = error ?: syncLabel,
+            color = if (error == null) Color(0xFF56F0C2) else Color(0xFFFFB86B),
+            fontSize = 10.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun NavRow(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val enabled = state.busyAction == null
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SmallButton("Préc.", enabled = enabled, onClick = viewModel::previousExercise)
+        SmallButton("Suiv.", enabled = enabled, onClick = viewModel::nextExercise)
+        SmallButton(
+            text = if (state.finishConfirm) "OK Fin" else "Fin",
+            enabled = enabled,
+            danger = state.finishConfirm,
+            onClick = {
+                if (state.finishConfirm) viewModel.completeSession() else viewModel.requestFinish()
+            },
+        )
+    }
+}
+
+@Composable
+private fun BigActionButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    Button(
+        modifier = Modifier
+            .fillMaxWidth(0.78f)
+            .height(44.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = Color(0xFF2E8BFF),
+            contentColor = Color.White,
+            disabledBackgroundColor = Color(0xFF243455),
+        ),
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onClick()
+        },
+    ) {
+        Text(text, fontSize = 16.sp, fontWeight = FontWeight.Black)
+    }
+}
+
+@Composable
+private fun RoundActionButton(text: String, enabled: Boolean, onClick: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    Button(
+        modifier = Modifier.size(width = 76.dp, height = 40.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = Color(0xFF152C56),
+            contentColor = Color.White,
+            disabledBackgroundColor = Color(0xFF1B2437),
+        ),
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onClick()
+        },
+    ) {
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun SmallButton(text: String, enabled: Boolean, danger: Boolean = false, onClick: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    Button(
+        modifier = Modifier.size(44.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = if (danger) Color(0xFF7F1D1D) else Color(0xFF12264A),
+            contentColor = Color.White,
+            disabledBackgroundColor = Color(0xFF1B2437),
+        ),
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            onClick()
+        },
+    ) {
+        Text(text, fontSize = 10.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun ActionChip(text: String, onClick: () -> Unit, enabled: Boolean) {
+    Chip(
+        modifier = Modifier.fillMaxWidth(0.74f),
+        label = { Text(text, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) },
+        enabled = enabled,
+        colors = ChipDefaults.primaryChipColors(
+            backgroundColor = Color(0xFF2E8BFF),
+            contentColor = Color.White,
+        ),
+        onClick = onClick,
+    )
+}
+
+private fun String.cleanExerciseTitle(): String {
+    return replace(Regex("\\([^)]*\\)"), "")
+        .replace("-", " ")
+        .trim()
+}
+
+private fun trimWeight(value: Double): String {
+    val asInt = value.toInt()
+    return if (value == asInt.toDouble()) asInt.toString() else "%.1f".format(value)
+}
