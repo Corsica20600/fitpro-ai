@@ -485,101 +485,312 @@ button, input, select { font-family: inherit; }
 }
 .lottie-ready .silhouette { display: none; }
 
-.exercise-detail-screen h1 { margin: 0; font-size: 1.4rem; }
-.exercise-header-text { display: grid; gap: 6px; margin-top: 10px; }
-.details-grid { display: grid; gap: 12px; }
-.details-grid h3 { margin: 0 0 6px; font-size: .9rem; }
-.details-grid p { margin: 0; color: #d6e7ff; line-height: 1.4; }
-.detail-list { margin: 0; padding-left: 18px; color: #d6e7ff; display: grid; gap: 4px; }
-.action-stack { display: grid; gap: 10px; }
+.exercise-detail-screen {
+  gap: 14px;
+}
+
+.exercise-tech-hero,
+.exercise-tech-panel,
+.exercise-tech-summary__main,
+.exercise-tech-mini-card,
+.exercise-step-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(67, 143, 244, .42);
+  border-radius: 24px;
+  background:
+    radial-gradient(140% 120% at 100% 0%, rgba(47, 143, 255, .18), transparent 42%),
+    linear-gradient(180deg, rgba(18, 31, 56, .96), rgba(8, 15, 29, .98));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .36);
+}
+
+.exercise-tech-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: clamp(18px, 4vw, 28px);
+  isolation: isolate;
+}
+
+.exercise-tech-hero::before {
+  content: "";
+  position: absolute;
+  inset: -40% 35% auto -20%;
+  height: 240px;
+  background: radial-gradient(circle, rgba(77, 181, 255, .28), transparent 68%);
+  filter: blur(8px);
+  z-index: -1;
+}
+
+.exercise-tech-hero__copy {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+
+.exercise-tech-brand {
+  margin: 0;
+  color: #80bbff;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.exercise-tech-hero h1 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: clamp(2rem, 8vw, 4.4rem);
+  font-weight: 1000;
+  line-height: .9;
+  text-transform: uppercase;
+  letter-spacing: -.06em;
+  text-wrap: balance;
+}
+
+.exercise-tech-hero h1 span {
+  display: block;
+  margin-top: 8px;
+  color: #78e04b;
+  font-size: .72em;
+  letter-spacing: -.045em;
+}
+
+.exercise-tech-hero p {
+  margin: 0;
+  color: #d8e8ff;
+  font-size: clamp(1rem, 2.6vw, 1.28rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.exercise-tech-hero__visual .exercise-visual {
+  height: 100%;
+  min-height: 260px;
+  border-color: rgba(81, 169, 255, .42);
+  background: #07111f;
+}
+
+.exercise-tech-pills,
+.exercise-tech-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.exercise-tech-pills span,
+.exercise-tech-mini-card {
+  display: grid;
+  gap: 3px;
+  min-height: 58px;
+  padding: 10px 12px;
+}
+
+.exercise-tech-pills span {
+  border: 1px solid rgba(86, 156, 255, .34);
+  border-radius: 16px;
+  background: rgba(5, 13, 28, .62);
+  color: #dbeaff;
+  font-weight: 800;
+}
+
+.exercise-tech-pills strong,
+.exercise-tech-mini-card span,
+.exercise-tech-summary__main span,
+.exercise-tech-section-head span {
+  color: #7fb8ff;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.exercise-tech-summary {
+  align-items: stretch;
+}
+
+.exercise-tech-summary__main {
+  grid-column: span 2;
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+}
+
+.exercise-tech-summary__main strong {
+  color: #f8fbff;
+  font-size: 1.18rem;
+}
+
+.exercise-tech-summary__main p,
+.exercise-step-card p,
+.exercise-muscle-stack p {
+  margin: 0;
+  color: #c6d8f7;
+  line-height: 1.48;
+}
+
+.exercise-tech-mini-card strong {
+  color: #f5f9ff;
+  font-size: .98rem;
+}
+
+.exercise-tech-panel {
+  display: grid;
+  gap: 14px;
+  padding: clamp(16px, 3vw, 22px);
+}
+
+.exercise-tech-section-head {
+  display: grid;
+  gap: 4px;
+}
+
+.exercise-tech-section-head h2 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  font-weight: 1000;
+  line-height: .98;
+  text-transform: uppercase;
+  letter-spacing: -.035em;
+}
+
 .exercise-guide-infographic {
   width: 100%;
   height: auto;
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(95, 167, 255, .32);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .38);
 }
-.exercise-pro-header {
-  border: 1px solid rgba(84, 150, 255, .45);
-  background:
-    linear-gradient(160deg, rgba(5, 12, 28, .98), rgba(8, 16, 35, .98)),
-    radial-gradient(circle at 75% -40%, rgba(38, 137, 255, .28), transparent 58%);
-}
-.exercise-pro-brand {
-  margin: 0;
-  color: #8db7ff;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-weight: 800;
-}
-.exercise-pro-header h1 {
-  margin: 4px 0 0;
-  font-size: clamp(1.55rem, 6.5vw, 2.3rem);
-  line-height: 1.02;
-  text-transform: uppercase;
-  font-weight: 900;
-}
-.exercise-pro-header h1 span {
-  color: #65e56c;
-}
-.exercise-pro-subtitle {
-  margin: 8px 0 0;
-  display: inline-flex;
-  border: 1px solid rgba(83, 164, 255, .42);
-  border-radius: 999px;
-  padding: 7px 12px;
-  color: #f8fbff;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .02em;
-}
+
 .exercise-steps-grid {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
 .exercise-step-card {
-  position: relative;
-  padding-top: 22px;
+  min-height: 210px;
+  padding: 48px 14px 15px;
 }
+
 .exercise-step-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 28px;
-  height: 28px;
+  top: 13px;
+  left: 13px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-weight: 900;
   color: #fff;
-  background: linear-gradient(160deg, #53b2ff, #2f76ff);
-  border: 1px solid rgba(255, 255, 255, .42);
+  font-size: 1.15rem;
+  font-weight: 1000;
+  background: linear-gradient(160deg, #60c3ff, #2578ff);
+  border: 1px solid rgba(255, 255, 255, .58);
+  box-shadow: 0 12px 24px rgba(27, 110, 243, .38);
 }
+
 .exercise-step-title {
-  margin: 0 0 8px 36px;
-  font-size: .95rem;
-  font-weight: 800;
+  margin: 0 0 12px;
+  color: #f7fbff;
+  font-size: .92rem;
+  font-weight: 1000;
+  line-height: 1.05;
   text-transform: uppercase;
-  letter-spacing: .03em;
-  line-height: 1.2;
-  min-height: 28px;
-  display: flex;
-  align-items: center;
-  transform: translateY(-12px);
 }
+
 .exercise-pro-panels {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.exercise-tech-panel--green { border-color: rgba(120, 224, 75, .36); }
+.exercise-tech-panel--gold { border-color: rgba(255, 196, 62, .36); }
+.exercise-tech-panel--red { border-color: rgba(255, 90, 110, .38); }
+
+.exercise-tech-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exercise-tech-list li {
+  position: relative;
+  min-height: 28px;
+  padding-left: 30px;
+  color: #d9e8ff;
+  line-height: 1.38;
+}
+
+.exercise-tech-list li::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #4a9dff;
+  box-shadow: 0 0 16px rgba(74, 157, 255, .38);
+}
+
+.exercise-tech-list--green li::before { background: #78e04b; }
+.exercise-tech-list--gold li::before { background: #ffbf36; }
+.exercise-tech-list--red li::before { background: #ff4f64; }
+
+.exercise-muscle-stack {
   display: grid;
   gap: 10px;
 }
-.exercise-pro-panels h3 {
-  margin: 0 0 6px;
-  text-transform: uppercase;
-  letter-spacing: .02em;
+
+.exercise-muscle-stack p {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(96, 161, 255, .24);
+  border-radius: 16px;
+  background: rgba(4, 11, 24, .45);
 }
-@media (max-width: 440px) {
-  .exercise-steps-grid {
+
+.exercise-muscle-stack strong {
+  color: #f8fbff;
+  text-transform: uppercase;
+}
+
+.exercise-program-panel .form-grid {
+  gap: 12px;
+}
+
+.exercise-program-panel .outline-link {
+  justify-self: start;
+}
+
+@media (max-width: 1180px) {
+  .exercise-steps-grid,
+  .exercise-pro-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .exercise-tech-hero,
+  .exercise-tech-summary,
+  .exercise-tech-pills,
+  .exercise-steps-grid,
+  .exercise-pro-panels {
     grid-template-columns: 1fr;
+  }
+
+  .exercise-tech-summary__main {
+    grid-column: auto;
+  }
+
+  .exercise-step-card {
+    min-height: 0;
   }
 }
 .ghost-btn {
