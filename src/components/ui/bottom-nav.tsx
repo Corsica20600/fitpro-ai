@@ -39,6 +39,7 @@ const nav: Array<{ href: string; label: string; icon: NavIconName }> = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  if (pathname === "/watch") return null;
 
   return (
     <nav className="bottom-nav fit-bottom-nav-v2" aria-label="Navigation principale">

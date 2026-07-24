@@ -320,6 +320,26 @@ export async function skipWatchRest(sessionId: string) {
   return { ...state, restRemaining: 0 };
 }
 
+export async function adjustWatchRest(sessionId: string, deltaSeconds: number) {
+  const state = await getWatchPayload(sessionId);
+  if (!state) return null;
+  const latestCompletedSet = await prisma.workoutSet.findFirst({
+    where: { workoutSessionId: state.sessionId, isCompleted: true, completedAt: { not: null } },
+    orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+  });
+
+  if (!latestCompletedSet) return state;
+
+  const currentRest = Math.max(0, latestCompletedSet.restSeconds ?? 0);
+  const nextRest = Math.max(0, Math.min(600, currentRest + Math.trunc(deltaSeconds)));
+  await prisma.workoutSet.update({
+    where: { id: latestCompletedSet.id },
+    data: { restSeconds: nextRest },
+  });
+
+  return getWatchPayload(state.sessionId);
+}
+
 export async function completeWatchSession(sessionId: string) {
   const state = await getWatchPayload(sessionId);
   if (!state) return null;

@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { WatchMetricCard } from "@/src/components/watch/watch-metric-card";
-import { WatchPermissionsCard } from "@/src/components/watch/watch-permissions-card";
-import { WatchStatusCard } from "@/src/components/watch/watch-status-card";
-import { WatchSyncCard } from "@/src/components/watch/watch-sync-card";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  createRestDeadlineFromServer,
+  formatWatchRest,
+  getRemainingFromDeadline,
+  shouldReplaceRestDeadline,
+  type WatchRestDeadline,
+} from "@/src/lib/watch-timer";
 
 type WatchState = {
   sessionId: string;
@@ -24,73 +27,110 @@ type ApiResponse = {
   error?: string;
 };
 
-function formatRest(seconds: number) {
-  if (seconds <= 0) return "GO";
-  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+type SyncState = "boot" | "ok" | "syncing" | "offline" | "error";
+
+function shortExerciseName(name: string) {
+  return name
+    .replace(/\s*-\s*/g, " ")
+    .replace(/\([^)]*\)/g, "")
+    .trim();
 }
 
-function formatTime(date: Date | null) {
-  if (!date) return "Jamais";
-  return new Intl.DateTimeFormat("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(date);
+function useHaptics() {
+  const vibrate = useCallback((pattern: number | number[]) => {
+    if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    navigator.vibrate(pattern);
+  }, []);
+
+  return useMemo(() => ({
+    restStart: () => vibrate(35),
+    restWarning: () => vibrate([25, 55, 25]),
+    restEnd: () => vibrate(90),
+    action: () => vibrate(25),
+    error: () => vibrate([30, 45, 30]),
+  }), [vibrate]);
 }
 
 export default function WatchPage() {
   const [state, setState] = useState<WatchState | null>(null);
-  const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [displayRestRemaining, setDisplayRestRemaining] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [syncState, setSyncState] = useState<SyncState>("boot");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastAttemptAt, setLastAttemptAt] = useState<Date | null>(null);
+  const [finishConfirm, setFinishConfirm] = useState(false);
   const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
+  const sequenceRef = useRef(0);
+  const stateKeyRef = useRef<string | null>(null);
+  const restDeadlineRef = useRef<WatchRestDeadline | null>(null);
+  const warnedAtThreeRef = useRef(false);
+  const wasRestingRef = useRef(false);
+  const haptics = useHaptics();
 
-  const applyPayload = useCallback((payload: WatchState) => {
-    setState(payload);
-    const nextRemaining = Math.max(0, Math.floor(payload.restRemaining ?? 0));
-    if (nextRemaining > 0) {
-      const nextRestEndsAt = Date.now() + nextRemaining * 1000;
-      setRestEndsAt(nextRestEndsAt);
-      setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
-    } else {
-      setRestEndsAt(null);
-      setDisplayRestRemaining(0);
-    }
-    setError(null);
-    setLastSuccessAt(new Date());
+  const setDeadline = useCallback((next: WatchRestDeadline | null) => {
+    restDeadlineRef.current = next;
   }, []);
 
-  const refreshState = useCallback(async () => {
-    setLastAttemptAt(new Date());
+  const applyPayload = useCallback((payload: WatchState, receivedAtEpochMs = Date.now(), receivedAtPerfMs = performance.now()) => {
+    const nextKey = `${payload.sessionId}:${payload.exerciseIndex}:${payload.setIndex}`;
+    const contextChanged = stateKeyRef.current !== nextKey;
+    stateKeyRef.current = nextKey;
+    setState(payload);
+    setError(null);
+    setSyncState("ok");
+    setLastSuccessAt(new Date(receivedAtEpochMs));
+
+    const nextDeadline = createRestDeadlineFromServer({
+      restRemaining: payload.restRemaining ?? 0,
+      receivedAtEpochMs,
+      receivedAtPerfMs,
+    });
+
+    if (shouldReplaceRestDeadline({
+      current: restDeadlineRef.current,
+      next: nextDeadline,
+      perfNowMs: receivedAtPerfMs,
+      contextChanged,
+    })) {
+      setDeadline(nextDeadline);
+      setDisplayRestRemaining(nextDeadline ? getRemainingFromDeadline(nextDeadline, receivedAtPerfMs) : 0);
+      warnedAtThreeRef.current = false;
+    }
+  }, [setDeadline]);
+
+  const refreshState = useCallback(async (silent = false) => {
+    const sequence = sequenceRef.current + 1;
+    sequenceRef.current = sequence;
+    if (!silent) setSyncState((current) => current === "boot" ? "boot" : "syncing");
+
     try {
       const response = await fetch("/api/watch/current-session", { cache: "no-store" });
+      const receivedAtEpochMs = Date.now();
+      const receivedAtPerfMs = performance.now();
       const data = (await response.json()) as ApiResponse;
+      if (sequence < sequenceRef.current) return;
+
       if (!response.ok || !data.payload) {
         setState(null);
-        setRestEndsAt(null);
+        stateKeyRef.current = null;
+        setDeadline(null);
         setDisplayRestRemaining(0);
         setError(data.error ?? "Aucune séance active.");
+        setSyncState(response.status === 404 ? "ok" : "error");
         return;
       }
-      applyPayload(data.payload);
+
+      applyPayload(data.payload, receivedAtEpochMs, receivedAtPerfMs);
     } catch {
-      setError("Connexion impossible.");
-    } finally {
-      setLoading(false);
+      if (sequence < sequenceRef.current) return;
+      setError("Réseau indisponible.");
+      setSyncState("offline");
     }
-  }, [applyPayload]);
+  }, [applyPayload, setDeadline]);
 
   useEffect(() => {
-    const bootId = window.setTimeout(() => {
-      void refreshState();
-    }, 0);
-    const id = window.setInterval(() => {
-      void refreshState();
-    }, 2000);
+    const bootId = window.setTimeout(() => void refreshState(), 0);
+    const id = window.setInterval(() => void refreshState(true), 2000);
     return () => {
       window.clearTimeout(bootId);
       window.clearInterval(id);
@@ -98,151 +138,202 @@ export default function WatchPage() {
   }, [refreshState]);
 
   useEffect(() => {
-    if (restEndsAt == null) return;
-    const refresh = () => {
-      const remainingSeconds = Math.max(0, Math.ceil((restEndsAt - Date.now()) / 1000));
-      setDisplayRestRemaining(remainingSeconds);
-      if (remainingSeconds <= 0) {
-        setRestEndsAt(null);
+    const refreshDisplay = () => {
+      const remaining = getRemainingFromDeadline(restDeadlineRef.current, performance.now());
+      setDisplayRestRemaining(remaining);
+
+      if (remaining > 0 && !wasRestingRef.current) {
+        wasRestingRef.current = true;
+        warnedAtThreeRef.current = false;
+        haptics.restStart();
+      }
+      if (remaining <= 3 && remaining > 0 && !warnedAtThreeRef.current) {
+        warnedAtThreeRef.current = true;
+        haptics.restWarning();
+      }
+      if (remaining <= 0 && wasRestingRef.current) {
+        wasRestingRef.current = false;
+        setDeadline(null);
+        haptics.restEnd();
       }
     };
-    refresh();
-    const interval = window.setInterval(refresh, 250);
+
+    refreshDisplay();
+    const id = window.setInterval(refreshDisplay, 250);
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refresh();
+      if (document.visibilityState === "visible") {
+        refreshDisplay();
+        void refreshState(true);
+      }
     };
+    window.addEventListener("focus", onVisibility);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      window.clearInterval(interval);
+      window.clearInterval(id);
+      window.removeEventListener("focus", onVisibility);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [restEndsAt]);
+  }, [haptics, refreshState, setDeadline]);
 
-  const perform = useCallback(
-    async (path: string, body?: Record<string, unknown>) => {
-      if (!state || busy) return;
-      setBusy(true);
-      setLastAttemptAt(new Date());
-      try {
-        const response = await fetch(path, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ sessionId: state.sessionId, ...body }),
-        });
-        const data = (await response.json()) as ApiResponse;
-        if (!response.ok || !data.payload) {
-          setError(data.error ?? "Action refusée.");
-          return;
-        }
-        applyPayload(data.payload);
-      } catch {
-        setError("Erreur reseau.");
-      } finally {
-        setBusy(false);
+  const perform = useCallback(async (path: string, actionId: string, body?: Record<string, unknown>) => {
+    if (!state || busyAction) return;
+    setBusyAction(actionId);
+    setFinishConfirm(false);
+    setSyncState("syncing");
+    haptics.action();
+
+    if (actionId === "skip-rest") {
+      setDeadline(null);
+      setDisplayRestRemaining(0);
+    }
+    if (actionId === "add-rest") {
+      const nowEpoch = Date.now();
+      const nowPerf = performance.now();
+      const currentRemaining = getRemainingFromDeadline(restDeadlineRef.current, nowPerf);
+      const optimistic = createRestDeadlineFromServer({
+        restRemaining: currentRemaining + 15,
+        receivedAtEpochMs: nowEpoch,
+        receivedAtPerfMs: nowPerf,
+      });
+      setDeadline(optimistic);
+      setDisplayRestRemaining(currentRemaining + 15);
+    }
+
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId: state.sessionId, ...body }),
+      });
+      const data = (await response.json()) as ApiResponse;
+
+      if (!response.ok || !data.payload) {
+        setError(data.error ?? "Action refusée.");
+        setSyncState("error");
+        haptics.error();
+        void refreshState(true);
+        return;
       }
-    },
-    [applyPayload, busy, state],
-  );
 
-  const subtitle = useMemo(() => {
-    if (!state) return "Démarre une séance sur FitAI Pro pour alimenter la montre.";
-    return `Exercice ${state.exerciseIndex}/${state.totalExercises} · Série ${state.setIndex}/${state.totalSets}`;
-  }, [state]);
+      applyPayload(data.payload);
+    } catch {
+      setError("Erreur réseau.");
+      setSyncState("offline");
+      haptics.error();
+      void refreshState(true);
+    } finally {
+      setBusyAction(null);
+    }
+  }, [applyPayload, busyAction, haptics, refreshState, setDeadline, state]);
 
-  const metrics = [
-    { label: "Exercice", value: state?.exerciseName ?? "Indisponible", detail: state ? "Séance active" : "Aucune donnée" },
-    { label: "Progression", value: state ? `${state.exerciseIndex}/${state.totalExercises}` : "-", detail: "Exercices" },
-    { label: "Série", value: state ? `${state.setIndex}/${state.totalSets}` : "-", detail: "Position actuelle" },
-    { label: "Cible", value: state ? String(state.targetReps) : "-", unit: " reps", detail: "Répétitions" },
-    { label: "Charge", value: state?.weight == null ? "-" : String(state.weight), unit: state?.weight == null ? undefined : " kg", detail: "Dernière charge connue" },
-    { label: "Repos", value: formatRest(displayRestRemaining), detail: displayRestRemaining > 0 ? "Récupération" : "Prêt" },
-  ];
+  const isResting = displayRestRemaining > 0;
+  const isCompleted = state?.status === "COMPLETED";
+  const exerciseName = state ? shortExerciseName(state.exerciseName) : "FitAI Pro";
+  const progressPercent = state
+    ? Math.max(0, Math.min(100, (((state.exerciseIndex - 1) + (state.setIndex / Math.max(1, state.totalSets))) / Math.max(1, state.totalExercises)) * 100))
+    : 0;
+  const restProgress = state && isResting
+    ? Math.max(5, Math.min(100, (displayRestRemaining / Math.max(1, state.restRemaining || displayRestRemaining)) * 100))
+    : progressPercent;
+  const ringStyle = {
+    "--watch-progress": `${isResting ? restProgress : progressPercent}%`,
+  } as CSSProperties;
+  const syncLabel = useMemo(() => {
+    if (syncState === "boot") return "Connexion";
+    if (syncState === "syncing") return "Sync...";
+    if (syncState === "offline") return "Hors ligne";
+    if (syncState === "error") return "À vérifier";
+    return lastSuccessAt ? "Sync OK" : "Prêt";
+  }, [lastSuccessAt, syncState]);
 
   return (
-    <main className="watch-page-v2">
-      <div className="watch-shell-v2">
-        <WatchStatusCard loading={loading} hasState={Boolean(state)} error={error} subtitle={subtitle} />
+    <main className={`watch-page-v2 ${isResting ? "is-resting" : ""}`} data-watch-route="true">
+      <section className="watch-round-shell" style={ringStyle} aria-live="polite">
+        <div className="watch-time-text">FitAI Pro</div>
+        <span className={`watch-sync-dot watch-sync-dot--${syncState}`}>{syncLabel}</span>
 
-        <section className="watch-last-sync-card">
-          <p className="eyebrow">Dernière synchronisation</p>
-          <h2>{formatTime(lastSuccessAt)}</h2>
-          <p>Dernière tentative: {formatTime(lastAttemptAt)}</p>
-        </section>
+        {!state ? (
+          <div className="watch-empty-state">
+            <span className="watch-empty-state__orb" aria-hidden="true" />
+            <h1>Aucune séance</h1>
+            <p>Démarre une séance sur le téléphone, la montre se synchronise automatiquement.</p>
+            <button type="button" className="watch-secondary-action" disabled={busyAction != null} onClick={() => void refreshState()}>
+              Actualiser
+            </button>
+            {error ? <span className="watch-inline-error">{error}</span> : null}
+          </div>
+        ) : isCompleted ? (
+          <div className="watch-empty-state watch-empty-state--done">
+            <span className="watch-empty-state__orb" aria-hidden="true" />
+            <h1>Séance terminée</h1>
+            <p>Synchronisation effectuée. Tu peux retrouver le détail dans l’historique FitAI Pro.</p>
+            <button type="button" className="watch-secondary-action" disabled={busyAction != null} onClick={() => void refreshState()}>
+              Actualiser
+            </button>
+          </div>
+        ) : isResting ? (
+          <div className="watch-rest-layout">
+            <span className="watch-kicker">Repos</span>
+            <strong className="watch-rest-time">{formatWatchRest(displayRestRemaining)}</strong>
+            <p>{state.setIndex}/{state.totalSets} · Prochaine série</p>
+            <div className="watch-rest-actions">
+              <button type="button" disabled={busyAction != null} onClick={() => void perform("/api/watch/adjust-rest", "add-rest", { deltaSeconds: 15 })}>
+                +15 s
+              </button>
+              <button type="button" disabled={busyAction != null} onClick={() => void perform("/api/watch/skip-rest", "skip-rest")}>
+                Passer
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="watch-active-layout">
+            <h1 title={state.exerciseName}>{exerciseName}</h1>
+            <div className="watch-primary-metric">
+              <span>Série</span>
+              <strong>{state.setIndex}/{state.totalSets}</strong>
+            </div>
+            <div className="watch-target-row">
+              <span><b>{state.targetReps}</b> reps</span>
+              <span><b>{state.weight == null ? "-" : state.weight}</b>{state.weight == null ? "" : " kg"}</span>
+            </div>
+            <button
+              type="button"
+              className="watch-validate-action"
+              disabled={busyAction != null}
+              onClick={() => void perform("/api/watch/validate-set", "validate", {
+                actualReps: state.targetReps,
+                weight: state.weight,
+              })}
+            >
+              {busyAction === "validate" ? "..." : "Valider"}
+            </button>
+          </div>
+        )}
 
-        <section className="watch-metric-grid" aria-label="Métriques montre disponibles">
-          {metrics.map((metric) => (
-            <WatchMetricCard
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-              unit={metric.unit}
-              detail={metric.detail}
-              unavailable={!state}
-            />
-          ))}
-        </section>
-
-        <WatchPermissionsCard
-          items={[
-            {
-              label: "Séance FitAI",
-              state: state ? "Disponible" : "En attente",
-              detail: "La montre lit la séance active via les endpoints watch existants.",
-              tone: state ? "success" : "warning",
-            },
-            {
-              label: "Samsung Health",
-              state: "Non exposé ici",
-              detail: "Aucune métrique Samsung Health n'est affichée par cette page actuellement.",
-              tone: "neutral",
-            },
-          ]}
-        />
-
-        <WatchSyncCard
-          busy={busy || loading}
-          disabled={false}
-          lastAttemptLabel={formatTime(lastAttemptAt)}
-          metricsCount={state ? metrics.length : 0}
-          onRefresh={() => void refreshState()}
-        />
-
-        <section className="watch-action-grid" aria-label="Actions montre">
-          <button className="primary-button" disabled={!state || busy} onClick={() => void perform("/api/watch/validate-set", {
-            actualReps: state?.targetReps ?? 10,
-            weight: state?.weight ?? null,
-          })}>
-            Valider série
-          </button>
-          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/skip-rest")}>
-            Passer repos
-          </button>
-          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/previous-exercise")}>
-            Précédent
-          </button>
-          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/next-exercise")}>
-            Suivant
-          </button>
-          <button className="ghost-btn chip danger" disabled={!state || busy} onClick={() => void perform("/api/watch/complete-session")}>
-            Fin
-          </button>
-        </section>
-
-        {error ? (
-          <section className="watch-error-card">
-            <p className="eyebrow">Fallback</p>
-            <h2>Action requise</h2>
-            <p>{error}</p>
-          </section>
+        {state && !isCompleted ? (
+          <div className="watch-nav-actions" aria-label="Navigation séance">
+            <button type="button" disabled={busyAction != null} onClick={() => void perform("/api/watch/previous-exercise", "previous")}>Préc.</button>
+            <button type="button" disabled={busyAction != null} onClick={() => void perform("/api/watch/next-exercise", "next")}>Suiv.</button>
+            <button
+              type="button"
+              className="watch-danger-action"
+              disabled={busyAction != null}
+              onClick={() => {
+                if (!finishConfirm) {
+                  setFinishConfirm(true);
+                  haptics.action();
+                  return;
+                }
+                void perform("/api/watch/complete-session", "finish");
+              }}
+            >
+              {finishConfirm ? "Confirmer" : "Fin"}
+            </button>
+          </div>
         ) : null}
 
-        <details className="watch-tech-card">
-          <summary>Informations techniques</summary>
-          <p>Polling conservé: `/api/watch/current-session` toutes les 2 secondes.</p>
-          <p>Session: {state?.sessionId ?? "aucune"}</p>
-          <p>Statut brut: {state?.status ?? "indisponible"}</p>
-        </details>
-      </div>
+        {error && state ? <span className="watch-inline-error">{error}</span> : null}
+      </section>
     </main>
   );
 }

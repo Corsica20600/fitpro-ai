@@ -1,0 +1,21 @@
+import { strict as assert } from 'node:assert';
+import { createRestDeadlineFromServer, formatWatchRest, getRemainingFromDeadline, shouldReplaceRestDeadline } from '../../src/lib/watch-timer';
+
+assert.equal(formatWatchRest(0), 'GO');
+assert.equal(formatWatchRest(42), '42');
+assert.equal(formatWatchRest(90), '1:30');
+const d30 = createRestDeadlineFromServer({ restRemaining: 30, receivedAtEpochMs: 100000, receivedAtPerfMs: 5000 });
+assert.ok(d30);
+assert.equal(getRemainingFromDeadline(d30, 5000), 30);
+assert.equal(getRemainingFromDeadline(d30, 25000), 10);
+assert.equal(getRemainingFromDeadline(d30, 36000), 0);
+const d45 = createRestDeadlineFromServer({ restRemaining: 45, receivedAtEpochMs: 100000, receivedAtPerfMs: 5000 });
+assert.ok(d45);
+assert.equal(getRemainingFromDeadline(d45, 5000), 45);
+const d90 = createRestDeadlineFromServer({ restRemaining: 90, receivedAtEpochMs: 100000, receivedAtPerfMs: 5000 });
+assert.ok(d90);
+assert.equal(formatWatchRest(getRemainingFromDeadline(d90, 5000)), '1:30');
+assert.equal(shouldReplaceRestDeadline({ current: d30, next: d30, perfNowMs: 5000, contextChanged: false }), false);
+assert.equal(shouldReplaceRestDeadline({ current: d30, next: d45, perfNowMs: 5000, contextChanged: false }), true);
+assert.equal(shouldReplaceRestDeadline({ current: d30, next: d30, perfNowMs: 5000, contextChanged: true }), true);
+console.log('watch-timer tests OK');
