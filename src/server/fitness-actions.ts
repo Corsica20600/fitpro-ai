@@ -33,6 +33,7 @@ export async function createSimpleProgramAction(formData: FormData) {
 export async function startWorkoutSessionAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programIdRaw = String(formData.get("programId") ?? "").trim();
+  const programDayIdRaw = String(formData.get("programDayId") ?? "").trim();
   const title = String(formData.get("title") ?? "Seance libre").trim();
   const selectedProgram = programIdRaw.length
     ? await prisma.program.findFirst({
@@ -41,13 +42,13 @@ export async function startWorkoutSessionAction(formData: FormData) {
           id: true,
           name: true,
           days: {
-            select: { id: true },
+            select: { id: true, title: true },
             orderBy: { dayIndex: "asc" },
-            take: 1,
           },
         },
       })
     : null;
+  const selectedDay = selectedProgram?.days.find((day) => day.id === programDayIdRaw) ?? selectedProgram?.days[0] ?? null;
   const defaultTitle = selectedProgram?.name?.trim() || "Seance libre";
   const sessionTitle = title.length && title.toLowerCase() !== "seance libre"
     ? title
@@ -57,7 +58,7 @@ export async function startWorkoutSessionAction(formData: FormData) {
     data: {
       userProfileId: profile.id,
       programId: selectedProgram?.id ?? null,
-      programDayId: selectedProgram?.days?.[0]?.id ?? null,
+      programDayId: selectedDay?.id ?? null,
       title: sessionTitle,
       status: "IN_PROGRESS",
       startedAt: new Date(),

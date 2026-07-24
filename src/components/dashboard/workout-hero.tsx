@@ -2,9 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { EmptyState } from "@/src/components/ui/empty-state";
 import { StatBadge } from "@/src/components/ui/stat-badge";
+import { startWorkoutSessionAction } from "@/src/server/fitness-actions";
 
 type WorkoutHeroProps = {
   workout: {
+    source: "mostFrequent" | "activeProgram";
+    eyebrow: string;
+    programId: string;
+    programDayId: string;
     programName: string;
     title: string;
     image: string;
@@ -57,7 +62,7 @@ export function WorkoutHero({ workout }: WorkoutHeroProps) {
       <div className="absolute inset-x-0 bottom-0 grid gap-5 p-5">
         <div className="grid gap-2">
           <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.22em] text-[var(--fit-accent-cyan)]">
-            {workout.isInProgress ? "Séance en cours" : "Séance du jour"}
+            {workout.isInProgress ? "SÉANCE EN COURS" : workout.eyebrow}
           </p>
           <p className="m-0 text-sm font-bold text-[var(--fit-text-muted)]">{workout.programName}</p>
           <h2 className="m-0 text-[2.25rem] font-black leading-[0.96] tracking-[-0.07em] text-white">
@@ -79,13 +84,27 @@ export function WorkoutHero({ workout }: WorkoutHeroProps) {
           ))}
         </div>
 
-        <Link
-          href="/workout"
-          prefetch={false}
-          className="inline-flex min-h-[56px] items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#36a2ff,#2768ff)] px-5 text-base font-black text-white shadow-[0_18px_32px_rgba(39,104,255,.38),inset_0_1px_0_rgba(255,255,255,.35)] outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-[rgba(55,215,255,.24)]"
-        >
-          Commencer
-        </Link>
+        {workout.isInProgress ? (
+          <Link
+            href="/workout"
+            prefetch={false}
+            className="inline-flex min-h-[56px] items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#36a2ff,#2768ff)] px-5 text-base font-black text-white shadow-[0_18px_32px_rgba(39,104,255,.38),inset_0_1px_0_rgba(255,255,255,.35)] outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-[rgba(55,215,255,.24)]"
+          >
+            Reprendre
+          </Link>
+        ) : (
+          <form action={startWorkoutSessionAction}>
+            <input type="hidden" name="programId" value={workout.programId} />
+            <input type="hidden" name="programDayId" value={workout.programDayId} />
+            <input type="hidden" name="title" value={workout.title} />
+            <button
+              type="submit"
+              className="inline-flex min-h-[56px] w-full items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#36a2ff,#2768ff)] px-5 text-base font-black text-white shadow-[0_18px_32px_rgba(39,104,255,.38),inset_0_1px_0_rgba(255,255,255,.35)] outline-none transition hover:brightness-110 focus-visible:ring-4 focus-visible:ring-[rgba(55,215,255,.24)]"
+            >
+              Commencer
+            </button>
+          </form>
+        )}
       </div>
     </section>
   );

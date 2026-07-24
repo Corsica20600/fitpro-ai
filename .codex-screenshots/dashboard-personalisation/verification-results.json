@@ -1,0 +1,74 @@
+{
+  "greetings": [
+    {
+      "label": "matin-08",
+      "hour": 8,
+      "expected": "Bonjour",
+      "status": 200,
+      "text": "Bonjour Athlete",
+      "helper": "Prêt à bien commencer la journée ?",
+      "ok": true,
+      "overlay": 0,
+      "overflow": false,
+      "errors": [],
+      "file": "C:\\dev\\fitpro\\fitai-pro\\.codex-screenshots\\dashboard-personalisation\\dashboard-matin-08-390.png"
+    },
+    {
+      "label": "apres-midi-14",
+      "hour": 14,
+      "expected": "Bon après-midi",
+      "status": 200,
+      "text": "Bon après-midi Athlete",
+      "helper": "Prêt pour ta prochaine séance ?",
+      "ok": true,
+      "overlay": 0,
+      "overflow": false,
+      "errors": [],
+      "file": "C:\\dev\\fitpro\\fitai-pro\\.codex-screenshots\\dashboard-personalisation\\dashboard-apres-midi-14-390.png"
+    },
+    {
+      "label": "soir-21",
+      "hour": 21,
+      "expected": "Bonsoir",
+      "status": 200,
+      "text": "Bonsoir Athlete",
+      "helper": "Une dernière séance pour finir fort ?",
+      "ok": true,
+      "overlay": 0,
+      "overflow": false,
+      "errors": [],
+      "file": "C:\\dev\\fitpro\\fitai-pro\\.codex-screenshots\\dashboard-personalisation\\dashboard-soir-21-390.png"
+    },
+    {
+      "label": "nuit-02",
+      "hour": 2,
+      "expected": "Bonsoir",
+      "status": 200,
+      "text": "Bonsoir Athlete",
+      "helper": "Une dernière séance pour finir fort ?",
+      "ok": true,
+      "overlay": 0,
+      "overflow": false,
+      "errors": [],
+      "file": "C:\\dev\\fitpro\\fitai-pro\\.codex-screenshots\\dashboard-personalisation\\dashboard-nuit-02-390.png"
+    }
+  ],
+  "dashboard": {
+    "bodyLen": 923,
+    "overlay": 0,
+    "overflow": false,
+    "hero": {
+      "text": "TA SÉANCE FAVORITEFull BodyFull BodyFocus: Développé couché avec barre - Prise moyenne13 exos71 minAvancéPectorauxQuadricepsIschio-jambiersCommencer",
+      "hasForm": true,
+      "hasWorkoutLink": false,
+      "formValues": {
+        "$ACTION_ID_406cff78465b0df18f2c1f4a1031428837f3a4ce42": "",
+        "programId": "cmp5amnnp0001jm04io301ddp",
+        "programDayId": "cmp803c1g0001ie04khyd3par",
+        "title": "Full Body"
+      }
+    }
+  },
+  "issues": [],
+  "logPath": "C:\\dev\\fitpro\\fitai-pro\\.codex-screenshots\\dashboard-personalisation\\next-start-3031.log"
+}

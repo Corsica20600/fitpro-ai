@@ -128,11 +128,42 @@ function getPreviousWeekStart(input = new Date()) {
 }
 
 function formatUserFirstName(displayName: string) {
-  return displayName.trim().split(/\s+/)[0] ?? displayName;
+  const firstName = displayName.trim().split(/\s+/)[0]?.trim();
+  if (firstName && ["athlete", "demo"].includes(firstName.toLowerCase())) return null;
+  return firstName || null;
 }
 
 function getSessionVolume(sets: Array<{ actualReps: number | null; actualWeightKg: number | null }>) {
   return sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
+}
+
+function estimateProgramDayMinutes(day: {
+  exercises: Array<{ sets: number; restSeconds: number | null }>;
+}) {
+  if (day.exercises.length === 0) return null;
+  return Math.max(
+    8,
+    Math.round(
+      day.exercises.reduce((acc, item) => acc + item.sets * ((item.restSeconds ?? 60) + 45), 0) / 60,
+    ),
+  );
+}
+
+function getProgramDayMuscles(day: {
+  exercises: Array<{
+    exercise: {
+      primaryMuscles: string[];
+      primaryMusclesFr: string[];
+    };
+  }>;
+}) {
+  return [
+    ...new Set(
+      day.exercises
+        .flatMap((item) => item.exercise.primaryMusclesFr.length ? item.exercise.primaryMusclesFr : item.exercise.primaryMuscles)
+        .filter(Boolean),
+    ),
+  ].slice(0, 3);
 }
 
 function getLevelFromXp(totalXp: number) {
@@ -768,7 +799,7 @@ export async function getDashboardDataForDemoUser() {
   const startOfWeek = getParisWeekStart(now);
   const previousWeekStart = getPreviousWeekStart(now);
 
-  const [programs, currentSession, completedSessions] = await Promise.all([
+  const [programs, currentSession, completedSessions, favoriteProgramDayGroups] = await Promise.all([
     prisma.program.findMany({
       where: { userProfileId: profile.id, status: { in: ["ACTIVE", "DRAFT"] } },
       include: {
@@ -833,8 +864,44 @@ export async function getDashboardDataForDemoUser() {
       orderBy: [{ endedAt: "desc" }, { createdAt: "desc" }],
       take: 120,
     }),
+    prisma.workoutSession.groupBy({
+      by: ["programDayId"],
+      where: {
+        userProfileId: profile.id,
+        status: "COMPLETED",
+        programDayId: { not: null },
+      },
+      _count: { programDayId: true },
+      _max: { endedAt: true, createdAt: true },
+    }),
   ]);
 
+  const favoriteProgramDayId = favoriteProgramDayGroups
+    .filter((group): group is typeof group & { programDayId: string } => Boolean(group.programDayId))
+    .sort((a, b) => {
+      const countDiff = b._count.programDayId - a._count.programDayId;
+      if (countDiff !== 0) return countDiff;
+      const bLatest = (b._max.endedAt ?? b._max.createdAt ?? new Date(0)).getTime();
+      const aLatest = (a._max.endedAt ?? a._max.createdAt ?? new Date(0)).getTime();
+      if (bLatest !== aLatest) return bLatest - aLatest;
+      return a.programDayId.localeCompare(b.programDayId);
+    })[0]?.programDayId ?? null;
+  const favoriteProgramDay = favoriteProgramDayId
+    ? await prisma.programDay.findFirst({
+        where: { id: favoriteProgramDayId, program: { userProfileId: profile.id } },
+        include: {
+          program: true,
+          exercises: {
+            orderBy: { orderIndex: "asc" },
+            include: {
+              exercise: {
+                include: { media: { orderBy: [{ type: "asc" }, { sortOrder: "asc" }] } },
+              },
+            },
+          },
+        },
+      })
+    : null;
   const activeProgram = programs.find((program) => program.status === "ACTIVE") ?? programs[0] ?? null;
   const completedForActiveProgram = activeProgram
     ? completedSessions.filter((session) => session.programId === activeProgram.id).length
@@ -842,34 +909,39 @@ export async function getDashboardDataForDemoUser() {
   const nextDay = activeProgram?.days.length
     ? activeProgram.days[completedForActiveProgram % activeProgram.days.length]
     : null;
-  const nextExercises = nextDay?.exercises ?? [];
-  const mainProgramExercise = nextExercises[0] ?? null;
-  const mainExerciseFromSession = currentSession?.sets[0]?.exercise ?? null;
-  const mainExercise = mainProgramExercise?.exercise ?? mainExerciseFromSession ?? null;
-  const workoutTitle = currentSession?.title ?? nextDay?.title ?? activeProgram?.name ?? "Séance libre";
+  const selectedWorkout = favoriteProgramDay && favoriteProgramDay.exercises.length > 0
+    ? {
+        source: "mostFrequent" as const,
+        eyebrow: "TA SÉANCE FAVORITE",
+        program: favoriteProgramDay.program,
+        day: favoriteProgramDay,
+      }
+    : activeProgram && nextDay && nextDay.exercises.length > 0
+      ? {
+          source: "activeProgram" as const,
+          eyebrow: "PROCHAINE SÉANCE",
+          program: activeProgram,
+          day: nextDay,
+        }
+      : activeProgram?.days[0] && activeProgram.days[0].exercises.length > 0
+        ? {
+            source: "activeProgram" as const,
+            eyebrow: "PROCHAINE SÉANCE",
+            program: activeProgram,
+            day: activeProgram.days[0],
+          }
+        : null;
+  const selectedExercises = selectedWorkout?.day.exercises ?? [];
+  const mainProgramExercise = selectedExercises[0] ?? null;
+  const mainExercise = mainProgramExercise?.exercise ?? null;
+  const workoutTitle = selectedWorkout?.day.title || selectedWorkout?.program.name || "Séance libre";
   const workoutImage =
     mainExercise?.fallbackImagePath ||
     mainExercise?.fallbackThumbnailPath ||
     "/media/exercises/air-bike/0.jpg";
-  const targetMuscles = [
-    ...new Set(
-      nextExercises
-        .flatMap((item) => item.exercise.primaryMusclesFr.length ? item.exercise.primaryMusclesFr : item.exercise.primaryMuscles)
-        .filter(Boolean),
-    ),
-  ].slice(0, 3);
-  const estimatedMinutes = nextExercises.length
-    ? Math.max(
-        8,
-        Math.round(
-          nextExercises.reduce(
-            (acc, item) => acc + item.sets * ((item.restSeconds ?? 60) + 45),
-            0,
-          ) / 60,
-        ),
-      )
-    : null;
-  const difficulty = activeProgram?.level ?? mainExercise?.difficulty ?? null;
+  const targetMuscles = selectedWorkout ? getProgramDayMuscles(selectedWorkout.day) : [];
+  const estimatedMinutes = selectedWorkout ? estimateProgramDayMinutes(selectedWorkout.day) : null;
+  const difficulty = selectedWorkout?.program.level ?? mainExercise?.difficulty ?? null;
 
   const sessionsWithStats = completedSessions.map((session) => ({
     ...session,
@@ -931,18 +1003,22 @@ export async function getDashboardDataForDemoUser() {
           status: activeProgram.status,
         }
       : null,
-    nextWorkout: activeProgram
+    nextWorkout: selectedWorkout
       ? {
-          programName: activeProgram.name,
+          source: selectedWorkout.source,
+          eyebrow: selectedWorkout.eyebrow,
+          programId: selectedWorkout.program.id,
+          programDayId: selectedWorkout.day.id,
+          programName: selectedWorkout.program.name,
           title: workoutTitle,
           image: workoutImage,
           imageAlt: mainExercise ? mainExercise.nameFr || mainExercise.name : workoutTitle,
           mainExerciseName: mainExercise ? mainExercise.nameFr || mainExercise.name : null,
-          exerciseCount: nextExercises.length || (currentSession ? new Set(currentSession.sets.map((set) => set.exerciseId)).size : 0),
+          exerciseCount: selectedExercises.length,
           targetMuscles,
           estimatedMinutes,
           difficulty,
-          isInProgress: Boolean(currentSession),
+          isInProgress: currentSession?.programDayId === selectedWorkout.day.id,
         }
       : null,
     weeklyStats: {
