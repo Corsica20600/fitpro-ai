@@ -491,7 +491,6 @@ button, input, select { font-family: inherit; }
 
 .exercise-tech-hero,
 .exercise-tech-panel,
-.exercise-tech-summary__main,
 .exercise-tech-mini-card,
 .exercise-step-card {
   position: relative;
@@ -596,7 +595,6 @@ button, input, select { font-family: inherit; }
 
 .exercise-tech-pills strong,
 .exercise-tech-mini-card span,
-.exercise-tech-summary__main span,
 .exercise-tech-section-head span {
   color: #7fb8ff;
   font-size: .72rem;
@@ -609,19 +607,6 @@ button, input, select { font-family: inherit; }
   align-items: stretch;
 }
 
-.exercise-tech-summary__main {
-  grid-column: span 2;
-  display: grid;
-  gap: 7px;
-  padding: 16px;
-}
-
-.exercise-tech-summary__main strong {
-  color: #f8fbff;
-  font-size: 1.18rem;
-}
-
-.exercise-tech-summary__main p,
 .exercise-step-card p,
 .exercise-muscle-stack p {
   margin: 0;
@@ -783,10 +768,6 @@ button, input, select { font-family: inherit; }
   .exercise-steps-grid,
   .exercise-pro-panels {
     grid-template-columns: 1fr;
-  }
-
-  .exercise-tech-summary__main {
-    grid-column: auto;
   }
 
   .exercise-step-card {

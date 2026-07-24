@@ -102,11 +102,6 @@ export function ExerciseDetailSheet({
       </section>
 
       <section className="exercise-tech-summary">
-        <article className="exercise-tech-summary__main">
-          <span>Technique</span>
-          <strong>{content.sourceNote}</strong>
-          <p>Lis la fiche comme un mémo de terrain : placement, contrôle, muscles ciblés puis erreurs à éviter.</p>
-        </article>
         {summaryItems.map((item) => (
           <article key={item.label} className="exercise-tech-mini-card">
             <span>{item.label}</span>
