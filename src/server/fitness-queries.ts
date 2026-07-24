@@ -281,7 +281,7 @@ export async function getOrCreateDemoProfile() {
 
   return prisma.userProfile.create({
     data: {
-      displayName: "Athlete Demo",
+      displayName: "Erwan",
       email: DEMO_EMAIL,
       trainingLevel: "INTERMEDIATE",
       primaryGoal: "HYPERTROPHY",
