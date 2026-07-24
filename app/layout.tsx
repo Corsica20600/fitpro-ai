@@ -32,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <div className="app-shell">
           <header className="app-topbar">
             <div className="app-brand">
-              <span className="app-brand-main">FITAi</span>
+              <span className="app-brand-main">FitAI</span>
               <span className="app-brand-pro">PRO</span>
             </div>
           </header>

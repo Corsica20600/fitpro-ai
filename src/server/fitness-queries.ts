@@ -112,6 +112,135 @@ function toFrCompat<T extends {
   };
 }
 
+function getParisWeekStart(input = new Date()) {
+  const date = new Date(input);
+  const day = date.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  date.setDate(date.getDate() - diffToMonday);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function getPreviousWeekStart(input = new Date()) {
+  const date = getParisWeekStart(input);
+  date.setDate(date.getDate() - 7);
+  return date;
+}
+
+function formatUserFirstName(displayName: string) {
+  return displayName.trim().split(/\s+/)[0] ?? displayName;
+}
+
+function getSessionVolume(sets: Array<{ actualReps: number | null; actualWeightKg: number | null }>) {
+  return sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
+}
+
+function getLevelFromXp(totalXp: number) {
+  let level = 1;
+  let xpSpent = 0;
+  let nextRequirement = 300;
+
+  while (totalXp >= xpSpent + nextRequirement) {
+    xpSpent += nextRequirement;
+    level += 1;
+    nextRequirement = 300 + (level - 1) * 120;
+  }
+
+  const xpInLevel = totalXp - xpSpent;
+  const progressPercent = Math.round((xpInLevel / nextRequirement) * 100);
+  const sessionsToNextLevel = Math.max(1, Math.ceil((nextRequirement - xpInLevel) / 100));
+
+  return {
+    level,
+    totalXp,
+    xpInLevel,
+    xpForNextLevel: nextRequirement,
+    progressPercent,
+    sessionsToNextLevel,
+  };
+}
+
+function getCompletedWeeksStreak(sessions: Array<{ startedAt: Date | null; createdAt: Date }>, now = new Date()) {
+  const weekStarts = new Set(
+    sessions.map((session) => getParisWeekStart(session.startedAt ?? session.createdAt).getTime()),
+  );
+  let cursor = getParisWeekStart(now);
+  let streak = 0;
+
+  while (weekStarts.has(cursor.getTime())) {
+    streak += 1;
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() - 7);
+  }
+
+  return streak;
+}
+
+function getCoachInsight(input: {
+  weeklySessions: number;
+  weeklyGoal: number | null;
+  weeklyVolume: number;
+  previousWeeklyVolume: number;
+  streakWeeks: number;
+  lastSessionAt: Date | null;
+  mostFrequentExerciseName: string | null;
+}) {
+  const daysSinceLastSession = input.lastSessionAt
+    ? Math.floor((Date.now() - input.lastSessionAt.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const weeklyGoal = input.weeklyGoal ?? 3;
+  const volumeDelta =
+    input.previousWeeklyVolume > 0
+      ? ((input.weeklyVolume - input.previousWeeklyVolume) / input.previousWeeklyVolume) * 100
+      : null;
+
+  if (!input.lastSessionAt || (daysSinceLastSession != null && daysSinceLastSession >= 7)) {
+    return {
+      title: "Reprise intelligente",
+      message: "Aucune séance récente détectée. Lance une séance légère pour relancer la machine sans te cramer.",
+      tone: "warning" as const,
+    };
+  }
+
+  if (volumeDelta != null && volumeDelta >= 45) {
+    return {
+      title: "Volume en forte hausse",
+      message: "Ta semaine monte vite en volume. Garde une exécution propre et surveille la récupération.",
+      tone: "orange" as const,
+    };
+  }
+
+  if (input.weeklySessions >= weeklyGoal) {
+    return {
+      title: "Objectif semaine atteint",
+      message: `Tu as déjà validé ${input.weeklySessions} séances cette semaine. Maintiens le cap avec une séance technique ou mobilité.`,
+      tone: "success" as const,
+    };
+  }
+
+  if (input.streakWeeks >= 2) {
+    return {
+      title: "Régularité solide",
+      message: `Tu tiens une série de ${input.streakWeeks} semaines. Une séance bien placée peut prolonger cette dynamique.`,
+      tone: "accent" as const,
+    };
+  }
+
+  if (input.mostFrequentExerciseName && input.weeklySessions >= 2) {
+    return {
+      title: "Variation utile",
+      message: `${input.mostFrequentExerciseName} revient souvent. Pense à varier l'angle ou le tempo si la séance le permet.`,
+      tone: "violet" as const,
+    };
+  }
+
+  return {
+    title: "Objectif accessible",
+    message: `Tu as ${input.weeklySessions} séance${input.weeklySessions > 1 ? "s" : ""} cette semaine. Une prochaine séance propre te rapproche de ton rythme cible.`,
+    tone: "accent" as const,
+  };
+}
+
 export async function getOrCreateDemoProfile() {
   const existing = await prisma.userProfile.findUnique({
     where: { email: DEMO_EMAIL },
@@ -595,6 +724,215 @@ export async function getWorkoutPageData() {
   }
 
   return { profile, programs, exercises, sessionExercises, currentSession, lastPerformedProgramId };
+}
+
+export async function getDashboardDataForDemoUser() {
+  const profile = await getOrCreateDemoProfile();
+  const now = new Date();
+  const startOfWeek = getParisWeekStart(now);
+  const previousWeekStart = getPreviousWeekStart(now);
+
+  const [programs, currentSession, completedSessions] = await Promise.all([
+    prisma.program.findMany({
+      where: { userProfileId: profile.id, status: { in: ["ACTIVE", "DRAFT"] } },
+      include: {
+        days: {
+          orderBy: { dayIndex: "asc" },
+          include: {
+            exercises: {
+              orderBy: { orderIndex: "asc" },
+              include: {
+                exercise: {
+                  include: { media: { orderBy: [{ type: "asc" }, { sortOrder: "asc" }] } },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      take: 8,
+    }),
+    prisma.workoutSession.findFirst({
+      where: { userProfileId: profile.id, status: "IN_PROGRESS" },
+      include: {
+        program: true,
+        sets: {
+          include: {
+            exercise: {
+              select: {
+                id: true,
+                name: true,
+                nameFr: true,
+                primaryMuscles: true,
+                primaryMusclesFr: true,
+                fallbackImagePath: true,
+                fallbackThumbnailPath: true,
+                difficulty: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.workoutSession.findMany({
+      where: { userProfileId: profile.id, status: "COMPLETED" },
+      include: {
+        program: true,
+        sets: {
+          include: {
+            exercise: {
+              select: {
+                id: true,
+                name: true,
+                nameFr: true,
+                primaryMuscles: true,
+                primaryMusclesFr: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ endedAt: "desc" }, { createdAt: "desc" }],
+      take: 120,
+    }),
+  ]);
+
+  const activeProgram = programs.find((program) => program.status === "ACTIVE") ?? programs[0] ?? null;
+  const completedForActiveProgram = activeProgram
+    ? completedSessions.filter((session) => session.programId === activeProgram.id).length
+    : 0;
+  const nextDay = activeProgram?.days.length
+    ? activeProgram.days[completedForActiveProgram % activeProgram.days.length]
+    : null;
+  const nextExercises = nextDay?.exercises ?? [];
+  const mainProgramExercise = nextExercises[0] ?? null;
+  const mainExerciseFromSession = currentSession?.sets[0]?.exercise ?? null;
+  const mainExercise = mainProgramExercise?.exercise ?? mainExerciseFromSession ?? null;
+  const workoutTitle = currentSession?.title ?? nextDay?.title ?? activeProgram?.name ?? "Séance libre";
+  const workoutImage =
+    mainExercise?.fallbackImagePath ||
+    mainExercise?.fallbackThumbnailPath ||
+    "/media/exercises/air-bike/0.jpg";
+  const targetMuscles = [
+    ...new Set(
+      nextExercises
+        .flatMap((item) => item.exercise.primaryMusclesFr.length ? item.exercise.primaryMusclesFr : item.exercise.primaryMuscles)
+        .filter(Boolean),
+    ),
+  ].slice(0, 3);
+  const estimatedMinutes = nextExercises.length
+    ? Math.max(
+        8,
+        Math.round(
+          nextExercises.reduce(
+            (acc, item) => acc + item.sets * ((item.restSeconds ?? 60) + 45),
+            0,
+          ) / 60,
+        ),
+      )
+    : null;
+  const difficulty = activeProgram?.level ?? mainExercise?.difficulty ?? null;
+
+  const sessionsWithStats = completedSessions.map((session) => ({
+    ...session,
+    date: session.startedAt ?? session.createdAt,
+    volume: getSessionVolume(session.sets),
+    setCount: session.sets.length,
+    exerciseCount: new Set(session.sets.map((set) => set.exerciseId)).size,
+  }));
+
+  const weeklySessions = sessionsWithStats.filter((session) => session.date >= startOfWeek);
+  const previousWeekSessions = sessionsWithStats.filter(
+    (session) => session.date >= previousWeekStart && session.date < startOfWeek,
+  );
+  const weeklyVolume = weeklySessions.reduce((acc, session) => acc + session.volume, 0);
+  const previousWeeklyVolume = previousWeekSessions.reduce((acc, session) => acc + session.volume, 0);
+  const weeklyDurationSeconds = weeklySessions.reduce((acc, session) => acc + (session.durationSeconds ?? 0), 0);
+  const weeklySetCount = weeklySessions.reduce((acc, session) => acc + session.setCount, 0);
+  const weeklyComparisonPercent =
+    previousWeeklyVolume > 0 ? Math.round(((weeklyVolume - previousWeeklyVolume) / previousWeeklyVolume) * 100) : null;
+  const streakWeeks = getCompletedWeeksStreak(sessionsWithStats, now);
+
+  const exerciseFrequency = new Map<string, { name: string; count: number }>();
+  for (const session of sessionsWithStats.slice(0, 20)) {
+    for (const set of session.sets) {
+      const item = exerciseFrequency.get(set.exerciseId) ?? {
+        name: set.exercise.nameFr || set.exercise.name,
+        count: 0,
+      };
+      item.count += 1;
+      exerciseFrequency.set(set.exerciseId, item);
+    }
+  }
+  const mostFrequentExercise = [...exerciseFrequency.values()].sort((a, b) => b.count - a.count)[0] ?? null;
+  const totalCompletedSessions = sessionsWithStats.length;
+  const level = getLevelFromXp(totalCompletedSessions * 100 + streakWeeks * 25);
+  const coachInsight = getCoachInsight({
+    weeklySessions: weeklySessions.length,
+    weeklyGoal: profile.sessionsPerWeek,
+    weeklyVolume,
+    previousWeeklyVolume,
+    streakWeeks,
+    lastSessionAt: sessionsWithStats[0]?.date ?? null,
+    mostFrequentExerciseName: mostFrequentExercise?.name ?? null,
+  });
+
+  return {
+    user: {
+      firstName: formatUserFirstName(profile.displayName),
+      sessionsPerWeek: profile.sessionsPerWeek,
+      trainingLevel: profile.trainingLevel,
+    },
+    activeProgram: activeProgram
+      ? {
+          id: activeProgram.id,
+          name: activeProgram.name,
+          level: activeProgram.level,
+          goal: activeProgram.goal,
+          sessionsPerWeek: activeProgram.sessionsPerWeek,
+          status: activeProgram.status,
+        }
+      : null,
+    nextWorkout: activeProgram
+      ? {
+          programName: activeProgram.name,
+          title: workoutTitle,
+          image: workoutImage,
+          imageAlt: mainExercise ? mainExercise.nameFr || mainExercise.name : workoutTitle,
+          mainExerciseName: mainExercise ? mainExercise.nameFr || mainExercise.name : null,
+          exerciseCount: nextExercises.length || (currentSession ? new Set(currentSession.sets.map((set) => set.exerciseId)).size : 0),
+          targetMuscles,
+          estimatedMinutes,
+          difficulty,
+          isInProgress: Boolean(currentSession),
+        }
+      : null,
+    weeklyStats: {
+      sessions: weeklySessions.length,
+      volume: weeklyVolume,
+      durationSeconds: weeklyDurationSeconds,
+      sets: weeklySetCount,
+      comparisonPercent: weeklyComparisonPercent,
+    },
+    previousWeekStats: {
+      sessions: previousWeekSessions.length,
+      volume: previousWeeklyVolume,
+    },
+    recentSessions: sessionsWithStats.slice(0, 5).map((session) => ({
+      id: session.id,
+      title: session.title,
+      date: session.date,
+      volume: session.volume,
+      setCount: session.setCount,
+    })),
+    streak: {
+      weeks: streakWeeks,
+    },
+    level,
+    coachInsight,
+  };
 }
 
 export async function getProgressDataForDemoUser(selectedExerciseId?: string) {

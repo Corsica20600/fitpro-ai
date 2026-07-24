@@ -1,0 +1,27 @@
+export type NavIconName = "dashboard" | "exercises" | "programs" | "workout" | "history" | "progress";
+
+type NavIconProps = {
+  name: NavIconName;
+  className?: string;
+};
+
+const paths: Record<NavIconName, string> = {
+  dashboard: "M4 13h7v7H4v-7Zm0-9h7v7H4V4Zm9 0h7v11h-7V4Zm0 13h7v3h-7v-3Z",
+  exercises:
+    "M6.6 10a2.6 2.6 0 1 1 0 4.9L4 17.5a2 2 0 0 1-2.8-2.8l2.6-2.6A2.6 2.6 0 0 1 6.6 10Zm10.8 0a2.6 2.6 0 0 1 2.8 2.1l2.6 2.6a2 2 0 1 1-2.8 2.8l-2.6-2.6a2.6 2.6 0 1 1 0-4.9ZM9 11h6v2H9v-2Z",
+  programs:
+    "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm1 4h12V6H6v2Zm0 4h8v-2H6v2Zm0 4h12v-2H6v2Z",
+  workout:
+    "M12 2a1 1 0 0 1 1 1v6.4l5.6 5.6a1 1 0 1 1-1.4 1.4L12 11.2V3a1 1 0 0 1 1-1Zm0 20a9 9 0 1 1 0-18 9 9 0 0 1 0 18Zm0-2a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z",
+  history:
+    "M12 3a9 9 0 1 1-7.8 4.5H1V5h6v6H5V8.8A7 7 0 1 0 12 5a1 1 0 1 1 0-2Zm-1 5h2v5h4v2h-6V8Z",
+  progress: "M3 19h18v2H3v-2Zm2-3 4-5 3 3 5-7 2 1.4-6.3 8.8-2.9-2.9L6.6 18 5 16Z",
+};
+
+export function NavIcon({ name, className = "" }: NavIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d={paths[name]} />
+    </svg>
+  );
+}
