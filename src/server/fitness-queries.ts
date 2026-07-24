@@ -270,24 +270,29 @@ export async function getExercisesCatalog() {
   });
 }
 
+export async function getActiveExercisesCount() {
+  return prisma.exercise.count({ where: { isActive: true } });
+}
+
 export async function getExerciseFilterOptions() {
   let rows: Array<{
     primaryMuscles: string[];
     primaryMusclesFr: string[];
     equipment: string[];
     equipmentFr: string[];
+    difficulty: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   }>;
 
   try {
     rows = await prisma.exercise.findMany({
       where: { isActive: true },
-      select: { primaryMuscles: true, primaryMusclesFr: true, equipment: true, equipmentFr: true },
+      select: { primaryMuscles: true, primaryMusclesFr: true, equipment: true, equipmentFr: true, difficulty: true },
     });
   } catch (error) {
     if (!isMissingColumnError(error)) throw error;
     const fallbackRows = await prisma.exercise.findMany({
       where: { isActive: true },
-      select: { primaryMuscles: true, equipment: true },
+      select: { primaryMuscles: true, equipment: true, difficulty: true },
     });
     rows = fallbackRows.map((item) => ({
       ...item,
@@ -298,15 +303,18 @@ export async function getExerciseFilterOptions() {
 
   const muscleSet = new Set<string>();
   const equipmentSet = new Set<string>();
+  const difficultySet = new Set<"BEGINNER" | "INTERMEDIATE" | "ADVANCED">();
 
   for (const row of rows) {
     for (const muscle of (row.primaryMusclesFr.length ? row.primaryMusclesFr : row.primaryMuscles)) muscleSet.add(muscle);
     for (const item of (row.equipmentFr.length ? row.equipmentFr : row.equipment)) equipmentSet.add(item);
+    difficultySet.add(row.difficulty);
   }
 
   return {
     muscles: [...muscleSet].sort((a, b) => a.localeCompare(b, "fr")),
     equipment: [...equipmentSet].sort((a, b) => a.localeCompare(b, "fr")),
+    difficulties: (["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const).filter((item) => difficultySet.has(item)),
   };
 }
 
@@ -314,6 +322,7 @@ export async function getExercisesCatalogPage(input: {
   search?: string;
   muscle?: string;
   equipment?: string;
+  difficulty?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -344,6 +353,9 @@ export async function getExercisesCatalogPage(input: {
         { equipmentFr: { has: input.equipment } },
       ],
     });
+  }
+  if (input.difficulty && ["BEGINNER", "INTERMEDIATE", "ADVANCED"].includes(input.difficulty)) {
+    andClauses.push({ difficulty: input.difficulty });
   }
 
   const where = andClauses.length
@@ -380,6 +392,9 @@ export async function getExercisesCatalogPage(input: {
     }
     if (input.equipment) {
       fallbackClauses.push({ equipment: { has: input.equipment } });
+    }
+    if (input.difficulty && ["BEGINNER", "INTERMEDIATE", "ADVANCED"].includes(input.difficulty)) {
+      fallbackClauses.push({ difficulty: input.difficulty });
     }
 
     const fallbackWhere = fallbackClauses.length

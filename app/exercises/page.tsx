@@ -1,135 +1,166 @@
 import Link from "next/link";
-import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
-import { PrimaryButton } from "@/src/components/ui/primary-button";
-import { levelToFr } from "@/src/lib/exercise-i18n";
-import { getExerciseFilterOptions, getExercisesCatalogPage } from "@/src/server/fitness-queries";
+import { ActiveFilterChips } from "@/src/components/exercise/active-filter-chips";
+import { ExerciseCard } from "@/src/components/exercise/exercise-card";
+import { ExerciseFilters } from "@/src/components/exercise/exercise-filters";
+import { EmptyState } from "@/src/components/ui/empty-state";
+import { GlassCard } from "@/src/components/ui/glass-card";
+import { PageHeader } from "@/src/components/ui/page-header";
+import { SectionTitle } from "@/src/components/ui/section-title";
+import { getActiveExercisesCount, getExerciseFilterOptions, getExercisesCatalogPage } from "@/src/server/fitness-queries";
+
+const PAGE_SIZE = 24;
+const VALID_DIFFICULTIES = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
+function sanitizeDifficulty(value: string) {
+  return VALID_DIFFICULTIES.includes(value as (typeof VALID_DIFFICULTIES)[number]) ? value : "";
+}
 
 function withQuery(
   page: number,
-  search: string,
-  muscle: string,
-  equipment: string,
+  filters: { search: string; muscle: string; equipment: string; difficulty: string },
 ) {
   const params = new URLSearchParams();
-  if (search) params.set("q", search);
-  if (muscle) params.set("muscle", muscle);
-  if (equipment) params.set("equipment", equipment);
+  if (filters.search) params.set("q", filters.search);
+  if (filters.muscle) params.set("muscle", filters.muscle);
+  if (filters.equipment) params.set("equipment", filters.equipment);
+  if (filters.difficulty) params.set("difficulty", filters.difficulty);
   params.set("page", String(page));
   return `/exercises?${params.toString()}`;
 }
 
+function Pagination({
+  page,
+  totalPages,
+  filters,
+}: {
+  page: number;
+  totalPages: number;
+  filters: { search: string; muscle: string; equipment: string; difficulty: string };
+}) {
+  const previousPage = Math.max(1, page - 1);
+  const nextPage = Math.min(totalPages, page + 1);
+
+  return (
+    <nav className="card workout-footer" aria-label="Pagination des exercices">
+      {page <= 1 ? (
+        <span className="ghost-btn disabled" aria-disabled="true">Page précédente</span>
+      ) : (
+        <Link href={withQuery(previousPage, filters)} className="ghost-btn">Page précédente</Link>
+      )}
+
+      <span className="muted" aria-current="page">
+        Page {page} / {totalPages}
+      </span>
+
+      {page >= totalPages ? (
+        <span className="primary-button disabled" aria-disabled="true">Page suivante</span>
+      ) : (
+        <Link href={withQuery(nextPage, filters)} className="primary-button">Page suivante</Link>
+      )}
+    </nav>
+  );
+}
+
 export default async function ExercisesPage(props: PageProps<"/exercises">) {
   const searchParams = await props.searchParams;
-  const search = String(searchParams.q ?? "").trim();
-  const muscle = String(searchParams.muscle ?? "").trim();
-  const equipment = String(searchParams.equipment ?? "").trim();
-  const page = Math.max(1, Number(searchParams.page ?? 1) || 1);
+  const search = firstParam(searchParams.q).trim();
+  const muscle = firstParam(searchParams.muscle).trim();
+  const equipment = firstParam(searchParams.equipment).trim();
+  const difficulty = sanitizeDifficulty(firstParam(searchParams.difficulty).trim());
+  const page = Math.max(1, Number(firstParam(searchParams.page) || 1) || 1);
+  const activeFilters = { search, muscle, equipment, difficulty };
 
-  let filters = { muscles: [] as string[], equipment: [] as string[] };
-  let result = {
+  let filters: Awaited<ReturnType<typeof getExerciseFilterOptions>> = {
+    muscles: [],
+    equipment: [],
+    difficulties: [],
+  };
+  let result: Awaited<ReturnType<typeof getExercisesCatalogPage>> = {
     page,
-    pageSize: 24,
+    pageSize: PAGE_SIZE,
     total: 0,
     totalPages: 1,
-    exercises: [] as Awaited<ReturnType<typeof getExercisesCatalogPage>>["exercises"],
+    exercises: [],
   };
+  let catalogTotal = 0;
 
   try {
-    const response = await Promise.all([
+    const [filterOptions, catalogPage, activeExercisesCount] = await Promise.all([
       getExerciseFilterOptions(),
-      getExercisesCatalogPage({ search, muscle, equipment, page, pageSize: 24 }),
+      getExercisesCatalogPage({ search, muscle, equipment, difficulty, page, pageSize: PAGE_SIZE }),
+      getActiveExercisesCount(),
     ]);
-    filters = response[0];
-    result = response[1];
+    filters = filterOptions;
+    result = catalogPage;
+    catalogTotal = activeExercisesCount;
   } catch (error) {
     console.error("[exercises-page] failed to load exercises catalog", error);
-    // Keep page renderable even if DB query fails in production.
   }
+
+  const firstResult = result.total === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
+  const lastResult = Math.min(result.total, result.page * result.pageSize);
+  const hasActiveFilters = Boolean(search || muscle || equipment || difficulty);
 
   return (
     <div className="stack">
-      <section className="hero mini compact">
-        <p className="eyebrow">Catalogue premium</p>
-        <h1>{result.total} exercices disponibles</h1>
-      </section>
+      <PageHeader
+        eyebrow="Catalogue premium"
+        title="Exercices"
+        description={`${catalogTotal} exercices actifs, filtrés côté serveur pour garder une navigation fluide même avec un gros catalogue.`}
+      />
 
-      <section className="card">
-        <Link href="/workout">
-          <PrimaryButton className="premium-glow">Démarrer une séance guidée</PrimaryButton>
+      <GlassCard elevated>
+        <Link href="/workout" className="primary-button premium-glow full-width">
+          Démarrer une séance guidée
         </Link>
-      </section>
+      </GlassCard>
 
-      <section className="stack">
-        <section className="card exercises-toolbar">
-          <form method="get" className="form-grid">
-            <input name="q" defaultValue={search} className="input" placeholder="Rechercher par nom" />
-            <select name="muscle" defaultValue={muscle} className="input">
-              <option value="">Tous les muscles</option>
-              {filters.muscles.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <select name="equipment" defaultValue={equipment} className="input">
-              <option value="">Tout le matériel</option>
-              {filters.equipment.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <PrimaryButton type="submit">Filtrer</PrimaryButton>
-          </form>
-        </section>
+      <GlassCard className="exercises-toolbar">
+        <SectionTitle
+          eyebrow="Recherche"
+          title="Trouver le bon mouvement"
+        />
+        <ExerciseFilters
+          search={search}
+          muscle={muscle}
+          equipment={equipment}
+          difficulty={difficulty}
+          filters={filters}
+        />
+        <ActiveFilterChips {...activeFilters} />
+      </GlassCard>
 
-        <section className="exercise-grid">
-          {result.exercises.map((exercise) => {
-            const override = getExerciseOverride(exercise.slug);
-            const displayName = override?.displayNameFr || exercise.nameFr || exercise.name;
-            return (
-            <article key={exercise.id} className="exercise-card exercise-card-premium">
-              <ExerciseVisual
-                media={exercise.media as never}
-                fallbackImage={override?.cardImage || exercise.fallbackThumbnailPath || exercise.fallbackImagePath}
-                fallbackAnimation={exercise.fallbackAnimationPath}
-                frameAnimationUrls={override?.frameAnimationUrls}
-                frameIntervalMs={override?.frameIntervalMs ?? 700}
-                preferFallbackImage={Boolean(override?.cardImage)}
-                title={displayName}
-                compact
-              />
-              <div className="exercise-card-overlay">
-                <h3>{displayName}</h3>
-                <p className="muted">{exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body"}</p>
-                <div className="chips">
-                  <span className="chip">{exercise.equipmentFr[0] || exercise.equipment[0] || "Poids du corps"}</span>
-                  <span className="chip">{levelToFr(exercise.difficulty)}</span>
-                </div>
-              </div>
-              <Link href={`/exercises/${exercise.slug}`} className="outline-link">Voir détail</Link>
-            </article>
-          )})}
-        </section>
+      <SectionTitle
+        eyebrow="Résultats"
+        title={
+          result.total > 0
+            ? `${firstResult}-${lastResult} sur ${result.total} exercices`
+            : "Aucun exercice trouvé"
+        }
+        action={hasActiveFilters ? <Link href="/exercises" className="outline-link">Réinitialiser</Link> : null}
+      />
 
-        {result.exercises.length === 0 && (
-          <section className="card">
-            <h3 className="section-title">Aucun exercice trouvé</h3>
-            <p className="muted">Essayez une autre recherche ou retirez un filtre.</p>
-            <Link href="/exercises" className="outline-link">Réinitialiser les filtres</Link>
+      {result.exercises.length > 0 ? (
+        <>
+          <section className="exercise-grid" aria-label="Liste des exercices">
+            {result.exercises.map((exercise) => (
+              <ExerciseCard key={exercise.id} exercise={exercise} />
+            ))}
           </section>
-        )}
 
-        <section className="card workout-footer">
-          <Link
-            href={withQuery(Math.max(1, result.page - 1), search, muscle, equipment)}
-            className={`ghost-btn ${result.page <= 1 ? "disabled" : ""}`}
-            aria-disabled={result.page <= 1}
-          >
-            Page précédente
-          </Link>
-          <Link
-            href={withQuery(Math.min(result.totalPages, result.page + 1), search, muscle, equipment)}
-            className={`primary-button ${result.page >= result.totalPages ? "disabled" : ""}`}
-            aria-disabled={result.page >= result.totalPages}
-          >
-            Page suivante ({result.page}/{result.totalPages})
-          </Link>
-        </section>
-      </section>
+          <Pagination page={result.page} totalPages={result.totalPages} filters={activeFilters} />
+        </>
+      ) : (
+        <EmptyState
+          title="Aucun exercice trouvé"
+          description="Aucun mouvement ne correspond à ces filtres. Essaie une recherche plus courte ou retire un filtre."
+          action={<Link href="/exercises" className="outline-link">Réinitialiser les filtres</Link>}
+        />
+      )}
     </div>
   );
 }
