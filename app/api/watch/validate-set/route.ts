@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { validateWatchSet } from "@/src/server/watch-mobile";
 
 export async function POST(request: Request) {
@@ -13,6 +14,8 @@ export async function POST(request: Request) {
   });
 
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
-  return NextResponse.json(payload);
+  revalidatePath("/workout");
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  return NextResponse.json({ payload });
 }
-

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { skipWatchRest } from "@/src/server/watch-mobile";
 
 export async function POST(request: Request) {
@@ -8,6 +9,8 @@ export async function POST(request: Request) {
 
   const payload = await skipWatchRest(sessionId);
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
-  return NextResponse.json(payload);
+  revalidatePath("/workout");
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  return NextResponse.json({ payload });
 }
-

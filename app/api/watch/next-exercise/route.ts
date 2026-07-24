@@ -8,6 +8,5 @@ export async function POST(request: Request) {
 
   const payload = await nextWatchExercise(sessionId);
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
-  return NextResponse.json(payload);
+  return NextResponse.json({ payload });
 }
-

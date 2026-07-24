@@ -113,6 +113,7 @@ export function GuidedWorkoutClient({
   const [ending, setEnding] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const [canRepairCompletion, setCanRepairCompletion] = useState(false);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
   const [plannedSetsByExercise, setPlannedSetsByExercise] = useState<Record<string, number>>({});
@@ -298,15 +299,18 @@ export function GuidedWorkoutClient({
           cache: "no-store",
         });
         if (!response.ok) return;
-        const state = await response.json() as {
-          exerciseIndex?: number;
-          setIndex?: number;
-          totalSets?: number;
-          restRemaining?: number;
-          status?: string;
+        const data = await response.json() as {
+          payload?: {
+            exerciseIndex?: number;
+            setIndex?: number;
+            totalSets?: number;
+            restRemaining?: number;
+            status?: string;
+          };
         };
+        const state = data.payload;
 
-        if (!alive || state.status !== "IN_PROGRESS") return;
+        if (!alive || state?.status !== "IN_PROGRESS") return;
         const exerciseIndexFromWatch = Math.max(1, Number(state.exerciseIndex ?? 1)) - 1;
         const setIndexFromWatch = Math.max(1, Number(state.setIndex ?? 1));
         const restFromWatch = Math.max(0, Number(state.restRemaining ?? 0));
@@ -432,7 +436,11 @@ export function GuidedWorkoutClient({
     try {
       const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
       if (strictStateRes.ok) {
-        const strictState = await strictStateRes.json() as { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
+        const strictData = await strictStateRes.json() as {
+          payload?: { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
+        };
+        const strictState = strictData.payload;
+        if (!strictState) return;
         let strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
         const strictSetIndex = Math.max(1, Number(strictState.setIndex ?? (setIndex + 1)));
         const strictRest = Math.max(0, Number(strictState.restRemaining ?? restChoice));
@@ -525,14 +533,15 @@ export function GuidedWorkoutClient({
     }
   }
 
-  async function onCompleteWorkout() {
+  async function onCompleteWorkout(forceComplete = false) {
     unlockRestAudio();
     setEnding(true);
     setCompletionError(null);
+    setCanRepairCompletion(false);
     const response = await fetch("/api/workout/complete", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sessionId }),
+      body: JSON.stringify({ sessionId, forceComplete }),
     });
     if (!response.ok) {
       if (response.status === 409) {
@@ -548,6 +557,7 @@ export function GuidedWorkoutClient({
         setCompletionError(topMissing.length > 0
           ? `Séries manquantes: ${topMissing.join(", ")}${(payload.missingSets?.length ?? 0) > 3 ? "..." : ""}`
           : "Séries manquantes détectées. Termine les séries avant de valider.");
+        setCanRepairCompletion(true);
       }
       setEnding(false);
       return;
@@ -555,6 +565,7 @@ export function GuidedWorkoutClient({
 
     const data = await response.json();
     if (data?.summary) {
+      setCanRepairCompletion(false);
       setSummary(data.summary as WorkoutSummary);
       return;
     }
@@ -666,9 +677,15 @@ export function GuidedWorkoutClient({
         <p className="eyebrow">Séance complète</p>
         <span className="chip success">Objectif atteint</span>
         <h2 className="workout-active-title">Terminer la séance</h2>
-        <PrimaryAction type="button" className="workout-validate-main premium-glow" onClick={onCompleteWorkout} disabled={ending}>
+        <PrimaryAction type="button" className="workout-validate-main premium-glow" onClick={() => void onCompleteWorkout()} disabled={ending}>
           {ending ? "..." : "Valider"}
         </PrimaryAction>
+        {completionError ? <p className="chip danger" style={{ margin: 0 }}>{completionError}</p> : null}
+        {canRepairCompletion ? (
+          <button type="button" className="outline-link" onClick={() => void onCompleteWorkout(true)} disabled={ending}>
+            Compléter et terminer
+          </button>
+        ) : null}
       </section>
     );
   }
@@ -754,12 +771,17 @@ export function GuidedWorkoutClient({
         <button
           type="button"
           className="outline-link"
-          onClick={onCompleteWorkout}
+          onClick={() => void onCompleteWorkout()}
           disabled={ending}
         >
           {ending ? "..." : "Finir la séance"}
         </button>
         {completionError ? <p className="chip danger" style={{ margin: 0 }}>{completionError}</p> : null}
+        {canRepairCompletion ? (
+          <button type="button" className="outline-link" onClick={() => void onCompleteWorkout(true)} disabled={ending}>
+            Compléter et terminer
+          </button>
+        ) : null}
       </div>
     </section>
   );
