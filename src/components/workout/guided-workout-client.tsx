@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { CurrentExerciseCard } from "@/src/components/workout/current-exercise-card";
+import { NextExerciseCard } from "@/src/components/workout/next-exercise-card";
+import { RestTimerCard } from "@/src/components/workout/rest-timer-card";
+import { WorkoutProgressHeader } from "@/src/components/workout/workout-progress-header";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
 
 type WorkoutExercise = {
@@ -26,6 +28,7 @@ type WorkoutExercise = {
   plannedWeightKg: number | null;
   plannedRestSeconds: number | null;
   programExerciseId: string | null;
+  technicalCue: string | null;
   media: Array<{
     id: string;
     type: "IMAGE" | "THUMBNAIL" | "ANIMATION";
@@ -83,10 +86,16 @@ function buildPlannedReps(exercise: WorkoutExercise, forcedSets?: number) {
 
 export function GuidedWorkoutClient({
   sessionId,
+  sessionTitle,
+  programName,
+  startedAt,
   exercises,
   existingSets,
 }: {
   sessionId: string;
+  sessionTitle: string;
+  programName?: string | null;
+  startedAt?: string | null;
   exercises: WorkoutExercise[];
   existingSets: ExistingSet[];
 }) {
@@ -112,6 +121,10 @@ export function GuidedWorkoutClient({
   );
   const [ending, setEnding] = useState(false);
   const [summary, setSummary] = useState<WorkoutSummary | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => {
+    if (!startedAt) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
+  });
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [canRepairCompletion, setCanRepairCompletion] = useState(false);
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
@@ -213,6 +226,14 @@ export function GuidedWorkoutClient({
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [restEndsAt, computeRemainingFromEndsAt]);
+
+  useEffect(() => {
+    if (!startedAt) return;
+    const refresh = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000)));
+    refresh();
+    const interval = window.setInterval(refresh, 30000);
+    return () => window.clearInterval(interval);
+  }, [startedAt]);
 
   const playRestFinishedBeep = useCallback(() => {
     try {
@@ -575,23 +596,27 @@ export function GuidedWorkoutClient({
 
   function formatDuration(seconds: number | null) {
     if (!seconds || seconds <= 0) return "0 min";
-    return `${Math.round(seconds / 60)} min`;
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest ? `${hours} h ${String(rest).padStart(2, "0")}` : `${hours} h`;
   }
 
   if (summary) {
     return (
-      <section className="card stack" style={{ minHeight: "60vh", placeContent: "center", textAlign: "center", gap: "14px" }}>
+      <section className="workout-finish-card stack">
         <p className="eyebrow">Séance terminée</p>
-        <h2 className="section-title" style={{ fontSize: "1.25rem", margin: 0 }}>Bon travail</h2>
-        <p className="muted">Volume solide aujourd’hui.</p>
-        <div className="chips" style={{ justifyContent: "center" }}>
+        <h1>Bon travail</h1>
+        <p className="muted">Ta séance est enregistrée dans l&apos;historique.</p>
+        <div className="chips workout-finish-card__chips">
           <span className="chip warning">Durée : {formatDuration(summary.durationSeconds)}</span>
           <span className="chip violet">Exercices: {summary.exercisesCount}</span>
           <span className="chip">Séries : {summary.setsCount}</span>
           <span className="chip success">Volume: {Math.round(summary.volumeTotal)} kg</span>
         </div>
-        <PrimaryAction type="button" className="premium-glow" onClick={() => router.push("/dashboard")}>Terminer</PrimaryAction>
-        <button type="button" className="outline-link" onClick={() => router.push("/workout")}>Recommencer</button>
+        <PrimaryAction type="button" className="premium-glow" onClick={() => router.push("/history")}>Voir l&apos;historique</PrimaryAction>
+        <button type="button" className="outline-link" onClick={() => router.push("/dashboard")}>Retour dashboard</button>
       </section>
     );
   }
@@ -608,6 +633,9 @@ export function GuidedWorkoutClient({
   const totalExercises = Math.max(1, exercises.length);
   const currentSetPosition = Math.max(1, Math.min(setRows.length || 1, nextSetIndex));
   const currentSetTargetReps = activeSet?.plannedReps ?? (setRows[0]?.plannedReps ?? 10);
+  const nextExercise = exercises[exerciseIndex + 1] ?? null;
+  const elapsedLabel = elapsedSeconds > 0 ? `Depuis ${formatDuration(elapsedSeconds)}` : null;
+  const restTotal = Math.max(restChoice, restRemaining);
 
   function canTapToValidate() {
     return Boolean(activeSet) && !ending && restRemaining <= 0 && !isWorkoutDone;
@@ -650,23 +678,26 @@ export function GuidedWorkoutClient({
 
   if (restRemaining > 0) {
     return (
-      <section className="card workout-rest-screen">
-        <p className="eyebrow">Repos</p>
-        <span className="chip warning">Récupération en cours</span>
-        <p className="workout-active-set">
-          Exercice {currentExercisePosition}/{totalExercises} · Série {currentSetPosition}/{Math.max(1, setRows.length)}
-        </p>
-        <p className="muted">Ensuite: {exercise.nameFr || exercise.name} · Cible {currentSetTargetReps} reps</p>
-        <div className="workout-reps-control workout-sets-adjust" style={{ justifyContent: "center", marginTop: 8 }}>
-          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
-          <strong>{Math.max(1, setRows.length)} séries</strong>
-          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
-        </div>
-        <p className="muted">Repos terminé, on repart.</p>
-        <div className="workout-rest-timer-xl">
-          {String(Math.floor(restRemaining / 60)).padStart(2, "0")}:{String(restRemaining % 60).padStart(2, "0")}
-        </div>
-        <button type="button" className="outline-link" onClick={onSkipRest}>Passer</button>
+      <section className="workout-session-stack">
+        <WorkoutProgressHeader
+          programName={programName}
+          sessionTitle={sessionTitle}
+          exercisePosition={currentExercisePosition}
+          totalExercises={totalExercises}
+          setPosition={currentSetPosition}
+          totalSets={Math.max(1, setRows.length)}
+          elapsedLabel={elapsedLabel}
+        />
+        <RestTimerCard
+          remainingSeconds={restRemaining}
+          totalSeconds={restTotal}
+          context={`Exercice ${currentExercisePosition}/${totalExercises} · Série ${currentSetPosition}/${Math.max(1, setRows.length)}`}
+          nextLabel={`Ensuite: ${exercise.nameFr || exercise.name} · cible ${currentSetTargetReps} reps`}
+          onAdd15={() => startRestTimer(restRemaining + 15)}
+          onRemove15={() => startRestTimer(Math.max(0, restRemaining - 15))}
+          onSkip={onSkipRest}
+        />
+        <NextExerciseCard exercise={nextExercise} />
       </section>
     );
   }
@@ -676,7 +707,7 @@ export function GuidedWorkoutClient({
       <section className="card workout-active-screen">
         <p className="eyebrow">Séance complète</p>
         <span className="chip success">Objectif atteint</span>
-        <h2 className="workout-active-title">Terminer la séance</h2>
+        <h1 className="workout-active-title">Terminer la séance</h1>
         <PrimaryAction type="button" className="workout-validate-main premium-glow" onClick={() => void onCompleteWorkout()} disabled={ending}>
           {ending ? "..." : "Valider"}
         </PrimaryAction>
@@ -692,69 +723,92 @@ export function GuidedWorkoutClient({
 
   return (
     <section
-      className={`workout-hero workout-active-screen ${justValidated ? "validated-flash" : ""}`}
+      className={`workout-session-stack ${justValidated ? "validated-flash" : ""}`}
       onClick={handleSurfaceTap}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <ExerciseVisual
-        media={exercise.media as never}
-        fallbackAnimation={exercise.fallbackAnimationPath}
-        fallbackImage={exercise.fallbackThumbnailPath || exercise.fallbackImagePath}
-        title={exercise.nameFr || exercise.name}
+      <WorkoutProgressHeader
+        programName={programName}
+        sessionTitle={sessionTitle}
+        exercisePosition={currentExercisePosition}
+        totalExercises={totalExercises}
+        setPosition={Math.min(nextSetIndex, setRows.length)}
+        totalSets={Math.max(1, setRows.length)}
+        elapsedLabel={elapsedLabel}
       />
-      <div className="workout-hero-body workout-active-body">
-        <h2 className="workout-active-title">{exercise.nameFr || exercise.name}</h2>
-        <p className="workout-active-set">Exercice {currentExercisePosition}/{totalExercises}</p>
-        <p className="workout-active-set">Série {Math.min(nextSetIndex, setRows.length)}/{setRows.length}</p>
-        <div className="workout-reps-control workout-sets-adjust" style={{ justifyContent: "center", marginTop: 6 }}>
+      <CurrentExerciseCard
+        exercise={exercise}
+        setLabel={`Série ${Math.min(nextSetIndex, setRows.length)}/${setRows.length}`}
+        targetRepsLabel={`Cible ${currentSetTargetReps} reps`}
+        plannedWeightLabel={exercise.plannedWeightKg != null ? `Prévu ${exercise.plannedWeightKg} kg` : "Charge libre"}
+        previousWeightLabel={weightFromCompleted != null ? `Dernière ${weightFromCompleted} kg` : null}
+        cue={exercise.technicalCue || (Math.min(nextSetIndex, setRows.length) === setRows.length ? "Dernière série, propre et contrôlée." : null)}
+      >
+        <div className="workout-sets-adjust">
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
           <strong>{Math.max(1, setRows.length)} séries</strong>
           <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
         </div>
-        <p className="muted">
-          {Math.min(nextSetIndex, setRows.length) === setRows.length
-            ? "Dernière série, propre et contrôlée."
-            : "Garde le tempo, contrôle la descente."}
-        </p>
-        <div className="workout-active-reps">
-          <span>Reps</span>
-          <div className="workout-reps-control">
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: Math.max(1, activeReps - 1) }))}
-            >
-              -
-            </button>
-            <strong>{activeReps}</strong>
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: activeReps + 1 }))}
-            >
-              +
-            </button>
+        <div className="workout-input-grid">
+          <div className="workout-active-reps">
+            <label htmlFor="workout-reps-input">Répétitions</label>
+            <div className="workout-reps-control">
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: Math.max(1, activeReps - 1) }))}
+              >
+                -
+              </button>
+              <input
+                id="workout-reps-input"
+                className="workout-input-xl"
+                inputMode="numeric"
+                type="number"
+                min={1}
+                value={activeReps}
+                onChange={(event) => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: Math.max(1, Number(event.target.value) || 1) }))}
+                aria-label="Répétitions réalisées"
+              />
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: activeReps + 1 }))}
+              >
+                +
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="workout-active-reps">
-          <span>Poids (kg)</span>
-          <div className="workout-reps-control">
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, activeWeight - 1) }))}
-            >
-              -
-            </button>
-            <strong>{activeWeight}</strong>
-            <button
-              type="button"
-              className="ghost-btn"
-              onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: activeWeight + 1 }))}
-            >
-              +
-            </button>
+          <div className="workout-active-reps">
+            <label htmlFor="workout-weight-input">Charge kg</label>
+            <div className="workout-reps-control">
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, activeWeight - 1) }))}
+              >
+                -
+              </button>
+              <input
+                id="workout-weight-input"
+                className="workout-input-xl"
+                inputMode="decimal"
+                type="number"
+                min={0}
+                step={0.5}
+                value={activeWeight}
+                onChange={(event) => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, Number(event.target.value) || 0) }))}
+                aria-label="Charge utilisée en kilogrammes"
+              />
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: activeWeight + 1 }))}
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
         <PrimaryAction
@@ -765,16 +819,17 @@ export function GuidedWorkoutClient({
         >
           Série terminée
         </PrimaryAction>
-        <Link href={`/exercises/${exercise.slug}`} className="outline-link">
-          Voir la fiche exercice
-        </Link>
-        <button
-          type="button"
-          className="outline-link"
-          onClick={() => void onCompleteWorkout()}
-          disabled={ending}
-        >
-          {ending ? "..." : "Finir la séance"}
+      </CurrentExerciseCard>
+      <NextExerciseCard exercise={nextExercise} />
+      <section className="workout-secondary-actions">
+        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet}>
+          Modifier / revalider
+        </button>
+        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet}>
+          Passer la série
+        </button>
+        <button type="button" className="outline-link" onClick={() => void onCompleteWorkout()} disabled={ending}>
+          {ending ? "..." : "Arrêter la séance"}
         </button>
         {completionError ? <p className="chip danger" style={{ margin: 0 }}>{completionError}</p> : null}
         {canRepairCompletion ? (
@@ -782,7 +837,7 @@ export function GuidedWorkoutClient({
             Compléter et terminer
           </button>
         ) : null}
-      </div>
+      </section>
     </section>
   );
 }

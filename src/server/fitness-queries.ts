@@ -488,9 +488,18 @@ export async function getWorkoutHistoryForDemoUser() {
       sets: {
         include: {
           exercise: {
-            select: { id: true, name: true, nameFr: true, fallbackThumbnailPath: true, fallbackImagePath: true },
+            select: {
+              id: true,
+              name: true,
+              nameFr: true,
+              primaryMuscles: true,
+              primaryMusclesFr: true,
+              fallbackThumbnailPath: true,
+              fallbackImagePath: true,
+            },
           },
         },
+        orderBy: [{ createdAt: "asc" }],
       },
       program: true,
     },
@@ -513,11 +522,21 @@ export async function getWorkoutHistorySummaryForDemoUser() {
     const totalVolume = session.sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
     const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
     const setsCount = session.sets.length;
+    const muscleCounts = new Map<string, number>();
+    for (const set of session.sets) {
+      const muscle = set.exercise.primaryMusclesFr[0] || set.exercise.primaryMuscles[0] || "Full body";
+      muscleCounts.set(muscle, (muscleCounts.get(muscle) ?? 0) + 1);
+    }
+    const primaryMuscles = [...muscleCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([muscle]) => muscle)
+      .slice(0, 3);
     return {
       ...session,
       totalVolume,
       exerciseCount,
       setsCount,
+      primaryMuscles,
     };
   });
 
@@ -571,7 +590,7 @@ export async function getWorkoutSessionDetailForDemoUser(sessionId: string) {
             },
           },
         },
-        orderBy: [{ exerciseId: "asc" }, { setIndex: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ createdAt: "asc" }, { setIndex: "asc" }],
       },
     },
   });
@@ -588,6 +607,7 @@ export async function getWorkoutSessionDetailForDemoUser(sessionId: string) {
       reps: number | null;
       weightKg: number | null;
       volume: number;
+      completedAt: Date | null;
     }>;
     totalVolume: number;
   }>();
@@ -612,6 +632,7 @@ export async function getWorkoutSessionDetailForDemoUser(sessionId: string) {
       reps: set.actualReps,
       weightKg: set.actualWeightKg,
       volume,
+      completedAt: set.completedAt,
     });
     group.totalVolume += volume;
   }

@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/src/components/ui/page-header";
+import { GlassCard } from "@/src/components/ui/glass-card";
+import { SectionTitle } from "@/src/components/ui/section-title";
+import { SessionSummary } from "@/src/components/history/session-summary";
 import { getWorkoutSessionDetailForDemoUser } from "@/src/server/fitness-queries";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR", {
     weekday: "short",
     day: "2-digit",
-    month: "2-digit",
+    month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -18,58 +22,84 @@ function formatDate(date: Date) {
 function formatDuration(seconds: number | null) {
   if (!seconds || seconds <= 0) return "0 min";
   const minutes = Math.round(seconds / 60);
-  return `${minutes} min`;
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${String(rest).padStart(2, "0")}` : `${hours} h`;
 }
 
-export default async function HistorySessionDetailPage(props: { params: Promise<{ sessionId: string }> }) {
+function formatKg(value: number | null | undefined) {
+  if (value == null) return "-";
+  return `${Math.round(value).toLocaleString("fr-FR")} kg`;
+}
+
+export default async function HistorySessionDetailPage(props: PageProps<"/history/[sessionId]">) {
   const { sessionId } = await props.params;
   const data = await getWorkoutSessionDetailForDemoUser(sessionId);
   if (!data) notFound();
 
   const { session, exercises, totalVolume, totalSets, totalExercises } = data;
+  const bestExercise = exercises.slice().sort((a, b) => b.totalVolume - a.totalVolume)[0] ?? null;
+  const bestSet = exercises
+    .flatMap((exercise) => exercise.sets.map((set) => ({ ...set, exerciseName: exercise.exerciseName })))
+    .sort((a, b) => (b.weightKg ?? 0) - (a.weightKg ?? 0))[0] ?? null;
 
   return (
     <div className="stack">
-      <section className="hero mini compact">
-        <p className="eyebrow">Détail séance</p>
-        <h1>{session.title}</h1>
-        <p className="muted">{formatDate(session.startedAt ?? session.createdAt)}</p>
-      </section>
+      <PageHeader
+        eyebrow="Détail séance"
+        title={session.title}
+        description={formatDate(session.startedAt ?? session.createdAt)}
+      />
 
-      <section className="card">
-        <div className="chips">
-          <span className="chip">Statut: {session.status === "COMPLETED" ? "Terminée" : "Brouillon"}</span>
-          <span className="chip">Durée: {formatDuration(session.durationSeconds)}</span>
-          <span className="chip">Exercices: {totalExercises}</span>
-          <span className="chip">Séries: {totalSets}</span>
-          <span className="chip">Volume total: {Math.round(totalVolume)} kg</span>
-        </div>
-      </section>
+      <SessionSummary
+        statusLabel={session.status === "COMPLETED" ? "Terminée" : "Brouillon"}
+        durationLabel={formatDuration(session.durationSeconds)}
+        volumeLabel={formatKg(totalVolume)}
+        exerciseCount={totalExercises}
+        setsCount={totalSets}
+        notes={session.notes}
+      />
+
+      {(bestExercise || bestSet) ? (
+        <GlassCard>
+          <SectionTitle eyebrow="Records" title="Repères de la séance" />
+          <div className="chips">
+            {bestExercise ? <span className="chip warning">Meilleur volume: {bestExercise.exerciseName} · {formatKg(bestExercise.totalVolume)}</span> : null}
+            {bestSet ? <span className="chip orange">Charge max: {bestSet.exerciseName} · {formatKg(bestSet.weightKg)}</span> : null}
+          </div>
+        </GlassCard>
+      ) : null}
 
       <section className="stack">
-        {exercises.map((exercise) => (
-          <section key={exercise.exerciseId} className="card">
-            <h2 className="section-title">{exercise.exerciseName}</h2>
-            <p className="muted">{exercise.primaryMuscle}</p>
-            <div className="chips">
-              <span className="chip">Volume exo: {Math.round(exercise.totalVolume)} kg</span>
-              <span className="chip">Séries: {exercise.sets.length}</span>
-            </div>
-            <div className="stack mt-10">
-              {exercise.sets.map((set) => (
-                <div key={set.id} className="set-row">
-                  <div className="set-row-left">Série {set.setIndex}</div>
-                  <div className="set-row-fields set-row-fields-3">
-                    <input className="set-input set-input-readonly" readOnly value={set.reps ?? "-"} />
-                    <input className="set-input set-input-readonly" readOnly value={set.weightKg ?? "-"} />
-                    <input className="set-input set-input-readonly" readOnly value={Math.round(set.volume)} />
-                  </div>
-                  <span className="chip">kg</span>
+        <SectionTitle eyebrow="Exercices" title="Séries enregistrées" />
+        {exercises.length === 0 ? (
+          <GlassCard>
+            <p className="muted">Cette séance ne contient pas encore de séries enregistrées.</p>
+          </GlassCard>
+        ) : (
+          exercises.map((exercise) => (
+            <section key={exercise.exerciseId} className="history-detail-exercise">
+              <div className="history-detail-exercise__head">
+                <div>
+                  <p className="eyebrow">{exercise.primaryMuscle}</p>
+                  <h2>{exercise.exerciseName}</h2>
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
+                <span className="chip success">{formatKg(exercise.totalVolume)}</span>
+              </div>
+              <div className="history-set-list">
+                {exercise.sets.map((set) => (
+                  <div key={set.id} className="history-set-card">
+                    <strong>Série {set.setIndex}</strong>
+                    <span>{set.reps ?? "-"} reps</span>
+                    <span>{formatKg(set.weightKg)}</span>
+                    <span>{formatKg(set.volume)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))
+        )}
       </section>
 
       <section className="card action-stack">

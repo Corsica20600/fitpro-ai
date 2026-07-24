@@ -23,13 +23,15 @@ export default async function WorkoutPage() {
 
   return (
     <AppShell className="stack workout-screen premium-workout">
-      <HeroVisual
-        title={heroTitle}
-        eyebrow="Seance guidee"
-        imageSrc={heroImage}
-        imageAlt={heroTitle}
-        className="workout-page-hero"
-      />
+      {!currentSession ? (
+        <HeroVisual
+          title={heroTitle}
+          eyebrow="Seance guidee"
+          imageSrc={heroImage}
+          imageAlt={heroTitle}
+          className="workout-page-hero"
+        />
+      ) : null}
 
       {!currentSession ? (
         <WorkoutCard light>
@@ -80,6 +82,9 @@ export default async function WorkoutPage() {
           </WorkoutCard>
           <GuidedWorkoutClient
             sessionId={currentSession.id}
+            sessionTitle={currentSession.title || heroTitle}
+            programName={currentSession.program?.name ?? null}
+            startedAt={(currentSession.startedAt ?? currentSession.createdAt).toISOString()}
             exercises={sessionExercises.map((item) => ({
               id: item.id,
               slug: item.slug,
@@ -99,6 +104,7 @@ export default async function WorkoutPage() {
               plannedWeightKg: item.plan?.plannedWeightKg ?? null,
               plannedRestSeconds: item.plan?.restSeconds ?? null,
               programExerciseId: item.plan?.programExerciseId ?? null,
+              technicalCue: item.shortTechnicalCues[0] ?? null,
               media: item.media.map((media) => ({
                 id: media.id,
                 type: media.type,
