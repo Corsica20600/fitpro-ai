@@ -1,159 +1,220 @@
 import Link from "next/link";
+import { MuscleDistribution } from "@/src/components/progress/muscle-distribution";
+import { PersonalRecordCard } from "@/src/components/progress/personal-record-card";
+import { ProgressChart } from "@/src/components/progress/progress-chart";
+import { ProgressPeriodSelector } from "@/src/components/progress/progress-period-selector";
+import { ProgressRings } from "@/src/components/progress/progress-rings";
+import { EmptyState } from "@/src/components/ui/empty-state";
+import { GlassCard } from "@/src/components/ui/glass-card";
+import { PageHeader } from "@/src/components/ui/page-header";
+import { SectionTitle } from "@/src/components/ui/section-title";
 import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
 
-function formatDuration(seconds: number) {
-  if (!seconds || seconds <= 0) return "0 min";
-  return `${Math.round(seconds / 60)} min`;
+const PERIODS = [
+  { key: "7d", label: "7 jours" },
+  { key: "30d", label: "30 jours" },
+  { key: "3m", label: "3 mois" },
+  { key: "1y", label: "1 an" },
+];
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }
 
-function formatDate(value: Date | null) {
-  if (!value) return "N/A";
+function formatNumber(value: number) {
+  return Math.round(value).toLocaleString("fr-FR");
+}
+
+function formatKg(value: number) {
+  return `${formatNumber(value)} kg`;
+}
+
+function formatDuration(seconds: number) {
+  const minutes = Math.round(seconds / 60);
+  if (minutes <= 0) return "0 min";
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${String(rest).padStart(2, "0")}` : `${hours} h`;
+}
+
+function formatDate(value: Date | null | undefined) {
+  if (!value) return null;
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
-    month: "2-digit",
+    month: "short",
     year: "numeric",
   }).format(value);
 }
 
-export default async function ProgressPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+function formatChange(value: number | null) {
+  if (value == null) return null;
+  if (Math.abs(value) < 1) return "Volume stable sur la période";
+  return value > 0
+    ? `Volume en hausse de ${value.toLocaleString("fr-FR")} %`
+    : `Volume en baisse de ${Math.abs(value).toLocaleString("fr-FR")} %`;
+}
+
+function ringPercent(current: number, previous: number) {
+  if (previous <= 0 && current > 0) return 100;
+  if (previous <= 0) return 0;
+  return Math.min(100, Math.round((current / previous) * 100));
+}
+
+export default async function ProgressPage(props: PageProps<"/progress">) {
   const searchParams = await props.searchParams;
-  const exerciseId = String(searchParams.exerciseId ?? "").trim();
-  const fallbackData = {
-    exerciseOptions: [] as Array<{ id: string; name: string }>,
-    selectedExercise: null as { id: string; name: string } | null,
-    headline: {
-      weeklySessions: 0,
-      weeklyVolume: 0,
-      totalSets: 0,
-      averageDuration: 0,
-      mostWorkedExercise: "N/A",
+  const requestedPeriod = firstParam(searchParams.period).trim();
+  const data = await getProgressDataForDemoUser(requestedPeriod);
+  const current = data.summary.current;
+  const previous = data.summary.previous;
+  const volumeMessage = formatChange(data.summary.changes.volumePercent) ?? "Pas encore assez de données pour comparer";
+
+  const rings = [
+    {
+      label: "Séances",
+      valueLabel: formatNumber(current.sessions),
+      detail: previous.sessions > 0 ? `vs ${formatNumber(previous.sessions)} avant` : "Base actuelle",
+      percent: ringPercent(current.sessions, previous.sessions),
+      tone: "blue" as const,
+      ariaLabel: `${current.sessions} séances sur ${data.period.label}`,
     },
-    progression: {
-      bestWeight: 0,
-      bestReps: 0,
-      totalVolume: 0,
-      lastSessionAt: null as Date | null,
-      evolution: "stable",
+    {
+      label: "Volume",
+      valueLabel: formatKg(current.volume),
+      detail: previous.volume > 0 ? `vs ${formatKg(previous.volume)} avant` : "Volume enregistré",
+      percent: ringPercent(current.volume, previous.volume),
+      tone: "green" as const,
+      ariaLabel: `${formatKg(current.volume)} de volume sur ${data.period.label}`,
     },
-    records: {
-      bestWeight: null as { value: number; exerciseName: string } | null,
-      bestExerciseVolume: null as { exerciseId: string; name: string; volume: number } | null,
-      bestSession: null as { sessionId: string; title: string; volume: number } | null,
+    {
+      label: "Durée",
+      valueLabel: formatDuration(current.durationSeconds),
+      detail: previous.durationSeconds > 0 ? `vs ${formatDuration(previous.durationSeconds)} avant` : "Temps cumulé",
+      percent: ringPercent(current.durationSeconds, previous.durationSeconds),
+      tone: "gold" as const,
+      ariaLabel: `${formatDuration(current.durationSeconds)} d'entraînement sur ${data.period.label}`,
     },
-    recentSessions: [] as Array<{ id: string; date: Date; status: string; setCount: number; volume: number }>,
-    donutExerciseDistribution: [] as Array<{ exerciseId: string; name: string; volume: number }>,
-    progressMetricReady: false,
-  };
-  const data = await getProgressDataForDemoUser(exerciseId).catch(() => fallbackData);
-  const sessionsForChart = data.recentSessions.slice(0, 6).reverse();
-  const maxVolume = Math.max(1, ...sessionsForChart.map((item) => item.volume));
-  const donutColors = ["#5eb8ff", "#38e3a5", "#9b7dff", "#ffb65e", "#ff6c9d"];
-  const donutTotalVolume = data.donutExerciseDistribution.reduce((acc, item) => acc + item.volume, 0);
-  const donutPercentages = data.donutExerciseDistribution.map((item) => (
-    donutTotalVolume > 0 ? (item.volume / donutTotalVolume) * 100 : 0
-  ));
-  const donutSegments = data.donutExerciseDistribution.map((item, index) => {
-    const from = donutPercentages.slice(0, index).reduce((acc, pct) => acc + pct, 0);
-    const to = from + (donutPercentages[index] ?? 0);
-    return { ...item, color: donutColors[index % donutColors.length], from, to };
-  });
-  const donutGradient = donutSegments.length
-    ? `conic-gradient(${donutSegments.map((segment) => `${segment.color} ${segment.from}% ${segment.to}%`).join(", ")})`
-    : "conic-gradient(#1d2b4a 0 100%)";
+    {
+      label: "Séries",
+      valueLabel: formatNumber(current.sets),
+      detail: previous.sets > 0 ? `vs ${formatNumber(previous.sets)} avant` : "Séries validées",
+      percent: ringPercent(current.sets, previous.sets),
+      tone: "violet" as const,
+      ariaLabel: `${current.sets} séries validées sur ${data.period.label}`,
+    },
+  ];
+
+  const records = [
+    data.records.bestWeight ? {
+      type: "Charge maximale",
+      value: formatKg(data.records.bestWeight.value),
+      context: data.records.bestWeight.exerciseName,
+      date: formatDate(data.records.bestWeight.date),
+      symbol: "PR",
+    } : null,
+    data.records.bestSession ? {
+      type: "Meilleure séance",
+      value: formatKg(data.records.bestSession.volume),
+      context: data.records.bestSession.title,
+      date: formatDate(data.records.bestSession.date),
+      symbol: "MAX",
+    } : null,
+    data.records.longestSession ? {
+      type: "Séance la plus longue",
+      value: formatDuration(data.records.longestSession.durationSeconds),
+      context: data.records.longestSession.title,
+      date: formatDate(data.records.longestSession.date),
+      symbol: "TIME",
+    } : null,
+    data.records.mostPracticedExercise ? {
+      type: "Exercice le plus pratiqué",
+      value: `${formatNumber(data.records.mostPracticedExercise.sets)} séries`,
+      context: data.records.mostPracticedExercise.name,
+      date: null,
+      symbol: "TOP",
+    } : null,
+  ].filter(Boolean) as Array<{
+    type: string;
+    value: string;
+    context: string;
+    date: string | null;
+    symbol: string;
+  }>;
 
   return (
-    <div className="stack">
-      <section className="hero mini compact">
-        <p className="eyebrow">Progression</p>
-        <h1>Analyse des performances</h1>
-      </section>
+    <div className="stack progress-dashboard">
+      <PageHeader
+        eyebrow="Tes performances"
+        title="Progression"
+        description={`Suis l'évolution de ton volume, de ta régularité et de tes performances. Période active: ${data.period.label}.`}
+      />
 
-      <section className="card">
-        <h2 className="section-title">Stats principales</h2>
-        <p className="muted">Volume solide aujourd&apos;hui.</p>
-        <div className="chips">
-          <span className="chip violet">Séances semaine: {data.headline.weeklySessions}</span>
-          <span className="chip success">Volume semaine: {Math.round(data.headline.weeklyVolume)} kg</span>
-          <span className="chip">Séries totales: {data.headline.totalSets}</span>
-          <span className="chip warning">Durée moyenne: {formatDuration(data.headline.averageDuration)}</span>
-          <span className="chip orange">Exo le plus travaillé: {data.headline.mostWorkedExercise}</span>
+      <ProgressPeriodSelector activePeriod={data.period.key} periods={PERIODS} />
+
+      <GlassCard elevated className="progress-summary-card">
+        <p className="fit-section-title__eyebrow">Résumé principal</p>
+        <h2>Ta progression</h2>
+        <strong>{volumeMessage}</strong>
+        <div className="progress-summary-grid">
+          <span><b>{formatNumber(current.sessions)}</b> séances</span>
+          <span><b>{formatKg(current.volume)}</b> volume</span>
+          <span><b>{formatNumber(current.sets)}</b> séries</span>
+          <span><b>{formatDuration(current.durationSeconds)}</b> durée</span>
         </div>
-      </section>
+      </GlassCard>
 
-      <section className="card progress-visuals">
-        <h2 className="section-title">Visualisation</h2>
-        <div className="progress-visual-grid">
-          <div className="progress-block">
-            <p className="eyebrow">Dernières séances</p>
-            <div className="progress-bars">
-              {sessionsForChart.length === 0 ? (
-                <p className="muted">Pas assez de données.</p>
-              ) : (
-                sessionsForChart.map((session) => (
-                  <div key={session.id} className="progress-bar-row">
-                    <span>{formatDate(session.date)}</span>
-                    <div className="progress-bar-track">
-                      <i style={{ width: `${Math.max(8, (session.volume / maxVolume) * 100)}%` }} />
-                    </div>
-                    <strong>{Math.round(session.volume)} kg</strong>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="progress-block">
-            <p className="eyebrow">Répartition 7 jours</p>
-            <div className="progress-donut-wrap">
-              <div className="progress-donut" style={{ background: donutGradient }}>
-                <div className="progress-donut-center">
-                  <strong>{Math.round(donutTotalVolume)}kg</strong>
-                  <span>Total</span>
-                </div>
-              </div>
-              <div className="progress-legend">
-                {donutSegments.length === 0 ? (
-                  <span><i style={{ background: "#1d2b4a" }} /> Pas de volume récent</span>
-                ) : donutSegments.map((segment) => (
-                  <span key={segment.exerciseId}>
-                    <i style={{ background: segment.color }} /> {segment.name} ({Math.round(segment.volume)} kg)
-                  </span>
+      {data.hasData ? (
+        <>
+          <ProgressRings items={rings} />
+
+          <ProgressChart
+            title="Volume par période"
+            description={`Découpage ${data.period.bucketKind === "day" ? "par jour" : data.period.bucketKind === "week" ? "par semaine" : "par mois"}. Les valeurs restent lisibles sans interaction.`}
+            bars={data.series.map((item) => ({
+              key: item.key,
+              label: item.label,
+              value: item.volume,
+              sessions: item.sessions,
+            }))}
+            valueFormatter={formatKg}
+            bestLabel={data.bestBucket && data.bestBucket.volume > 0 ? `${data.bestBucket.label} · ${formatKg(data.bestBucket.volume)}` : null}
+          />
+
+          {records.length > 0 ? (
+            <section className="stack">
+              <SectionTitle eyebrow="Records personnels" title="Tes meilleurs repères" />
+              <div className="personal-record-grid">
+                {records.map((record) => (
+                  <PersonalRecordCard key={`${record.type}-${record.value}`} {...record} />
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          <MuscleDistribution items={data.muscleDistribution} />
+
+          <GlassCard className="progress-trends-card">
+            <SectionTitle eyebrow="Régularité" title="Rythme d'entraînement" />
+            <div className="progress-trend-grid">
+              <span><b>{formatNumber(data.regularity.activeWeeks)}</b> semaines actives</span>
+              <span><b>{data.regularity.averageSessionsPerWeek.toLocaleString("fr-FR")}</b> séances / semaine</span>
+              <span><b>{formatNumber(data.regularity.bestStreakWeeks)}</b> meilleure série</span>
+              <span><b>{data.regularity.favoriteDay?.label ?? "N/A"}</b> jour favori</span>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="card progress-records">
-        <h2 className="section-title">Records personnels</h2>
-        <div className="chips">
-          <span className="chip">
-            Record charge: {data.records.bestWeight ? `${data.records.bestWeight.value.toFixed(1)} kg (${data.records.bestWeight.exerciseName})` : "N/A"}
-          </span>
-          <span className="chip">
-            Record volume exo: {data.records.bestExerciseVolume ? `${Math.round(data.records.bestExerciseVolume.volume)} kg (${data.records.bestExerciseVolume.name})` : "N/A"}
-          </span>
-          <span className="chip">
-            Meilleure séance: {data.records.bestSession ? `${Math.round(data.records.bestSession.volume)} kg (${data.records.bestSession.title})` : "N/A"}
-          </span>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2 className="section-title">Historique compact</h2>
-        <div className="stack">
-          {data.recentSessions.length === 0 ? (
-            <p className="muted">Aucune séance enregistrée.</p>
-          ) : (
-            data.recentSessions.map((session) => (
-              <Link key={session.id} href={`/history/${session.id}`} className="outline-link">
-                {formatDate(session.date)} · {session.status === "COMPLETED" ? "Terminée" : "Brouillon"} · {session.setCount} séries · {Math.round(session.volume)} kg
-              </Link>
-            ))
-          )}
-        </div>
-      </section>
-
+            <p className="muted">
+              {data.regularity.latestSessionAt
+                ? `Dernière séance enregistrée le ${formatDate(data.regularity.latestSessionAt)}.`
+                : "Aucune séance récente sur cette période."}
+            </p>
+          </GlassCard>
+        </>
+      ) : (
+        <EmptyState
+          title="Pas encore de données"
+          description="Aucune séance terminée n'est enregistrée sur cette période. Lance une séance pour alimenter tes statistiques."
+          action={<Link href="/workout" className="primary-button">Démarrer une séance</Link>}
+        />
+      )}
     </div>
   );
 }

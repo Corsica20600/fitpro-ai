@@ -945,6 +945,296 @@ button, input, select { font-family: inherit; }
   display: inline-block;
 }
 
+.progress-dashboard {
+  gap: 14px;
+}
+
+.progress-period-selector {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  padding: 6px;
+  border: 1px solid rgba(111, 151, 219, .28);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(13, 24, 43, .9), rgba(8, 15, 29, .94));
+}
+
+.progress-period-pill {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: #b9c9e9;
+  font-size: .78rem;
+  font-weight: 850;
+  outline: none;
+}
+
+.progress-period-pill.active {
+  color: #06182e;
+  background: linear-gradient(135deg, #8fc7ff, #2f8fff);
+  box-shadow: 0 12px 24px rgba(47, 143, 255, .32);
+}
+
+.progress-period-pill:focus-visible,
+.personal-record-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(99, 174, 255, .34);
+}
+
+.progress-summary-card {
+  display: grid;
+  gap: 11px;
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(255, 190, 92, .16), transparent 48%),
+    radial-gradient(120% 100% at 0% 100%, rgba(48, 144, 255, .2), transparent 55%),
+    linear-gradient(180deg, rgba(20, 35, 62, .98), rgba(11, 19, 35, .98));
+}
+
+.progress-summary-card h2,
+.progress-chart-card h2,
+.muscle-distribution-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.progress-summary-card > strong {
+  font-size: 1.05rem;
+  color: #fff3cf;
+}
+
+.progress-summary-grid,
+.progress-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.progress-summary-grid span,
+.progress-trend-grid span {
+  min-height: 70px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(122, 166, 236, .18);
+  border-radius: 16px;
+  color: #acc0e3;
+  background: rgba(8, 15, 28, .42);
+}
+
+.progress-summary-grid b,
+.progress-trend-grid b {
+  color: #f5f9ff;
+  font-size: 1rem;
+}
+
+.progress-rings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.progress-ring-card {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 13px 8px;
+  border: 1px solid rgba(120, 168, 255, .22);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(18, 31, 55, .96), rgba(10, 18, 33, .96));
+  text-align: center;
+}
+
+.progress-ring-card p {
+  margin: 0;
+  color: #aebfe0;
+  font-size: .74rem;
+}
+
+.progress-ring-card--green .fit-progress-ring__value { stroke: #38e3a5; }
+.progress-ring-card--gold .fit-progress-ring__value { stroke: #ffca6a; }
+.progress-ring-card--violet .fit-progress-ring__value { stroke: #a990ff; }
+
+.progress-chart-card,
+.muscle-distribution-card,
+.progress-trends-card {
+  display: grid;
+  gap: 12px;
+}
+
+.progress-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.progress-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+  gap: 7px;
+  min-height: 210px;
+  align-items: end;
+  padding-top: 6px;
+}
+
+.progress-chart-bar {
+  display: grid;
+  grid-template-rows: auto 150px auto;
+  gap: 7px;
+  min-width: 0;
+  text-align: center;
+}
+
+.progress-chart-value {
+  min-height: 28px;
+  color: #d7e7ff;
+  font-size: .66rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.progress-chart-track {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(119, 164, 235, .22);
+  background: rgba(8, 15, 28, .72);
+}
+
+.progress-chart-track i {
+  width: 100%;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(180deg, #83caff, #2f8fff 55%, #1763d6);
+}
+
+.progress-chart-label {
+  overflow: hidden;
+  color: #9eb2d4;
+  font-size: .66rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-record-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.personal-record-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 126px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 193, 88, .26);
+  border-radius: 22px;
+  background:
+    radial-gradient(90% 110% at 100% 0%, rgba(255, 190, 92, .14), transparent 55%),
+    linear-gradient(180deg, rgba(26, 34, 50, .98), rgba(12, 19, 33, .98));
+}
+
+.personal-record-card__symbol {
+  width: 46px;
+  height: 46px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 16px;
+  color: #211500;
+  background: linear-gradient(135deg, #ffe4a1, #ffae39);
+  font-size: .72rem;
+  font-weight: 950;
+  box-shadow: 0 14px 26px rgba(255, 174, 57, .2);
+}
+
+.personal-record-card h3,
+.personal-record-card p {
+  margin: 0;
+}
+
+.personal-record-card h3 {
+  margin-top: 3px;
+  color: #fff4d8;
+  font-size: 1.2rem;
+}
+
+.personal-record-card p {
+  color: #d9e4f8;
+}
+
+.personal-record-card span:not(.personal-record-card__symbol) {
+  color: #9fb2d5;
+  font-size: .76rem;
+}
+
+.muscle-distribution-list {
+  display: grid;
+  gap: 10px;
+}
+
+.muscle-distribution-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.muscle-distribution-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.muscle-distribution-row strong {
+  color: #f4f8ff;
+}
+
+.muscle-distribution-row span {
+  color: #aebfe0;
+  font-size: .76rem;
+}
+
+.muscle-distribution-track {
+  grid-column: 1 / -1;
+  height: 11px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 168, 255, .24);
+  background: rgba(9, 16, 30, .78);
+}
+
+.muscle-distribution-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #37d7ff, #8ef5c9);
+}
+
+.muscle-distribution-row em {
+  color: #f3f8ff;
+  font-style: normal;
+  font-weight: 850;
+}
+
+@media (min-width: 560px) {
+  .personal-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 760px) {
+  .progress-rings-grid,
+  .progress-summary-grid,
+  .progress-trend-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .dashboard-competition {
   gap: 12px;
 }

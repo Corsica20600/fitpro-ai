@@ -950,229 +950,348 @@ export async function getDashboardDataForDemoUser() {
   };
 }
 
-export async function getProgressDataForDemoUser(selectedExerciseId?: string) {
-  const profile = await getOrCreateDemoProfile();
-  const exerciseId = (selectedExerciseId ?? "").trim();
+type ProgressPeriodKey = "7d" | "30d" | "3m" | "1y";
 
-  let sessions: Array<{
-    id: string;
-    title: string;
-    startedAt: Date | null;
-    createdAt: Date;
-    status: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED";
-    durationSeconds: number | null;
-    sets: Array<{
-      exerciseId: string;
-      actualReps: number | null;
-      actualWeightKg: number | null;
-      exercise: { id: string; name: string; nameFr: string | null };
-    }>;
+type ProgressBucketKind = "day" | "week" | "month";
+
+const PROGRESS_PERIODS: Record<ProgressPeriodKey, { label: string; days: number; bucketKind: ProgressBucketKind }> = {
+  "7d": { label: "7 jours", days: 7, bucketKind: "day" },
+  "30d": { label: "30 jours", days: 30, bucketKind: "week" },
+  "3m": { label: "3 mois", days: 90, bucketKind: "week" },
+  "1y": { label: "1 an", days: 365, bucketKind: "month" },
+};
+
+function resolveProgressPeriod(period?: string): ProgressPeriodKey {
+  return period === "7d" || period === "3m" || period === "1y" ? period : "30d";
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfLocalDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function startOfLocalMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function formatBucketLabel(date: Date, kind: ProgressBucketKind) {
+  if (kind === "month") {
+    return new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date);
+  }
+  if (kind === "week") {
+    return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(date);
+  }
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(date);
+}
+
+function getBucketKey(date: Date, kind: ProgressBucketKind) {
+  if (kind === "month") {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+  const bucketDate = kind === "week" ? getParisWeekStart(date) : startOfLocalDay(date);
+  return bucketDate.toISOString().slice(0, 10);
+}
+
+function getBucketStart(date: Date, kind: ProgressBucketKind) {
+  if (kind === "month") return startOfLocalMonth(date);
+  if (kind === "week") return getParisWeekStart(date);
+  return startOfLocalDay(date);
+}
+
+function buildProgressBuckets(start: Date, end: Date, kind: ProgressBucketKind) {
+  const buckets: Array<{
+    key: string;
+    label: string;
+    start: Date;
+    sessions: number;
+    volume: number;
+    sets: number;
+    reps: number;
+    durationSeconds: number;
   }> = [];
+  let cursor = getBucketStart(start, kind);
 
-  let exercises: Array<{ id: string; name: string; nameFr: string | null }> = [];
-
-  try {
-    const response = await Promise.all([
-      prisma.workoutSession.findMany({
-        where: { userProfileId: profile.id },
-        include: {
-          sets: {
-            include: {
-              exercise: {
-                select: { id: true, name: true, nameFr: true },
-              },
-            },
-          },
-        },
-        orderBy: [{ createdAt: "desc" }],
-        take: 150,
-      }),
-      prisma.exercise.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true, nameFr: true },
-        orderBy: [{ name: "asc" }],
-        take: 300,
-      }),
-    ]);
-    sessions = response[0];
-    exercises = response[1];
-  } catch (error) {
-    if (!isMissingColumnError(error)) throw error;
-
-    const response = await Promise.all([
-      prisma.workoutSession.findMany({
-        where: { userProfileId: profile.id },
-        include: {
-          sets: {
-            include: {
-              exercise: {
-                select: { id: true, name: true },
-              },
-            },
-          },
-        },
-        orderBy: [{ createdAt: "desc" }],
-        take: 150,
-      }),
-      prisma.exercise.findMany({
-        where: { isActive: true },
-        select: { id: true, name: true },
-        orderBy: [{ name: "asc" }],
-        take: 300,
-      }),
-    ]);
-
-    sessions = response[0].map((session) => ({
-      ...session,
-      sets: session.sets.map((set) => ({
-        ...set,
-        exercise: { ...set.exercise, nameFr: null },
-      })),
-    }));
-    exercises = response[1].map((exercise) => ({ ...exercise, nameFr: null }));
-  }
-
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  const day = startOfWeek.getDay();
-  const diffToMonday = day === 0 ? 6 : day - 1;
-  startOfWeek.setDate(startOfWeek.getDate() - diffToMonday);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const sessionsWithVolume = sessions.map((session) => {
-    const volume = session.sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
-    const exerciseCount = new Set(session.sets.map((set) => set.exerciseId)).size;
-    const setCount = session.sets.length;
-    return { ...session, volume, exerciseCount, setCount };
-  });
-
-  const weeklySessions = sessionsWithVolume.filter((session) => (session.startedAt ?? session.createdAt) >= startOfWeek);
-  const weeklyVolume = weeklySessions.reduce((acc, item) => acc + item.volume, 0);
-
-  const allSets = sessions.flatMap((session) => session.sets);
-  const exerciseUsage = new Map<string, { count: number; name: string }>();
-  for (const set of allSets) {
-    const current = exerciseUsage.get(set.exerciseId) ?? {
-      count: 0,
-      name: set.exercise.nameFr || set.exercise.name,
-    };
-    current.count += 1;
-    exerciseUsage.set(set.exerciseId, current);
-  }
-
-  const mostWorked = [...exerciseUsage.entries()]
-    .sort((a, b) => b[1].count - a[1].count)[0];
-
-  const selected = exerciseId || exercises[0]?.id || "";
-  const selectedExercise = exercises.find((item) => item.id === selected) ?? null;
-  const selectedSets = allSets.filter((set) => set.exerciseId === selected);
-
-  const bestWeight = selectedSets.reduce((acc, set) => Math.max(acc, set.actualWeightKg ?? 0), 0);
-  const bestReps = selectedSets.reduce((acc, set) => Math.max(acc, set.actualReps ?? 0), 0);
-  const selectedVolume = selectedSets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
-
-  const selectedSessions = sessionsWithVolume
-    .filter((session) => session.sets.some((set) => set.exerciseId === selected))
-    .map((session) => {
-      const sessionSets = session.sets.filter((set) => set.exerciseId === selected);
-      const sessionVolume = sessionSets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
-      return {
-        sessionId: session.id,
-        date: session.startedAt ?? session.createdAt,
-        volume: sessionVolume,
-      };
-    })
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-  const latestVolume = selectedSessions[0]?.volume ?? 0;
-  const previousVolume = selectedSessions[1]?.volume ?? 0;
-  const evolution =
-    latestVolume > previousVolume ? "en hausse" :
-    latestVolume < previousVolume ? "en baisse" :
-    "stable";
-
-  const globalBestWeightSet = allSets
-    .filter((set) => (set.actualWeightKg ?? 0) > 0)
-    .sort((a, b) => (b.actualWeightKg ?? 0) - (a.actualWeightKg ?? 0))[0] ?? null;
-
-  const bestVolumeByExercise = [...exerciseUsage.keys()]
-    .map((id) => {
-      const sets = allSets.filter((set) => set.exerciseId === id);
-      const volume = sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
-      const name = sets[0]?.exercise.nameFr || sets[0]?.exercise.name || "Exercice";
-      return { exerciseId: id, name, volume };
-    })
-    .sort((a, b) => b.volume - a.volume)[0] ?? null;
-
-  const bestSession = sessionsWithVolume
-    .filter((session) => session.status === "COMPLETED")
-    .sort((a, b) => b.volume - a.volume)[0] ?? null;
-
-  const totalDuration = sessionsWithVolume.reduce((acc, session) => acc + (session.durationSeconds ?? 0), 0);
-  const averageDuration = sessionsWithVolume.length ? Math.round(totalDuration / sessionsWithVolume.length) : 0;
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const volumeByExerciseLast7Days = new Map<string, { name: string; volume: number }>();
-  for (const session of sessions) {
-    const sessionDate = session.startedAt ?? session.createdAt;
-    if (sessionDate < sevenDaysAgo) continue;
-    for (const set of session.sets) {
-      const volume = (set.actualReps ?? 0) * (set.actualWeightKg ?? 0);
-      if (volume <= 0) continue;
-      const current = volumeByExerciseLast7Days.get(set.exerciseId) ?? {
-        name: set.exercise.nameFr || set.exercise.name,
-        volume: 0,
-      };
-      current.volume += volume;
-      volumeByExerciseLast7Days.set(set.exerciseId, current);
+  while (cursor < end) {
+    buckets.push({
+      key: getBucketKey(cursor, kind),
+      label: formatBucketLabel(cursor, kind),
+      start: new Date(cursor),
+      sessions: 0,
+      volume: 0,
+      sets: 0,
+      reps: 0,
+      durationSeconds: 0,
+    });
+    if (kind === "month") {
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    } else if (kind === "week") {
+      cursor = addDays(cursor, 7);
+    } else {
+      cursor = addDays(cursor, 1);
     }
   }
-  const donutExerciseDistribution = [...volumeByExerciseLast7Days.entries()]
-    .map(([exerciseId, item]) => ({
-      exerciseId,
-      name: item.name,
-      volume: item.volume,
+
+  return buckets;
+}
+
+function percentChange(current: number, previous: number) {
+  if (previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+function normalizeMuscleGroup(value: string) {
+  const lower = value.toLowerCase();
+  if (["chest", "pectoraux", "poitrine"].some((token) => lower.includes(token))) return "Pectoraux";
+  if (["back", "dos", "lats", "trapezes", "trapèzes"].some((token) => lower.includes(token))) return "Dos";
+  if (["leg", "jamb", "quad", "hamstring", "ischio", "glute", "fessier", "calf", "mollet"].some((token) => lower.includes(token))) return "Jambes";
+  if (["shoulder", "épaule", "epaule", "delto"].some((token) => lower.includes(token))) return "Épaules";
+  if (["biceps", "triceps", "forearm", "avant-bras", "bras"].some((token) => lower.includes(token))) return "Bras";
+  if (["ab", "abdomin", "core", "oblique"].some((token) => lower.includes(token))) return "Abdominaux";
+  return "Autres";
+}
+
+export async function getProgressDataForDemoUser(periodOrExerciseId?: string) {
+  const period = resolveProgressPeriod(periodOrExerciseId);
+  const periodConfig = PROGRESS_PERIODS[period];
+  const profile = await getOrCreateDemoProfile();
+  const now = new Date();
+  const currentEnd = now;
+  const currentStart = startOfLocalDay(addDays(currentEnd, -periodConfig.days + 1));
+  const previousEnd = currentStart;
+  const previousStart = startOfLocalDay(addDays(previousEnd, -periodConfig.days));
+
+  const sessions = await prisma.workoutSession.findMany({
+    where: {
+      userProfileId: profile.id,
+      status: "COMPLETED",
+      OR: [
+        { startedAt: { gte: previousStart, lte: currentEnd } },
+        { startedAt: null, createdAt: { gte: previousStart, lte: currentEnd } },
+      ],
+    },
+    include: {
+      sets: {
+        include: {
+          exercise: {
+            select: {
+              id: true,
+              name: true,
+              nameFr: true,
+              primaryMuscles: true,
+              primaryMusclesFr: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: "asc" }],
+      },
+    },
+    orderBy: [{ startedAt: "desc" }, { createdAt: "desc" }],
+    take: 500,
+  });
+
+  const enrichSession = (session: (typeof sessions)[number]) => {
+    const date = session.startedAt ?? session.createdAt;
+    const completedSets = session.sets.filter((set) => set.isCompleted || set.actualReps != null || set.actualWeightKg != null);
+    const volume = completedSets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
+    const reps = completedSets.reduce((acc, set) => acc + (set.actualReps ?? 0), 0);
+    return {
+      ...session,
+      date,
+      completedSets,
+      volume,
+      reps,
+      setCount: completedSets.length,
+      durationSeconds: session.durationSeconds ?? 0,
+    };
+  };
+
+  const enriched = sessions.map(enrichSession);
+  const currentSessions = enriched.filter((session) => session.date >= currentStart && session.date <= currentEnd);
+  const previousSessions = enriched.filter((session) => session.date >= previousStart && session.date < previousEnd);
+
+  const summarize = (items: typeof currentSessions) => ({
+    sessions: items.length,
+    volume: items.reduce((acc, session) => acc + session.volume, 0),
+    durationSeconds: items.reduce((acc, session) => acc + session.durationSeconds, 0),
+    sets: items.reduce((acc, session) => acc + session.setCount, 0),
+    reps: items.reduce((acc, session) => acc + session.reps, 0),
+  });
+
+  const current = summarize(currentSessions);
+  const previous = summarize(previousSessions);
+  const volumeChangePercent = percentChange(current.volume, previous.volume);
+  const sessionsChangePercent = percentChange(current.sessions, previous.sessions);
+  const durationChangePercent = percentChange(current.durationSeconds, previous.durationSeconds);
+  const setsChangePercent = percentChange(current.sets, previous.sets);
+
+  const buckets = buildProgressBuckets(currentStart, currentEnd, periodConfig.bucketKind);
+  const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+  for (const session of currentSessions) {
+    const bucket = bucketMap.get(getBucketKey(session.date, periodConfig.bucketKind));
+    if (!bucket) continue;
+    bucket.sessions += 1;
+    bucket.volume += session.volume;
+    bucket.sets += session.setCount;
+    bucket.reps += session.reps;
+    bucket.durationSeconds += session.durationSeconds;
+  }
+
+  const bestBucket = buckets.reduce((best, bucket) => (bucket.volume > best.volume ? bucket : best), buckets[0] ?? null);
+  const allCurrentSets = currentSessions.flatMap((session) => session.completedSets.map((set) => ({ ...set, session })));
+
+  const bestWeightSet = allCurrentSets
+    .filter((set) => (set.actualWeightKg ?? 0) > 0)
+    .sort((a, b) => (b.actualWeightKg ?? 0) - (a.actualWeightKg ?? 0))[0] ?? null;
+  const bestVolumeSession = currentSessions.sort((a, b) => b.volume - a.volume)[0] ?? null;
+  const longestSession = currentSessions.filter((session) => session.durationSeconds > 0).sort((a, b) => b.durationSeconds - a.durationSeconds)[0] ?? null;
+  const mostSetsSession = currentSessions.sort((a, b) => b.setCount - a.setCount)[0] ?? null;
+
+  const exerciseUsage = new Map<string, { id: string; name: string; sets: number; volume: number }>();
+  const muscleUsage = new Map<string, { group: string; sets: number; volume: number }>();
+  for (const session of currentSessions) {
+    for (const set of session.completedSets) {
+      const exerciseName = set.exercise.nameFr || set.exercise.name;
+      const setVolume = (set.actualReps ?? 0) * (set.actualWeightKg ?? 0);
+      const exerciseItem = exerciseUsage.get(set.exerciseId) ?? { id: set.exerciseId, name: exerciseName, sets: 0, volume: 0 };
+      exerciseItem.sets += 1;
+      exerciseItem.volume += setVolume;
+      exerciseUsage.set(set.exerciseId, exerciseItem);
+
+      const muscles = set.exercise.primaryMusclesFr.length ? set.exercise.primaryMusclesFr : set.exercise.primaryMuscles;
+      const primaryGroup = normalizeMuscleGroup(muscles[0] ?? "Autres");
+      const muscleItem = muscleUsage.get(primaryGroup) ?? { group: primaryGroup, sets: 0, volume: 0 };
+      muscleItem.sets += 1;
+      muscleItem.volume += setVolume;
+      muscleUsage.set(primaryGroup, muscleItem);
+    }
+  }
+
+  const mostPracticedExercise = [...exerciseUsage.values()].sort((a, b) => b.sets - a.sets)[0] ?? null;
+  const bestExerciseVolume = [...exerciseUsage.values()].sort((a, b) => b.volume - a.volume)[0] ?? null;
+  const totalMuscleSets = [...muscleUsage.values()].reduce((acc, item) => acc + item.sets, 0);
+  const muscleDistribution = [...muscleUsage.values()]
+    .map((item) => ({
+      ...item,
+      percent: totalMuscleSets > 0 ? Math.round((item.sets / totalMuscleSets) * 100) : 0,
     }))
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 5);
+    .sort((a, b) => b.sets - a.sets);
+
+  const currentWeekKeys = new Set(currentSessions.map((session) => getParisWeekStart(session.date).toISOString().slice(0, 10)));
+  const activeWeeks = currentWeekKeys.size;
+  const averageSessionsPerWeek = periodConfig.days > 0 ? Math.round((current.sessions / (periodConfig.days / 7)) * 10) / 10 : 0;
+  const favoriteDay = [...currentSessions.reduce((map, session) => {
+    const label = new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(session.date);
+    map.set(label, (map.get(label) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
+
+  const completedSessionDates = enriched
+    .filter((session) => session.date <= currentEnd)
+    .map((session) => getParisWeekStart(session.date).getTime());
+  const weeklyKeys = new Set(completedSessionDates);
+  let bestStreakWeeks = 0;
+  let currentStreak = 0;
+  const minWeek = completedSessionDates.length ? Math.min(...completedSessionDates) : null;
+  if (minWeek != null) {
+    for (let cursor = getParisWeekStart(currentEnd).getTime(); cursor >= minWeek; cursor -= 7 * 24 * 60 * 60 * 1000) {
+      if (weeklyKeys.has(cursor)) {
+        currentStreak += 1;
+        bestStreakWeeks = Math.max(bestStreakWeeks, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    }
+  }
 
   return {
-    exerciseOptions: exercises.map((item) => ({
-      id: item.id,
-      name: item.nameFr || item.name,
+    period: {
+      key: period,
+      label: periodConfig.label,
+      start: currentStart,
+      end: currentEnd,
+      previousStart,
+      previousEnd,
+      bucketKind: periodConfig.bucketKind,
+    },
+    summary: {
+      current,
+      previous,
+      changes: {
+        volumePercent: volumeChangePercent,
+        sessionsPercent: sessionsChangePercent,
+        durationPercent: durationChangePercent,
+        setsPercent: setsChangePercent,
+      },
+    },
+    series: buckets.map((bucket) => ({
+      key: bucket.key,
+      label: bucket.label,
+      sessions: bucket.sessions,
+      volume: bucket.volume,
+      sets: bucket.sets,
+      reps: bucket.reps,
+      durationSeconds: bucket.durationSeconds,
     })),
-    selectedExercise: selectedExercise ? { id: selectedExercise.id, name: selectedExercise.nameFr || selectedExercise.name } : null,
-    headline: {
-      weeklySessions: weeklySessions.length,
-      weeklyVolume,
-      totalSets: allSets.length,
-      averageDuration,
-      mostWorkedExercise: mostWorked ? mostWorked[1].name : "N/A",
-    },
-    progression: {
-      bestWeight,
-      bestReps,
-      totalVolume: selectedVolume,
-      lastSessionAt: selectedSessions[0]?.date ?? null,
-      evolution,
-    },
+    bestBucket: bestBucket ? { label: bestBucket.label, volume: bestBucket.volume, sessions: bestBucket.sessions } : null,
     records: {
-      bestWeight: globalBestWeightSet
-        ? { value: globalBestWeightSet.actualWeightKg ?? 0, exerciseName: globalBestWeightSet.exercise.nameFr || globalBestWeightSet.exercise.name }
-        : null,
-      bestExerciseVolume: bestVolumeByExercise,
-      bestSession: bestSession
-        ? { sessionId: bestSession.id, title: bestSession.title, volume: bestSession.volume }
-        : null,
+      bestWeight: bestWeightSet ? {
+        value: bestWeightSet.actualWeightKg ?? 0,
+        exerciseName: bestWeightSet.exercise.nameFr || bestWeightSet.exercise.name,
+        date: bestWeightSet.session.date,
+      } : null,
+      bestExerciseVolume: bestExerciseVolume ? {
+        exerciseId: bestExerciseVolume.id,
+        name: bestExerciseVolume.name,
+        volume: bestExerciseVolume.volume,
+      } : null,
+      bestSession: bestVolumeSession ? {
+        sessionId: bestVolumeSession.id,
+        title: bestVolumeSession.title,
+        volume: bestVolumeSession.volume,
+        date: bestVolumeSession.date,
+      } : null,
+      longestSession: longestSession ? {
+        sessionId: longestSession.id,
+        title: longestSession.title,
+        durationSeconds: longestSession.durationSeconds,
+        date: longestSession.date,
+      } : null,
+      mostSetsSession: mostSetsSession ? {
+        sessionId: mostSetsSession.id,
+        title: mostSetsSession.title,
+        sets: mostSetsSession.setCount,
+        date: mostSetsSession.date,
+      } : null,
+      mostPracticedExercise: mostPracticedExercise ? {
+        exerciseId: mostPracticedExercise.id,
+        name: mostPracticedExercise.name,
+        sets: mostPracticedExercise.sets,
+      } : null,
+      bestStreakWeeks,
     },
-    recentSessions: sessionsWithVolume.slice(0, 12).map((session) => ({
+    muscleDistribution,
+    regularity: {
+      activeWeeks,
+      averageSessionsPerWeek,
+      favoriteDay: favoriteDay ? { label: favoriteDay[0], sessions: favoriteDay[1] } : null,
+      bestStreakWeeks,
+      latestSessionAt: currentSessions[0]?.date ?? null,
+    },
+    recentSessions: currentSessions.slice(0, 8).map((session) => ({
       id: session.id,
-      date: session.startedAt ?? session.createdAt,
-      status: session.status,
+      date: session.date,
+      title: session.title,
       setCount: session.setCount,
       volume: session.volume,
+      durationSeconds: session.durationSeconds,
     })),
-    donutExerciseDistribution,
-    progressMetricReady: true,
+    hasData: current.sessions > 0 || current.sets > 0 || current.volume > 0,
   };
 }
