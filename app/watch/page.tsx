@@ -1,6 +1,10 @@
 "use client";
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { WatchMetricCard } from "@/src/components/watch/watch-metric-card";
+import { WatchPermissionsCard } from "@/src/components/watch/watch-permissions-card";
+import { WatchStatusCard } from "@/src/components/watch/watch-status-card";
+import { WatchSyncCard } from "@/src/components/watch/watch-sync-card";
 
 type WatchState = {
   sessionId: string;
@@ -20,6 +24,21 @@ type ApiResponse = {
   error?: string;
 };
 
+function formatRest(seconds: number) {
+  if (seconds <= 0) return "GO";
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function formatTime(date: Date | null) {
+  if (!date) return "Jamais";
+  return new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 export default function WatchPage() {
   const [state, setState] = useState<WatchState | null>(null);
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
@@ -27,8 +46,26 @@ export default function WatchPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAttemptAt, setLastAttemptAt] = useState<Date | null>(null);
+  const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
+
+  const applyPayload = useCallback((payload: WatchState) => {
+    setState(payload);
+    const nextRemaining = Math.max(0, Math.floor(payload.restRemaining ?? 0));
+    if (nextRemaining > 0) {
+      const nextRestEndsAt = Date.now() + nextRemaining * 1000;
+      setRestEndsAt(nextRestEndsAt);
+      setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
+    } else {
+      setRestEndsAt(null);
+      setDisplayRestRemaining(0);
+    }
+    setError(null);
+    setLastSuccessAt(new Date());
+  }, []);
 
   const refreshState = useCallback(async () => {
+    setLastAttemptAt(new Date());
     try {
       const response = await fetch("/api/watch/current-session", { cache: "no-store" });
       const data = (await response.json()) as ApiResponse;
@@ -39,24 +76,13 @@ export default function WatchPage() {
         setError(data.error ?? "Aucune séance active.");
         return;
       }
-      setState(data.payload);
-      const nextRemaining = Math.max(0, Math.floor(data.payload.restRemaining ?? 0));
-      if (nextRemaining > 0) {
-        const restStartedAt = Date.now();
-        const nextRestEndsAt = restStartedAt + nextRemaining * 1000;
-        setRestEndsAt(nextRestEndsAt);
-        setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
-      } else {
-        setRestEndsAt(null);
-        setDisplayRestRemaining(0);
-      }
-      setError(null);
+      applyPayload(data.payload);
     } catch {
       setError("Connexion impossible.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyPayload]);
 
   useEffect(() => {
     const bootId = window.setTimeout(() => {
@@ -96,6 +122,7 @@ export default function WatchPage() {
     async (path: string, body?: Record<string, unknown>) => {
       if (!state || busy) return;
       setBusy(true);
+      setLastAttemptAt(new Date());
       try {
         const response = await fetch(path, {
           method: "POST",
@@ -107,197 +134,115 @@ export default function WatchPage() {
           setError(data.error ?? "Action refusée.");
           return;
         }
-        setState(data.payload);
-        const nextRemaining = Math.max(0, Math.floor(data.payload.restRemaining ?? 0));
-        if (nextRemaining > 0) {
-          const restStartedAt = Date.now();
-          const nextRestEndsAt = restStartedAt + nextRemaining * 1000;
-          setRestEndsAt(nextRestEndsAt);
-          setDisplayRestRemaining(Math.max(0, Math.ceil((nextRestEndsAt - Date.now()) / 1000)));
-        } else {
-          setRestEndsAt(null);
-          setDisplayRestRemaining(0);
-        }
-        setError(null);
+        applyPayload(data.payload);
       } catch {
         setError("Erreur reseau.");
       } finally {
         setBusy(false);
       }
     },
-    [busy, state],
+    [applyPayload, busy, state],
   );
 
   const subtitle = useMemo(() => {
-    if (!state) return "Démarre une séance sur FitAI.";
-    return `Exo ${state.exerciseIndex}/${state.totalExercises} · Série ${state.setIndex}/${state.totalSets}`;
+    if (!state) return "Démarre une séance sur FitAI Pro pour alimenter la montre.";
+    return `Exercice ${state.exerciseIndex}/${state.totalExercises} · Série ${state.setIndex}/${state.totalSets}`;
   }, [state]);
 
-  const detailLine = useMemo(() => {
-    if (!state) return "";
-    const weightPart = state.weight == null ? "-" : `${state.weight} kg`;
-    return `${state.targetReps} reps · ${weightPart}`;
-  }, [state]);
+  const metrics = [
+    { label: "Exercice", value: state?.exerciseName ?? "Indisponible", detail: state ? "Séance active" : "Aucune donnée" },
+    { label: "Progression", value: state ? `${state.exerciseIndex}/${state.totalExercises}` : "-", detail: "Exercices" },
+    { label: "Série", value: state ? `${state.setIndex}/${state.totalSets}` : "-", detail: "Position actuelle" },
+    { label: "Cible", value: state ? String(state.targetReps) : "-", unit: " reps", detail: "Répétitions" },
+    { label: "Charge", value: state?.weight == null ? "-" : String(state.weight), unit: state?.weight == null ? undefined : " kg", detail: "Dernière charge connue" },
+    { label: "Repos", value: formatRest(displayRestRemaining), detail: displayRestRemaining > 0 ? "Récupération" : "Prêt" },
+  ];
 
   return (
-    <main style={styles.page}>
-      <section style={styles.card}>
-        <p style={styles.brand}>FITAI PRO</p>
-        {loading ? <p style={styles.text}>Chargement...</p> : null}
-        {!loading ? <p style={styles.exercise} title={state?.exerciseName ?? "Aucune séance active"}>{state?.exerciseName ?? "Aucune séance active"}</p> : null}
-        <p style={styles.text}>{subtitle}</p>
-        {state ? <p style={styles.detail}>{detailLine}</p> : null}
-        <div style={styles.statusWrap}>
-          <p style={styles.statusLabel}>{displayRestRemaining > 0 ? "RÉCUPÉRATION" : "PRÊT"}</p>
-          <p style={styles.rest}>{displayRestRemaining > 0 ? `${displayRestRemaining}s` : "GO"}</p>
-        </div>
-        {error ? <p style={styles.error}>{error}</p> : null}
+    <main className="watch-page-v2">
+      <div className="watch-shell-v2">
+        <WatchStatusCard loading={loading} hasState={Boolean(state)} error={error} subtitle={subtitle} />
 
-        <div style={styles.grid}>
-          <button style={styles.primary} disabled={!state || busy} onClick={() => void perform("/api/watch/validate-set", {
+        <section className="watch-last-sync-card">
+          <p className="eyebrow">Dernière synchronisation</p>
+          <h2>{formatTime(lastSuccessAt)}</h2>
+          <p>Dernière tentative: {formatTime(lastAttemptAt)}</p>
+        </section>
+
+        <section className="watch-metric-grid" aria-label="Métriques montre disponibles">
+          {metrics.map((metric) => (
+            <WatchMetricCard
+              key={metric.label}
+              label={metric.label}
+              value={metric.value}
+              unit={metric.unit}
+              detail={metric.detail}
+              unavailable={!state}
+            />
+          ))}
+        </section>
+
+        <WatchPermissionsCard
+          items={[
+            {
+              label: "Séance FitAI",
+              state: state ? "Disponible" : "En attente",
+              detail: "La montre lit la séance active via les endpoints watch existants.",
+              tone: state ? "success" : "warning",
+            },
+            {
+              label: "Samsung Health",
+              state: "Non exposé ici",
+              detail: "Aucune métrique Samsung Health n'est affichée par cette page actuellement.",
+              tone: "neutral",
+            },
+          ]}
+        />
+
+        <WatchSyncCard
+          busy={busy || loading}
+          disabled={false}
+          lastAttemptLabel={formatTime(lastAttemptAt)}
+          metricsCount={state ? metrics.length : 0}
+          onRefresh={() => void refreshState()}
+        />
+
+        <section className="watch-action-grid" aria-label="Actions montre">
+          <button className="primary-button" disabled={!state || busy} onClick={() => void perform("/api/watch/validate-set", {
             actualReps: state?.targetReps ?? 10,
             weight: state?.weight ?? null,
           })}>
             Valider série
           </button>
-          <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/skip-rest")}>
+          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/skip-rest")}>
             Passer repos
           </button>
-          <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/previous-exercise")}>
-            Préc.
+          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/previous-exercise")}>
+            Précédent
           </button>
-          <button style={styles.secondary} disabled={!state || busy} onClick={() => void perform("/api/watch/next-exercise")}>
-            Suiv.
+          <button className="ghost-btn" disabled={!state || busy} onClick={() => void perform("/api/watch/next-exercise")}>
+            Suivant
           </button>
-          <button style={styles.danger} disabled={!state || busy} onClick={() => void perform("/api/watch/complete-session")}>
+          <button className="ghost-btn chip danger" disabled={!state || busy} onClick={() => void perform("/api/watch/complete-session")}>
             Fin
           </button>
-          <button style={styles.secondary} disabled={busy} onClick={() => void refreshState()}>
-            Sync
-          </button>
-        </div>
-      </section>
+        </section>
+
+        {error ? (
+          <section className="watch-error-card">
+            <p className="eyebrow">Fallback</p>
+            <h2>Action requise</h2>
+            <p>{error}</p>
+          </section>
+        ) : null}
+
+        <details className="watch-tech-card">
+          <summary>Informations techniques</summary>
+          <p>Polling conservé: `/api/watch/current-session` toutes les 2 secondes.</p>
+          <p>Session: {state?.sessionId ?? "aucune"}</p>
+          <p>Statut brut: {state?.status ?? "indisponible"}</p>
+        </details>
+      </div>
     </main>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100dvh",
-    background: "radial-gradient(circle at 50% 18%, #14316f 0%, #06112a 52%, #020617 100%)",
-    color: "#E2E8F0",
-    padding: "max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left))",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "240px",
-    background: "linear-gradient(165deg, rgba(14,36,84,.97) 0%, rgba(10,20,48,.97) 38%, rgba(5,12,30,.98) 100%)",
-    border: "1px solid rgba(148,163,184,.24)",
-    borderRadius: "20px",
-    padding: "8px",
-    boxShadow: "0 12px 24px rgba(1,8,22,.52), inset 0 1px 0 rgba(191,219,254,.16)",
-  },
-  brand: {
-    margin: "0 0 2px 0",
-    fontSize: "11px",
-    letterSpacing: ".16em",
-    fontWeight: 800,
-    color: "#BFDBFE",
-    lineHeight: 1.2,
-    textAlign: "center",
-  },
-  exercise: {
-    margin: "4px 0 2px 0",
-    fontSize: "clamp(14px, 4.8vw, 19px)",
-    fontWeight: 800,
-    lineHeight: 1.08,
-    textAlign: "center",
-    textWrap: "pretty",
-    overflow: "hidden",
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    minHeight: "1.9em",
-  },
-  text: {
-    margin: "1px 0 0",
-    fontSize: "11px",
-    color: "#D6E6FF",
-    fontWeight: 700,
-    textAlign: "center",
-  },
-  detail: {
-    margin: "3px 0 0",
-    fontSize: "10px",
-    color: "#93C5FD",
-    textAlign: "center",
-  },
-  statusWrap: {
-    marginTop: "6px",
-    padding: "7px 7px 6px",
-    borderRadius: "12px",
-    border: "1px solid rgba(147,197,253,.24)",
-    background: "linear-gradient(180deg, rgba(15,30,64,.85) 0%, rgba(10,20,44,.88) 100%)",
-    boxShadow: "inset 0 1px 0 rgba(219,234,254,.22)",
-  },
-  statusLabel: {
-    margin: 0,
-    fontSize: "9px",
-    letterSpacing: ".15em",
-    fontWeight: 800,
-    color: "#BFDBFE",
-    textAlign: "center",
-  },
-  rest: {
-    margin: "3px 0 0 0",
-    fontSize: "clamp(17px, 6.8vw, 24px)",
-    fontWeight: 900,
-    textAlign: "center",
-    letterSpacing: ".02em",
-    color: "#86EFAC",
-    textShadow: "0 0 14px rgba(56,189,248,.35)",
-  },
-  error: {
-    margin: "6px 0",
-    fontSize: "10px",
-    color: "#FCA5A5",
-    textAlign: "center",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "4px",
-  },
-  primary: {
-    gridColumn: "1 / -1",
-    minHeight: "34px",
-    borderRadius: "999px",
-    border: "none",
-    background: "linear-gradient(180deg, #7DD3FC 0%, #3B82F6 52%, #1D4ED8 100%)",
-    color: "#FFFFFF",
-    fontSize: "13px",
-    fontWeight: 800,
-    boxShadow: "0 6px 12px rgba(37,99,235,.3), inset 0 1px 0 rgba(255,255,255,.24)",
-  },
-  secondary: {
-    minHeight: "30px",
-    borderRadius: "999px",
-    border: "1px solid rgba(148,163,184,.35)",
-    background: "linear-gradient(180deg, rgba(15,25,52,.9) 0%, rgba(10,18,36,.9) 100%)",
-    color: "#E5EDFF",
-    fontSize: "11px",
-    fontWeight: 700,
-  },
-  danger: {
-    minHeight: "30px",
-    borderRadius: "999px",
-    border: "1px solid rgba(185,28,28,.65)",
-    background: "linear-gradient(180deg, #7F1D1D 0%, #450A0A 100%)",
-    color: "#FEE2E2",
-    fontSize: "11px",
-    fontWeight: 700,
-  },
-};

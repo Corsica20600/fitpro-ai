@@ -1,8 +1,14 @@
 import { connection } from "next/server";
+import { ActiveProgramCard } from "@/src/components/programs/active-program-card";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { AiProgramGeneratorPanel } from "@/src/components/programs/ai-program-generator-panel";
+import { EmptyState } from "@/src/components/ui/empty-state";
+import { GlassCard } from "@/src/components/ui/glass-card";
+import { PageHeader } from "@/src/components/ui/page-header";
+import { ProgramCard } from "@/src/components/programs/program-card";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
 import { ProgramDayExercisesEditor } from "@/src/components/programs/program-day-exercises-editor";
+import { ProgramSummary } from "@/src/components/programs/program-summary";
 import {
   addExerciseToProgramDayAction,
   createSimpleProgramAction,
@@ -38,21 +44,47 @@ function statusToFr(status: string) {
   return map[status] ?? status;
 }
 
+function uniqueProgramMuscles(program: Awaited<ReturnType<typeof getProgramsForDemoUser>>[number]) {
+  return [...new Set(program.days.flatMap((day) =>
+    day.exercises.map((item) => item.exercise.primaryMusclesFr[0] || item.exercise.primaryMuscles[0]).filter(Boolean),
+  ))].slice(0, 5);
+}
+
+function uniqueProgramEquipment(program: Awaited<ReturnType<typeof getProgramsForDemoUser>>[number]) {
+  return [...new Set(program.days.flatMap((day) =>
+    day.exercises.map((item) => item.exercise.equipmentFr[0] || item.exercise.equipment[0]).filter(Boolean),
+  ))].slice(0, 4);
+}
+
+function programExercisesCount(program: Awaited<ReturnType<typeof getProgramsForDemoUser>>[number]) {
+  return program.days.reduce((acc, day) => acc + day.exercises.length, 0);
+}
+
 export default async function ProgramsPage() {
   await connection();
   const [programs, exerciseOptions] = await Promise.all([
     getProgramsForDemoUser(),
     getExerciseOptionsForPrograms(2000),
   ]);
+  const activeProgram = programs.find((program) => program.status === "ACTIVE") ?? null;
+  const totalDays = programs.reduce((acc, program) => acc + program.days.length, 0);
+  const totalProgramExercises = programs.reduce((acc, program) => acc + programExercisesCount(program), 0);
 
   return (
     <div className="stack">
-      <section className="hero mini compact">
-        <p className="eyebrow">Programmes</p>
-        <h1>Construit ton plan en 10 secondes</h1>
-      </section>
+      <PageHeader
+        eyebrow="Tes entraînements"
+        title="Programmes"
+        description={`Choisis une structure d'entraînement adaptée à ton rythme. ${programs.length} programme${programs.length > 1 ? "s" : ""} disponible${programs.length > 1 ? "s" : ""}.`}
+      />
 
-      <section className="card">
+      <ActiveProgramCard
+        program={activeProgram}
+        totalExercises={activeProgram ? programExercisesCount(activeProgram) : 0}
+        nextSessionTitle={activeProgram?.days[0]?.title ?? null}
+      />
+
+      <GlassCard>
         <p className="eyebrow">Nouveau programme</p>
         <form action={createSimpleProgramAction} className="form-grid">
           <label className="field-label" htmlFor="program-name">Nom du programme</label>
@@ -70,43 +102,58 @@ export default async function ProgramsPage() {
 
           <PrimaryButton type="submit">Créer programme</PrimaryButton>
         </form>
-      </section>
+      </GlassCard>
 
       <AiProgramGeneratorPanel />
 
+      <ProgramSummary
+        totalPrograms={programs.length}
+        activeCount={programs.filter((program) => program.status === "ACTIVE").length}
+        totalDays={totalDays}
+        totalExercises={totalProgramExercises}
+      />
+
       <section className="stack">
         {programs.length === 0 ? (
-          <section className="card">
-            <p className="muted">Aucun programme. Crée ton premier plan.</p>
-          </section>
+          <EmptyState
+            title="Aucun programme"
+            description="Crée ton premier plan ou génère une base avec l'IA pour démarrer proprement."
+          />
         ) : (
           programs.map((program) => (
-            <section key={program.id} className="card">
-              <p className="eyebrow">{goalToFr(program.goal)} · {levelToFr(program.level)}</p>
-              <h2 className="section-title">{program.name}</h2>
-              <div className="chips">
-                <span className={`chip ${program.status === "ACTIVE" ? "success" : program.status === "ARCHIVED" ? "danger" : "warning"}`}>
-                  Statut : {statusToFr(program.status)}
-                </span>
-                <span className="chip violet">Séance unique</span>
-              </div>
-              <div className="grid-2" style={{ marginTop: 10 }}>
-                <form action={setProgramStatusAction}>
-                  <input type="hidden" name="programId" value={program.id} />
-                  <input type="hidden" name="status" value={program.status === "ACTIVE" ? "DRAFT" : "ACTIVE"} />
-                  <PrimaryButton type="submit">
-                    {program.status === "ACTIVE" ? "Passer en brouillon" : "Activer le programme"}
-                  </PrimaryButton>
-                </form>
-                <form action={setProgramStatusAction}>
-                  <input type="hidden" name="programId" value={program.id} />
-                  <input type="hidden" name="status" value="ARCHIVED" />
-                  <button className="ghost-btn chip danger" type="submit">Archiver</button>
-                </form>
-              </div>
+            <ProgramCard
+              key={program.id}
+              id={program.id}
+              name={program.name}
+              description={program.description}
+              goalLabel={goalToFr(program.goal)}
+              level={program.level}
+              status={program.status}
+              statusLabel={statusToFr(program.status)}
+              sessionsCount={program.days.length}
+              exercisesCount={programExercisesCount(program)}
+              muscles={uniqueProgramMuscles(program)}
+              equipment={uniqueProgramEquipment(program)}
+              actions={
+                <div className="grid-2">
+                  <form action={setProgramStatusAction}>
+                    <input type="hidden" name="programId" value={program.id} />
+                    <input type="hidden" name="status" value={program.status === "ACTIVE" ? "DRAFT" : "ACTIVE"} />
+                    <PrimaryButton type="submit">
+                      {program.status === "ACTIVE" ? "Passer en brouillon" : "Activer le programme"}
+                    </PrimaryButton>
+                  </form>
+                  <form action={setProgramStatusAction}>
+                    <input type="hidden" name="programId" value={program.id} />
+                    <input type="hidden" name="status" value="ARCHIVED" />
+                    <button className="ghost-btn chip danger" type="submit">Archiver</button>
+                  </form>
+                </div>
+              }
+            >
               <div className="stack" style={{ marginTop: 16 }}>
                 {program.days.map((day) => (
-                  <details key={day.id} className="card">
+                  <details key={day.id} className="program-day-panel">
                     <summary className="day-summary">
                       <span>{day.title || program.name}</span>
                       <span className="chip orange">{day.exercises.length} exos</span>
@@ -165,7 +212,7 @@ export default async function ProgramsPage() {
                   </details>
                 ))}
 
-                <details className="card">
+                <details className="program-day-panel">
                   <summary className="day-summary">
                     <span>Ajouter un exercice</span>
                     <span className="chip violet">Ouvrir</span>
@@ -178,7 +225,7 @@ export default async function ProgramsPage() {
                   />
                 </details>
               </div>
-            </section>
+            </ProgramCard>
           ))
         )}
       </section>
