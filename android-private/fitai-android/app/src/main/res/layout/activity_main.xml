@@ -21,8 +21,9 @@
         android:id="@+id/buttonOpenSync"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="20dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="96dp"
         android:contentDescription="@string/tab_sync_health"
         app:srcCompat="@android:drawable/ic_popup_sync" />
 

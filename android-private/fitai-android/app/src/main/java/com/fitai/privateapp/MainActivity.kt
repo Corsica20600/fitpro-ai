@@ -14,6 +14,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.fitai.privateapp.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_INITIAL_PATH = "com.fitai.privateapp.EXTRA_INITIAL_PATH"
+    }
+
     private lateinit var binding: ActivityMainBinding
     private val fitAiUrl = "https://fitai-pro-zeta.vercel.app"
     private val allowedHosts = setOf("fitai-pro-zeta.vercel.app")
@@ -72,7 +76,14 @@ class MainActivity : AppCompatActivity() {
                 return handleNavigationUrl(target)
             }
         }
-        binding.webViewFitAi.loadUrl(fitAiUrl)
+        binding.webViewFitAi.loadUrl(buildInitialUrl())
+    }
+
+    private fun buildInitialUrl(): String {
+        val path = intent.getStringExtra(EXTRA_INITIAL_PATH)?.trim().orEmpty()
+        if (path.isBlank()) return fitAiUrl
+        val safePath = if (path.startsWith("/")) path else "/$path"
+        return fitAiUrl + safePath
     }
 
     private fun handleNavigationUrl(rawUrl: String): Boolean {

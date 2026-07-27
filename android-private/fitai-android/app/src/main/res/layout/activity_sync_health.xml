@@ -47,6 +47,20 @@
             android:layout_marginTop="18dp"
             android:text="@string/button_sync" />
 
+        <Button
+            android:id="@+id/buttonBackToFitAi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/button_back_to_fitai" />
+
+        <Button
+            android:id="@+id/buttonOpenSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/button_open_settings" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

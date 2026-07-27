@@ -1,5 +1,6 @@
 package com.fitai.privateapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
@@ -54,7 +55,18 @@ class SyncHealthActivity : AppCompatActivity() {
         samsungHealthProvider = SamsungHealthProviderFactory(applicationContext).create()
         binding.textConfig.text = "API: ${BuildConfig.FITAI_SYNC_BASE_URL}"
         binding.buttonSync.setOnClickListener { syncNow() }
+        binding.buttonBackToFitAi.setOnClickListener { finish() }
+        binding.buttonOpenSettings.setOnClickListener { openFitAiSettings() }
         requestPermissionsIfNeeded()
+    }
+
+    private fun openFitAiSettings() {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_INITIAL_PATH, "/settings")
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun syncNow() {
