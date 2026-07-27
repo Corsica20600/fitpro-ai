@@ -57,24 +57,25 @@ export function DashboardGreeting({ firstName, weeklySessions, streakWeeks, week
     return () => window.clearTimeout(id);
   }, []);
 
-  const title = useMemo(() => `${copy.greeting} ${displayName}`, [copy.greeting, displayName]);
+  const greeting = useMemo(() => copy.greeting.replace("-", "\u2011"), [copy.greeting]);
 
   return (
-    <GlassCard className="grid gap-2 px-4 py-4">
+    <GlassCard className="grid gap-3 px-4 py-4">
       <p className="m-0 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[var(--fit-accent-cyan)]">
         Accueil
       </p>
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="m-0 text-[1.72rem] font-black leading-[1.02] tracking-[-0.05em] text-[var(--fit-text)]">
-            {title}
+      <div className="flex min-w-0 flex-col items-start gap-3 min-[390px]:flex-row min-[390px]:items-end min-[390px]:justify-between">
+        <div className="min-w-0 flex-1">
+          <h1 className="m-0 max-w-full text-[clamp(1.65rem,7vw,2.05rem)] font-black leading-[1.04] tracking-[-0.045em] text-[var(--fit-text)]">
+            <span className="whitespace-nowrap">{greeting}</span>{" "}
+            <span className="whitespace-nowrap">{displayName}</span>
           </h1>
           <p className="m-0 mt-2 text-sm font-semibold text-[var(--fit-text-muted)]">
             {copy.helper}
           </p>
         </div>
         {activityLabel ? (
-          <span className="shrink-0 rounded-full border border-[rgba(55,215,255,.32)] bg-[rgba(55,215,255,.08)] px-3 py-2 text-right text-[0.72rem] font-black leading-tight text-[var(--fit-text-soft)]">
+          <span className="rounded-full border border-[rgba(55,215,255,.32)] bg-[rgba(55,215,255,.08)] px-3 py-2 text-left text-[0.72rem] font-black leading-tight text-[var(--fit-text-soft)] min-[390px]:shrink-0 min-[390px]:text-right">
             {activityLabel}
           </span>
         ) : null}
