@@ -1,7 +1,11 @@
+import { auth, LEGACY_DEMO_EMAIL, PRIMARY_USER_EMAIL } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
 import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
-const DEMO_EMAIL = "demo@fitai.local";
+function normalizeEmail(email?: string | null) {
+  const normalized = email?.trim().toLowerCase();
+  return normalized && normalized.includes("@") ? normalized : null;
+}
 
 type ExerciseWithFrCompat = {
   id: string;
@@ -274,16 +278,36 @@ function getCoachInsight(input: {
 }
 
 export async function getOrCreateDemoProfile() {
+  const session = await auth().catch(() => null);
+  const activeEmail = normalizeEmail(session?.user?.email) ?? PRIMARY_USER_EMAIL;
+  const displayName = session?.user?.name?.trim() || "Erwan";
+
   const existing = await prisma.userProfile.findUnique({
-    where: { email: DEMO_EMAIL },
+    where: { email: activeEmail },
   });
 
   if (existing) return existing;
 
+  const legacyProfile = activeEmail === PRIMARY_USER_EMAIL
+    ? await prisma.userProfile.findUnique({
+        where: { email: LEGACY_DEMO_EMAIL },
+      })
+    : null;
+
+  if (legacyProfile) {
+    return prisma.userProfile.update({
+      where: { id: legacyProfile.id },
+      data: {
+        displayName: "Erwan",
+        email: activeEmail,
+      },
+    });
+  }
+
   return prisma.userProfile.create({
     data: {
-      displayName: "Erwan",
-      email: DEMO_EMAIL,
+      displayName,
+      email: activeEmail,
       trainingLevel: "INTERMEDIATE",
       primaryGoal: "HYPERTROPHY",
       sessionsPerWeek: 4,

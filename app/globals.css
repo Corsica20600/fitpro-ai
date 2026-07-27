@@ -916,6 +916,10 @@ button, input, select { font-family: inherit; }
   padding: 8px 4px 4px;
   background: linear-gradient(180deg, rgba(5, 7, 12, .86), rgba(5, 7, 12, .36), transparent);
   backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .app-brand {
@@ -939,6 +943,38 @@ button, input, select { font-family: inherit; }
   color: #2f9dff;
   line-height: 1;
   text-shadow: 0 2px 16px rgba(47, 157, 255, .42);
+}
+
+.account-pill-form {
+  margin: 0;
+}
+
+.account-pill {
+  min-height: 42px;
+  display: inline-grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  padding: 7px 12px;
+  border: 1px solid rgba(120, 168, 255, .24);
+  border-radius: 999px;
+  color: #f5f9ff;
+  background: linear-gradient(135deg, rgba(20, 36, 62, .92), rgba(8, 16, 30, .94));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.account-pill small {
+  color: #7ee7ff;
+  font-size: .62rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.account-pill--login {
+  color: #06182e;
+  background: linear-gradient(135deg, #8ef5c9, #37d7ff);
 }
 
 .dashboard-focus {

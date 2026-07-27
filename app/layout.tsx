@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { AccountPill } from "@/src/components/auth/account-pill";
 import { BottomNav } from "@/src/components/ui/bottom-nav";
 import "./globals.css";
 
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <span className="app-brand-main">FitAI</span>
               <span className="app-brand-pro">PRO</span>
             </div>
+            <AccountPill />
           </header>
           <main className="screen">{children}</main>
           <BottomNav />
