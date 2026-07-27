@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
+import { getStripe } from "@/src/lib/stripe";
 import { prisma } from "@/src/lib/prisma";
 
 function normalizeEmail(email?: string | null) {
@@ -27,12 +28,20 @@ export async function deleteAccountAction(formData: FormData) {
 
   const profile = await prisma.userProfile.findUnique({
     where: { email: activeEmail },
-    select: { id: true },
+    select: { id: true, stripeSubscriptionId: true },
   });
 
   if (!profile) {
     await signOut({ redirectTo: "/data-deletion?accountDeleted=1" });
     return;
+  }
+
+  if (profile.stripeSubscriptionId) {
+    try {
+      await getStripe().subscriptions.cancel(profile.stripeSubscriptionId);
+    } catch {
+      redirect("/settings?deleteError=billing");
+    }
   }
 
   await prisma.$transaction(async (tx) => {

@@ -17,8 +17,8 @@ const termsSections = [
     title: "Compte et abonnement",
     items: [
       "La connexion Google sert à rattacher les données au bon compte.",
-      "Les futures formules payantes devront préciser le prix, la période d'essai et les conditions de résiliation.",
-      "Aucune facturation n'est activée dans cette phase privée.",
+      "Les formules payantes sont gérées par Stripe et affichent le prix, la période et les conditions avant paiement.",
+      "La gestion, la résiliation et les moyens de paiement se font depuis le portail d'abonnement accessible dans les paramètres.",
     ],
   },
   {

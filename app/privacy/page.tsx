@@ -10,6 +10,7 @@ const privacySections = [
     items: [
       "Compte Google : adresse e-mail et nom affiché pour identifier ton compte.",
       "Données d'entraînement : programmes, séances, séries, charges, répétitions et progression.",
+      "Données d'abonnement : identifiants client et abonnement Stripe, statut de paiement et période d'accès.",
       "Données techniques : synchronisation montre et état des intégrations quand elles sont activées.",
     ],
   },
@@ -18,14 +19,14 @@ const privacySections = [
     items: [
       "Retrouver ton historique sur plusieurs appareils.",
       "Calculer tes statistiques, volumes et tendances de progression.",
-      "Préparer les futures connexions santé, montre, musique et abonnement.",
+      "Gérer l'abonnement, les accès premium et les futures connexions santé, montre et musique.",
     ],
   },
   {
     title: "Contrôle",
     items: [
       "Tu peux exporter tes données depuis les paramètres.",
-      "La suppression de compte sera ajoutée avant une ouverture publique.",
+      "Tu peux demander la suppression définitive du compte depuis les paramètres.",
       "Les accès santé ou musique resteront optionnels et explicites.",
     ],
   },

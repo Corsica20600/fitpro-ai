@@ -1172,6 +1172,7 @@ button, input, select { font-family: inherit; }
 }
 
 .settings-account-card,
+.settings-billing-card,
 .settings-data-card,
 .settings-danger-card,
 .settings-legal-card,
@@ -1181,6 +1182,7 @@ button, input, select { font-family: inherit; }
 }
 
 .settings-account-card h2,
+.settings-billing-card h2,
 .settings-data-card h2,
 .settings-danger-card h2,
 .settings-legal-card h2,
@@ -1246,6 +1248,21 @@ button, input, select { font-family: inherit; }
 
 .settings-export-link {
   text-decoration: none;
+}
+
+.settings-billing-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-success-message {
+  margin: 0;
+  border: 1px solid rgba(109, 239, 184, .34);
+  border-radius: 18px;
+  background: rgba(109, 239, 184, .09);
+  color: var(--fit-success);
+  font-weight: 900;
+  padding: 12px 14px;
 }
 
 .settings-legal-card {

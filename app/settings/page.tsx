@@ -3,8 +3,10 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { isStripeConfigured } from "@/src/lib/stripe";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { deleteAccountAction } from "@/src/server/account-actions";
+import { createBillingCheckoutAction, openBillingPortalAction } from "@/src/server/billing-actions";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
 
 export const metadata = privatePageMetadata(
@@ -14,13 +16,6 @@ export const metadata = privatePageMetadata(
 
 function getSettingSections(watchPairingEnabled: boolean) {
   return [
-  {
-    eyebrow: "Abonnement",
-    title: "FitAI Pro",
-    description: "Préparation du futur abonnement Play Store, avec statut et gestion de formule.",
-    status: "À venir",
-    tone: "warning",
-  },
   {
     eyebrow: "Santé",
     title: "Health Connect",
@@ -60,11 +55,44 @@ function formatDate(date: Date | null | undefined) {
 }
 
 type SettingsPageProps = {
-  searchParams?: Promise<{ deleteError?: string | string[] }>;
+  searchParams?: Promise<{
+    billing?: string | string[];
+    billingError?: string | string[];
+    deleteError?: string | string[];
+  }>;
 };
 
-function getDeleteError(value: string | string[] | undefined) {
+function getFirstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function getSubscriptionLabel(status: string) {
+  const labels: Record<string, string> = {
+    FREE: "Gratuit",
+    TRIALING: "Essai actif",
+    ACTIVE: "Actif",
+    PAST_DUE: "Paiement à régulariser",
+    CANCELED: "Annulé",
+    INCOMPLETE: "Paiement incomplet",
+    INCOMPLETE_EXPIRED: "Paiement expiré",
+    UNPAID: "Impayé",
+    PAUSED: "En pause",
+  };
+
+  return labels[status] ?? "Gratuit";
+}
+
+function getBillingErrorMessage(error: string | undefined) {
+  if (error === "config") {
+    return "Stripe n'est pas encore configuré dans Vercel. Ajoute les variables Stripe avant de lancer un paiement.";
+  }
+  if (error === "checkout") {
+    return "Stripe n'a pas renvoyé de lien Checkout. Vérifie le prix configuré.";
+  }
+  if (error === "noCustomer") {
+    return "Aucun client Stripe n'est encore lié à ce compte. Lance d'abord l'abonnement.";
+  }
+  return null;
 }
 
 export default async function SettingsPage(props: SettingsPageProps) {
@@ -73,12 +101,22 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const [session, accountData, searchParams] = await Promise.all([
     auth().catch(() => null),
     getAccountSettingsData(),
-    props.searchParams ?? Promise.resolve({} as { deleteError?: string | string[] }),
+    props.searchParams ?? Promise.resolve({} as {
+      billing?: string | string[];
+      billingError?: string | string[];
+      deleteError?: string | string[];
+    }),
   ]);
-  const deleteError = getDeleteError(searchParams.deleteError);
+  const deleteError = getFirstParam(searchParams.deleteError);
+  const billing = getFirstParam(searchParams.billing);
+  const billingError = getBillingErrorMessage(getFirstParam(searchParams.billingError));
   const email = session?.user?.email ?? accountData.profile.email ?? "Compte Google";
   const name = accountData.profile.displayName || session?.user?.name || "Utilisateur FitAI";
   const connected = Boolean(session?.user?.email);
+  const stripeConfigured = isStripeConfigured();
+  const subscriptionStatus = accountData.profile.subscriptionStatus;
+  const subscriptionActive = subscriptionStatus === "ACTIVE" || subscriptionStatus === "TRIALING";
+  const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
   const latestSessionDate = accountData.latestSession?.endedAt
     ?? accountData.latestSession?.startedAt
     ?? accountData.latestSession?.createdAt
@@ -120,6 +158,70 @@ export default async function SettingsPage(props: SettingsPageProps) {
             <button type="submit" className="primary-button full-line">Connexion Google</button>
           </form>
         )}
+      </GlassCard>
+
+      <GlassCard className="settings-billing-card" elevated>
+        <div>
+          <p className="eyebrow">Abonnement</p>
+          <h2>FitAI Pro</h2>
+          <p className="muted">
+            Paiement sécurisé par Stripe. Ton abonnement est rattaché au même compte Google que ton historique.
+          </p>
+        </div>
+        <span className={`chip ${subscriptionActive ? "success" : "warning"}`}>
+          {getSubscriptionLabel(subscriptionStatus)}
+        </span>
+        {accountData.profile.subscriptionCancelAtPeriodEnd ? (
+          <p className="settings-footnote">
+            <span>Renouvellement</span>
+            <strong>Annulation programmée</strong>
+          </p>
+        ) : null}
+        {accountData.profile.subscriptionCurrentPeriodEnd ? (
+          <p className="settings-footnote">
+            <span>Accès jusqu&apos;au</span>
+            <strong>{formatDate(accountData.profile.subscriptionCurrentPeriodEnd)}</strong>
+          </p>
+        ) : null}
+        {billing === "success" ? (
+          <p className="settings-success-message">
+            Paiement validé. Le statut peut prendre quelques secondes à se synchroniser via Stripe.
+          </p>
+        ) : null}
+        {billing === "cancelled" ? (
+          <p className="settings-danger-error">
+            Paiement annulé, aucun abonnement n&apos;a été activé.
+          </p>
+        ) : null}
+        {billingError ? (
+          <p className="settings-danger-error">{billingError}</p>
+        ) : null}
+        {connected ? (
+          <div className="settings-billing-actions">
+            {!subscriptionActive ? (
+              <form action={createBillingCheckoutAction}>
+                <button type="submit" className="primary-button full-line" disabled={!stripeConfigured}>
+                  Activer l&apos;abonnement
+                </button>
+              </form>
+            ) : null}
+            {canOpenPortal ? (
+              <form action={openBillingPortalAction}>
+                <button type="submit" className="ghost-btn full-line" disabled={!stripeConfigured}>
+                  Gérer mon abonnement
+                </button>
+              </form>
+            ) : null}
+          </div>
+        ) : (
+          <p className="muted">Connecte-toi avec Google pour activer ou gérer l&apos;abonnement.</p>
+        )}
+        {!stripeConfigured ? (
+          <p className="settings-footnote">
+            <span>Configuration</span>
+            <strong>Variables Stripe manquantes côté serveur</strong>
+          </p>
+        ) : null}
       </GlassCard>
 
       <GlassCard className="settings-data-card">
@@ -203,6 +305,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
           {deleteError === "confirmation" ? (
             <p className="settings-danger-error">
               Confirmation incorrecte. Saisis exactement ton e-mail, le mot SUPPRIMER et coche la case.
+            </p>
+          ) : null}
+          {deleteError === "billing" ? (
+            <p className="settings-danger-error">
+              Impossible d&apos;annuler l&apos;abonnement Stripe pour le moment. Réessaie ou passe par le portail
+              d&apos;abonnement avant de supprimer le compte.
             </p>
           ) : null}
           <form action={deleteAccountAction} className="settings-delete-form">
