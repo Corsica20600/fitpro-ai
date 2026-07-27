@@ -8,6 +8,7 @@ import { WorkoutHero } from "@/src/components/dashboard/workout-hero";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { NavIcon } from "@/src/components/ui/nav-icon";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getDashboardDataForDemoUser } from "@/src/server/fitness-queries";
 
 const shortcuts = [
@@ -16,6 +17,11 @@ const shortcuts = [
   { href: "/history", label: "Histo", helper: "Voir les séances", icon: "history" },
   { href: "/progress", label: "Progrès", helper: "Suivre l'évolution", icon: "progress" },
 ] as const;
+
+export const metadata = privatePageMetadata(
+  "Tableau de bord",
+  "Tableau de bord privé FitAI Pro avec statistiques, objectifs et prochaine séance.",
+);
 
 export default async function DashboardPage() {
   await connection();

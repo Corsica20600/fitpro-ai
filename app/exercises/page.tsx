@@ -6,10 +6,16 @@ import { EmptyState } from "@/src/components/ui/empty-state";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { SectionTitle } from "@/src/components/ui/section-title";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getActiveExercisesCount, getExerciseFilterOptions, getExercisesCatalogPage } from "@/src/server/fitness-queries";
 
 const PAGE_SIZE = 24;
 const VALID_DIFFICULTIES = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
+
+export const metadata = privatePageMetadata(
+  "Exercices",
+  "Catalogue privé des exercices FitAI Pro, filtres et fiches détaillées.",
+);
 
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");

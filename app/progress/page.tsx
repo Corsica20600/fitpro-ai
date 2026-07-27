@@ -8,7 +8,13 @@ import { EmptyState } from "@/src/components/ui/empty-state";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { SectionTitle } from "@/src/components/ui/section-title";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
+
+export const metadata = privatePageMetadata(
+  "Progression",
+  "Progression privée FitAI Pro avec records, volumes, muscles et tendances.",
+);
 
 const PERIODS = [
   { key: "7d", label: "7 jours" },

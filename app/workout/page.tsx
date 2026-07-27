@@ -9,6 +9,12 @@ import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-cli
 import { AppShortcutLink } from "@/src/components/integrations/app-shortcut-link";
 import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { spotifyIntegration } from "@/src/lib/integrations";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
+
+export const metadata = privatePageMetadata(
+  "Séance",
+  "Séance privée FitAI Pro avec suivi guidé, repos, séries et synchronisation montre.",
+);
 
 function formatWorkoutLabel(label?: string | null) {
   if (!label) return null;

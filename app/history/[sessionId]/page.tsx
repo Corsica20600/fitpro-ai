@@ -4,7 +4,13 @@ import { PageHeader } from "@/src/components/ui/page-header";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { SectionTitle } from "@/src/components/ui/section-title";
 import { SessionSummary } from "@/src/components/history/session-summary";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getWorkoutSessionDetailForDemoUser } from "@/src/server/fitness-queries";
+
+export const metadata = privatePageMetadata(
+  "Détail séance",
+  "Détail privé d'une séance FitAI Pro avec exercices, séries et volume.",
+);
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR", {

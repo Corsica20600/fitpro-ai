@@ -20,9 +20,15 @@ import {
 } from "@/src/server/fitness-actions";
 import { getExerciseOptionsForPrograms, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 import { levelToFr } from "@/src/lib/exercise-i18n";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 
 const GOALS = ["HYPERTROPHY", "STRENGTH", "ENDURANCE", "FAT_LOSS", "GENERAL_FITNESS"];
 const LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+
+export const metadata = privatePageMetadata(
+  "Programmes",
+  "Programmes privés FitAI Pro, génération, édition et organisation des séances.",
+);
 
 function goalToFr(goal: string) {
   const map: Record<string, string> = {

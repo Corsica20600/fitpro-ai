@@ -3,7 +3,13 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
+
+export const metadata = privatePageMetadata(
+  "Paramètres",
+  "Paramètres privés FitAI Pro pour compte, export de données et intégrations.",
+);
 
 const settingSections = [
   {

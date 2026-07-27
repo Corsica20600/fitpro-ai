@@ -6,7 +6,13 @@ import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { SectionTitle } from "@/src/components/ui/section-title";
+import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { getWorkoutHistorySummaryForDemoUser } from "@/src/server/fitness-queries";
+
+export const metadata = privatePageMetadata(
+  "Historique",
+  "Historique privé FitAI Pro des séances terminées, volumes et séries enregistrées.",
+);
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("fr-FR", {
