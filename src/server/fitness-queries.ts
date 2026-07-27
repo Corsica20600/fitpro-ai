@@ -314,10 +314,20 @@ async function getOrCreateProfileForEmail(activeEmail: string, displayName: stri
   });
 }
 
+function getProfileDisplayName(name: string | null | undefined, email: string) {
+  const sessionName = name?.trim();
+  if (sessionName) return sessionName;
+
+  const emailName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+  return emailName || "Utilisateur FitAI";
+}
+
 export async function getOrCreateDemoProfile() {
   const session = await auth().catch(() => null);
   const activeEmail = normalizeEmail(session?.user?.email) ?? PRIMARY_USER_EMAIL;
-  const displayName = session?.user?.name?.trim() || "Erwan";
+  const displayName = session?.user?.email
+    ? getProfileDisplayName(session.user.name, activeEmail)
+    : "Erwan";
 
   return getOrCreateProfileForEmail(activeEmail, displayName);
 }
@@ -334,11 +344,11 @@ export async function getAuthenticatedUserProfile() {
     throw new Error("AUTH_REQUIRED");
   }
 
-  return getOrCreateProfileForEmail(activeEmail, session?.user?.name?.trim() || "Erwan");
+  return getOrCreateProfileForEmail(activeEmail, getProfileDisplayName(session?.user?.name, activeEmail));
 }
 
 export async function getAccountSettingsData() {
-  const profile = await getCurrentUserProfile();
+  const profile = await getAuthenticatedUserProfile();
 
   const [workoutSessions, completedSessions, programs, progressMetrics, latestSession] = await Promise.all([
     prisma.workoutSession.count({ where: { userProfileId: profile.id } }),

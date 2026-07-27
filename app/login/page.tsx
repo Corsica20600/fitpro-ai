@@ -55,7 +55,7 @@ export default async function LoginPage(props: LoginPageProps) {
           <button type="submit" className="primary-button full-line">Continuer avec Google</button>
         </form>
         <p className="login-card__note">
-          Accès privé limité au compte autorisé pendant la phase de commercialisation.
+          Chaque compte Google garde son propre historique, ses statistiques et ses futures connexions.
         </p>
         <div className="legal-link-row" aria-label="Documents légaux">
           <Link href="/privacy">Confidentialité</Link>

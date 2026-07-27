@@ -4,6 +4,15 @@ import Google from "next-auth/providers/google";
 export const PRIMARY_USER_EMAIL = "longin.erwan@gmail.com";
 export const LEGACY_DEMO_EMAIL = "demo@fitai.local";
 
+function getAllowedEmails() {
+  return new Set(
+    (process.env.FITAI_ALLOWED_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [Google],
@@ -15,8 +24,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const email = profile?.email?.toLowerCase();
       if (!email) return false;
 
-      // Phase 1: keep the private build locked to Erwan while we commercialize safely.
-      return email === PRIMARY_USER_EMAIL;
+      const googleProfile = profile as { email_verified?: boolean } | undefined;
+      if (googleProfile?.email_verified === false) return false;
+
+      const allowedEmails = getAllowedEmails();
+      if (allowedEmails.size > 0) {
+        return allowedEmails.has(email);
+      }
+
+      return true;
     },
     async session({ session, token }) {
       if (session.user && token.email) {
@@ -26,4 +42,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
-

@@ -76,8 +76,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
     props.searchParams ?? Promise.resolve({} as { deleteError?: string | string[] }),
   ]);
   const deleteError = getDeleteError(searchParams.deleteError);
-  const email = session?.user?.email ?? accountData.profile.email ?? "longin.erwan@gmail.com";
-  const name = accountData.profile.displayName || session?.user?.name || "Erwan";
+  const email = session?.user?.email ?? accountData.profile.email ?? "Compte Google";
+  const name = accountData.profile.displayName || session?.user?.name || "Utilisateur FitAI";
   const connected = Boolean(session?.user?.email);
   const latestSessionDate = accountData.latestSession?.endedAt
     ?? accountData.latestSession?.startedAt
