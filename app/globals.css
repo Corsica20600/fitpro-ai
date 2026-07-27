@@ -1172,12 +1172,14 @@ button, input, select { font-family: inherit; }
 }
 
 .settings-account-card,
+.settings-data-card,
 .settings-service-card {
   display: grid;
   gap: 12px;
 }
 
 .settings-account-card h2,
+.settings-data-card h2,
 .settings-service-card h2 {
   margin: 0;
   color: #f7fbff;
@@ -1191,6 +1193,51 @@ button, input, select { font-family: inherit; }
 .settings-grid {
   display: grid;
   gap: 10px;
+}
+
+.settings-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-stat-grid div {
+  min-height: 82px;
+  padding: 14px;
+  border: 1px solid rgba(111, 151, 219, .22);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(10, 22, 41, .84), rgba(8, 16, 31, .92));
+}
+
+.settings-stat-grid strong {
+  display: block;
+  color: #f8fbff;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.settings-stat-grid span {
+  display: block;
+  margin-top: 8px;
+  color: #aebfe0;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.settings-footnote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+  color: #9eb1d5;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.settings-footnote strong {
+  color: #dfeaff;
+  text-align: right;
 }
 
 .settings-service-card {

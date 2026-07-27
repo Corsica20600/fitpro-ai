@@ -318,6 +318,43 @@ export async function getOrCreateDemoProfile() {
   });
 }
 
+export async function getCurrentUserProfile() {
+  return getOrCreateDemoProfile();
+}
+
+export async function getAccountSettingsData() {
+  const profile = await getCurrentUserProfile();
+
+  const [workoutSessions, completedSessions, programs, progressMetrics, latestSession] = await Promise.all([
+    prisma.workoutSession.count({ where: { userProfileId: profile.id } }),
+    prisma.workoutSession.count({ where: { userProfileId: profile.id, status: "COMPLETED" } }),
+    prisma.program.count({ where: { userProfileId: profile.id } }),
+    prisma.progressMetric.count({ where: { userProfileId: profile.id } }),
+    prisma.workoutSession.findFirst({
+      where: { userProfileId: profile.id },
+      orderBy: [{ endedAt: "desc" }, { startedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        title: true,
+        status: true,
+        startedAt: true,
+        endedAt: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    profile,
+    stats: {
+      workoutSessions,
+      completedSessions,
+      programs,
+      progressMetrics,
+    },
+    latestSession,
+  };
+}
+
 export async function getExercisesCatalog() {
   return prisma.exercise.findMany({
     where: { isActive: true },

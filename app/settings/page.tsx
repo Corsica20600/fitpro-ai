@@ -2,6 +2,7 @@ import { auth, signIn, signOut } from "@/auth";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { getAccountSettingsData } from "@/src/server/fitness-queries";
 
 const settingSections = [
   {
@@ -34,11 +35,30 @@ const settingSections = [
   },
 ] as const;
 
+function formatDate(date: Date | null | undefined) {
+  if (!date) return "Aucune séance";
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export default async function SettingsPage() {
-  const session = await auth().catch(() => null);
-  const email = session?.user?.email ?? "longin.erwan@gmail.com";
-  const name = session?.user?.name ?? "Erwan";
+  const [session, accountData] = await Promise.all([
+    auth().catch(() => null),
+    getAccountSettingsData(),
+  ]);
+  const email = session?.user?.email ?? accountData.profile.email ?? "longin.erwan@gmail.com";
+  const name = accountData.profile.displayName || session?.user?.name || "Erwan";
   const connected = Boolean(session?.user?.email);
+  const latestSessionDate = accountData.latestSession?.endedAt
+    ?? accountData.latestSession?.startedAt
+    ?? accountData.latestSession?.createdAt
+    ?? null;
 
   return (
     <AppShell className="settings-page">
@@ -78,6 +98,39 @@ export default async function SettingsPage() {
         )}
       </GlassCard>
 
+      <GlassCard className="settings-data-card">
+        <div>
+          <p className="eyebrow">Données FitAI</p>
+          <h2>Historique rattaché à {name}</h2>
+          <p className="muted">
+            Ton historique reste lié au profil Neon associé à ton compte Google. Les prochains modules commerciaux
+            partiront de cette base.
+          </p>
+        </div>
+        <div className="settings-stat-grid" aria-label="Résumé des données du compte">
+          <div>
+            <strong>{accountData.stats.completedSessions}</strong>
+            <span>Séances terminées</span>
+          </div>
+          <div>
+            <strong>{accountData.stats.workoutSessions}</strong>
+            <span>Séances totales</span>
+          </div>
+          <div>
+            <strong>{accountData.stats.programs}</strong>
+            <span>Programmes</span>
+          </div>
+          <div>
+            <strong>{accountData.stats.progressMetrics}</strong>
+            <span>Mesures</span>
+          </div>
+        </div>
+        <div className="settings-footnote">
+          <span>Dernière activité</span>
+          <strong>{formatDate(latestSessionDate)}</strong>
+        </div>
+      </GlassCard>
+
       <section className="settings-grid" aria-label="Connexions et services">
         {settingSections.map((section) => (
           <GlassCard key={section.title} className="settings-service-card">
@@ -93,4 +146,3 @@ export default async function SettingsPage() {
     </AppShell>
   );
 }
-
