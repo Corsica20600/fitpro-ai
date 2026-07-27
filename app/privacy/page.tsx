@@ -66,9 +66,11 @@ export default function PrivacyPage() {
         <p className="muted">
           Pour toute question liée aux données, utilise l&apos;adresse de contact qui sera publiée avec la fiche Play Store.
         </p>
-        <Link className="ghost-btn full-line settings-export-link" href="/settings">
-          Retour aux paramètres
-        </Link>
+        <div className="legal-link-row">
+          <Link href="/data-deletion">Suppression des données</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/settings">Paramètres</Link>
+        </div>
       </GlassCard>
     </AppShell>
   );

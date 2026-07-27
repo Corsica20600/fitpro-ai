@@ -66,9 +66,11 @@ export default function TermsPage() {
           Avant publication publique, il faudra finaliser le nom de l&apos;éditeur, l&apos;adresse de contact, les règles de
           remboursement et les mentions liées aux abonnements.
         </p>
-        <Link className="ghost-btn full-line settings-export-link" href="/settings">
-          Retour aux paramètres
-        </Link>
+        <div className="legal-link-row">
+          <Link href="/data-deletion">Suppression des données</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/settings">Paramètres</Link>
+        </div>
       </GlassCard>
     </AppShell>
   );

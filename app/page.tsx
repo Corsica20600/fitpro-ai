@@ -75,6 +75,8 @@ export default async function HomePage() {
       <div className="legal-link-row">
         <Link href="/terms">Conditions</Link>
         <span aria-hidden="true">·</span>
+        <Link href="/data-deletion">Suppression des données</Link>
+        <span aria-hidden="true">·</span>
         <Link href="/login">Connexion Google</Link>
       </div>
     </AppShell>

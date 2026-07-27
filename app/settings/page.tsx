@@ -162,6 +162,8 @@ export default async function SettingsPage() {
           <Link href="/privacy">Confidentialité</Link>
           <span aria-hidden="true">·</span>
           <Link href="/terms">Conditions</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/data-deletion">Suppression</Link>
         </div>
       </GlassCard>
     </AppShell>

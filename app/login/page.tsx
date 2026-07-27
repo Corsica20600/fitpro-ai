@@ -52,6 +52,8 @@ export default async function LoginPage(props: LoginPageProps) {
           <Link href="/privacy">Confidentialité</Link>
           <span aria-hidden="true">·</span>
           <Link href="/terms">Conditions</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/data-deletion">Données</Link>
         </div>
       </GlassCard>
     </AppShell>
