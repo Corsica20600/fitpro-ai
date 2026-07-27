@@ -47,12 +47,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupWebView() {
-        CookieManager.getInstance().removeAllCookies(null)
-        CookieManager.getInstance().flush()
-        binding.webViewFitAi.clearCache(true)
-        binding.webViewFitAi.clearHistory()
+        CookieManager.getInstance().setAcceptCookie(true)
+        CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webViewFitAi, true)
         binding.webViewFitAi.settings.javaScriptEnabled = true
         binding.webViewFitAi.settings.domStorageEnabled = true
+        binding.webViewFitAi.settings.databaseEnabled = true
         binding.webViewFitAi.settings.loadsImagesAutomatically = true
         binding.webViewFitAi.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
