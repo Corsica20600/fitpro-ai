@@ -17,7 +17,11 @@ android {
         val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?)
             ?: System.getenv("FITAI_SYNC_BASE_URL")
             ?: "https://fitai-pro-zeta.vercel.app"
+        val watchToken = (project.findProperty("FITAI_WATCH_TOKEN") as String?)
+            ?: System.getenv("FITAI_WATCH_TOKEN")
+            ?: ""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
+        buildConfigField("String", "FITAI_WATCH_TOKEN", "\"$watchToken\"")
     }
 
     buildTypes {

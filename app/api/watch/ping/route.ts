@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
+import { requireWatchAccess } from "@/src/server/watch-auth";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const access = await requireWatchAccess(request);
+  if (!access.ok) return access.response;
+
   const profile = await getOrCreateDemoProfile();
 
   const activeSession = await prisma.workoutSession.findFirst({

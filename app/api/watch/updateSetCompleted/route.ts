@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { updateSetCompleted } from "@/src/server/workout-sync";
+import { requireWatchAccess } from "@/src/server/watch-auth";
 
 export async function POST(request: Request) {
+  const access = await requireWatchAccess(request);
+  if (!access.ok) return access.response;
+
   const body = await request.json();
   const workoutSessionId = String(body.workoutSessionId ?? "").trim();
   const exerciseId = String(body.exerciseId ?? "").trim();

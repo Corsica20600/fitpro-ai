@@ -36,7 +36,7 @@ const settingSections = [
   {
     eyebrow: "Montre",
     title: "Wear OS",
-    description: "Synchronisation de la montre, état de connexion et diagnostic rapide.",
+    description: "Synchronisation montre avec pairing par token côté API, prêt pour le prochain APK.",
     status: "Actif",
     tone: "violet",
   },
