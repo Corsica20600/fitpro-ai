@@ -5,6 +5,7 @@ import { AppShell } from "@/src/components/ui/app-shell";
 import { HeroVisual } from "@/src/components/ui/hero-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
+import { SpotifyOpenLink } from "@/src/components/integrations/spotify-open-link";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
 import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
@@ -31,7 +32,8 @@ function formatWorkoutLabel(label?: string | null) {
 
 export default async function WorkoutPage() {
   await connection();
-  const { programs, sessionExercises, currentSession, lastPerformedProgramId } = await getWorkoutPageData();
+  const { programs, sessionExercises, currentSession, lastPerformedProgramId, spotifyConnection } = await getWorkoutPageData();
+  const spotifyConnected = spotifyConnection?.status === "CONNECTED";
   const heroExercise = sessionExercises[0] ?? null;
   const defaultProgramId = programs.some((program) => program.id === lastPerformedProgramId)
     ? lastPerformedProgramId
@@ -67,6 +69,7 @@ export default async function WorkoutPage() {
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
             <span className="chip warning">Conseil : prépare ta playlist avant la première série.</span>
+            <SpotifyOpenLink connected={spotifyConnected} className="ghost-btn" />
           </div>
         </WorkoutCard>
       ) : sessionExercises.length === 0 ? (
@@ -80,7 +83,12 @@ export default async function WorkoutPage() {
           <WorkoutCard light>
             <p className="eyebrow">Focus musique</p>
             <span className="chip orange">Mode focus actif</span>
-            <p className="muted">Garde le tempo, contrôle la descente. Spotify se connecte maintenant depuis Paramètres.</p>
+            <p className="muted">
+              {spotifyConnected
+                ? `Compte Spotify connecté${spotifyConnection?.displayName ? ` : ${spotifyConnection.displayName}` : ""}.`
+                : "Connecte Spotify depuis Paramètres pour garder la musique liée au compte."}
+            </p>
+            <SpotifyOpenLink connected={spotifyConnected} className="ghost-btn" />
           </WorkoutCard>
           <GuidedWorkoutClient
             key={currentSession.id}

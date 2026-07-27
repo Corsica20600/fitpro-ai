@@ -1009,7 +1009,16 @@ export async function getWorkoutPageData() {
     sessionExercises = shuffled.slice(0, 6).map((exercise) => ({ ...exercise, plan: undefined }));
   }
 
-  return { profile, programs, exercises, sessionExercises, currentSession, lastPerformedProgramId };
+  const spotifyConnection = await prisma.integrationConnection.findUnique({
+    where: { userProfileId_provider: { userProfileId: profile.id, provider: "SPOTIFY" } },
+    select: {
+      status: true,
+      displayName: true,
+      connectedAt: true,
+    },
+  });
+
+  return { profile, programs, exercises, sessionExercises, currentSession, lastPerformedProgramId, spotifyConnection };
 }
 
 export async function getDashboardDataForDemoUser() {
