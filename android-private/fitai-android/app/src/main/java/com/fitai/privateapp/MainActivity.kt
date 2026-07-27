@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private val fitAiUrl = "https://fitai-pro-zeta.vercel.app"
     private val allowedHosts = setOf("fitai-pro-zeta.vercel.app")
     private val samsungFallbackUrl = "https://www.samsung.com/global/galaxy/apps/samsung-health/"
+    private val spotifyFallbackUrl = "https://open.spotify.com/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,8 +99,14 @@ class MainActivity : AppCompatActivity() {
         if (scheme == "intent") {
             val intent = runCatching { Intent.parseUri(rawUrl, Intent.URI_INTENT_SCHEME) }.getOrNull()
             if (intent != null && openExternalSafely(intent)) return true
-            if (!openExternalSafely(Intent(Intent.ACTION_VIEW, Uri.parse(samsungFallbackUrl)))) {
-                Toast.makeText(this, "Samsung Health indisponible sur cet appareil.", Toast.LENGTH_SHORT).show()
+            if (rawUrl.contains("spotify", ignoreCase = true)) {
+                if (!openExternalSafely(Intent(Intent.ACTION_VIEW, Uri.parse(spotifyFallbackUrl)))) {
+                    Toast.makeText(this, "Spotify indisponible sur cet appareil.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                if (!openExternalSafely(Intent(Intent.ACTION_VIEW, Uri.parse(samsungFallbackUrl)))) {
+                    Toast.makeText(this, "Application externe indisponible sur cet appareil.", Toast.LENGTH_SHORT).show()
+                }
             }
             return true
         }

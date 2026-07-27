@@ -4467,6 +4467,45 @@ summary:focus-visible {
   border-color: rgba(55, 215, 255, .38);
 }
 
+.workout-session-stack,
+.current-exercise-card,
+.current-exercise-card__body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.current-exercise-card__body {
+  overflow: hidden;
+}
+
+.workout-sets-adjust,
+.workout-reps-control {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.workout-sets-adjust {
+  grid-template-columns: minmax(44px, 52px) minmax(0, 1fr) minmax(44px, 52px);
+}
+
+.workout-reps-control {
+  grid-template-columns: minmax(48px, 56px) minmax(0, 1fr) minmax(48px, 56px);
+}
+
+.workout-sets-adjust .ghost-btn,
+.workout-reps-control .ghost-btn {
+  min-width: 0;
+  padding-inline: 6px;
+}
+
+.workout-sets-adjust strong,
+.workout-reps-control .workout-input-xl {
+  min-width: 0;
+  width: 100%;
+  text-align: center;
+}
+
 .watch-page-v2 {
   background:
     radial-gradient(circle at 50% 7%, rgba(47, 143, 255, .24), transparent 34%),
