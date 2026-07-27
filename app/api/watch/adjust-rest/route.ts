@@ -15,6 +15,7 @@ export async function POST(request: Request) {
   const payload = await adjustWatchRest(
     sessionId,
     Number.isFinite(deltaSeconds) ? deltaSeconds : 0,
+    access.userProfileId,
   );
 
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });

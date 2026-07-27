@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const sessionId = String(body.sessionId ?? "").trim();
   if (!sessionId) return NextResponse.json({ error: "missing_session_id" }, { status: 400 });
 
-  const payload = await skipWatchRest(sessionId);
+  const payload = await skipWatchRest(sessionId, access.userProfileId);
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
   revalidatePath("/workout");
   revalidatePath("/dashboard");

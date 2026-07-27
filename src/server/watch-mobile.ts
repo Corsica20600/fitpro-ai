@@ -34,10 +34,10 @@ function parseWeightKgFromText(text?: string | null) {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-async function resolveSession(sessionId?: string) {
+async function resolveSession(sessionId?: string, userProfileId?: string) {
   if (sessionId) {
     return prisma.workoutSession.findUnique({
-      where: { id: sessionId },
+      where: userProfileId ? { id: sessionId, userProfileId } : { id: sessionId },
       include: {
         watchSession: true,
         sets: {
@@ -48,9 +48,9 @@ async function resolveSession(sessionId?: string) {
     });
   }
 
-  const profile = await getOrCreateDemoProfile();
+  const profile = userProfileId ? null : await getOrCreateDemoProfile();
   return prisma.workoutSession.findFirst({
-    where: { userProfileId: profile.id, status: "IN_PROGRESS" },
+    where: { userProfileId: userProfileId ?? profile!.id, status: "IN_PROGRESS" },
     include: {
       watchSession: true,
       sets: {
@@ -158,8 +158,8 @@ async function getOrderedExercisesForSession(session: {
   }));
 }
 
-export async function getWatchPayload(sessionId?: string): Promise<WatchPayload | null> {
-  const session = await resolveSession(sessionId);
+export async function getWatchPayload(sessionId?: string, userProfileId?: string): Promise<WatchPayload | null> {
+  const session = await resolveSession(sessionId, userProfileId);
   if (!session) return null;
 
   const ordered = await getOrderedExercisesForSession(session);
@@ -204,8 +204,9 @@ export async function validateWatchSet(input: {
   sessionId: string;
   actualReps?: number | null;
   weight?: number | null;
+  userProfileId?: string;
 }) {
-  const session = await resolveSession(input.sessionId);
+  const session = await resolveSession(input.sessionId, input.userProfileId);
   if (!session) return null;
   const ordered = await getOrderedExercisesForSession(session);
   const exerciseIndex = Math.max(0, Math.min(ordered.length - 1, session.watchSession?.currentExerciseIndex ?? 0));
@@ -295,7 +296,7 @@ export async function validateWatchSet(input: {
         lastSyncAt: new Date(),
       },
     });
-    const final = await getWatchPayload(session.id);
+    const final = await getWatchPayload(session.id, input.userProfileId);
     return final ? { ...final, status: "COMPLETED", restRemaining: 0 } : null;
   }
 
@@ -319,11 +320,11 @@ export async function validateWatchSet(input: {
     },
   });
 
-  return getWatchPayload(session.id);
+  return getWatchPayload(session.id, input.userProfileId);
 }
 
-export async function nextWatchExercise(sessionId: string) {
-  const state = await getWatchPayload(sessionId);
+export async function nextWatchExercise(sessionId: string, userProfileId?: string) {
+  const state = await getWatchPayload(sessionId, userProfileId);
   if (!state) return null;
   await prisma.watchSession.upsert({
     where: { workoutSessionId: state.sessionId },
@@ -341,11 +342,11 @@ export async function nextWatchExercise(sessionId: string) {
       lastSyncAt: new Date(),
     },
   });
-  return getWatchPayload(state.sessionId);
+  return getWatchPayload(state.sessionId, userProfileId);
 }
 
-export async function previousWatchExercise(sessionId: string) {
-  const state = await getWatchPayload(sessionId);
+export async function previousWatchExercise(sessionId: string, userProfileId?: string) {
+  const state = await getWatchPayload(sessionId, userProfileId);
   if (!state) return null;
   await prisma.watchSession.upsert({
     where: { workoutSessionId: state.sessionId },
@@ -363,11 +364,11 @@ export async function previousWatchExercise(sessionId: string) {
       lastSyncAt: new Date(),
     },
   });
-  return getWatchPayload(state.sessionId);
+  return getWatchPayload(state.sessionId, userProfileId);
 }
 
-export async function skipWatchRest(sessionId: string) {
-  const state = await getWatchPayload(sessionId);
+export async function skipWatchRest(sessionId: string, userProfileId?: string) {
+  const state = await getWatchPayload(sessionId, userProfileId);
   if (!state) return null;
   const latestCompletedSet = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: state.sessionId, isCompleted: true, completedAt: { not: null } },
@@ -382,8 +383,8 @@ export async function skipWatchRest(sessionId: string) {
   return { ...state, restRemaining: 0 };
 }
 
-export async function adjustWatchRest(sessionId: string, deltaSeconds: number) {
-  const state = await getWatchPayload(sessionId);
+export async function adjustWatchRest(sessionId: string, deltaSeconds: number, userProfileId?: string) {
+  const state = await getWatchPayload(sessionId, userProfileId);
   if (!state) return null;
   const latestCompletedSet = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: state.sessionId, isCompleted: true, completedAt: { not: null } },
@@ -399,11 +400,11 @@ export async function adjustWatchRest(sessionId: string, deltaSeconds: number) {
     data: { restSeconds: nextRest },
   });
 
-  return getWatchPayload(state.sessionId);
+  return getWatchPayload(state.sessionId, userProfileId);
 }
 
-export async function completeWatchSession(sessionId: string) {
-  const state = await getWatchPayload(sessionId);
+export async function completeWatchSession(sessionId: string, userProfileId?: string) {
+  const state = await getWatchPayload(sessionId, userProfileId);
   if (!state) return null;
   const endedAt = new Date();
   const started = await prisma.workoutSession.findUnique({ where: { id: state.sessionId }, select: { startedAt: true } });
@@ -419,6 +420,6 @@ export async function completeWatchSession(sessionId: string) {
     where: { workoutSessionId: state.sessionId },
     data: { status: "COMPLETED", lastSyncAt: new Date() },
   });
-  const final = await getWatchPayload(state.sessionId);
+  const final = await getWatchPayload(state.sessionId, userProfileId);
   return final ? { ...final, status: "COMPLETED", restRemaining: 0 } : null;
 }

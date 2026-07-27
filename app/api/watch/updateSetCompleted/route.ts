@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     actualReps: body.actualReps == null ? null : Number(body.actualReps),
     actualWeightKg: body.actualWeightKg == null ? null : Number(body.actualWeightKg),
     restSeconds: body.restSeconds == null ? null : Number(body.restSeconds),
+    userProfileId: access.userProfileId,
   });
 
   if (!state) return NextResponse.json({ error: "session_not_found" }, { status: 404 });

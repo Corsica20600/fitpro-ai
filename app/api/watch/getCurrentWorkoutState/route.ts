@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentWorkoutState } from "@/src/server/workout-sync";
+import { getCurrentWorkoutStateForProfile } from "@/src/server/workout-sync";
 import { requireWatchAccess } from "@/src/server/watch-auth";
 
 export async function GET(request: Request) {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const workoutSessionId = String(searchParams.get("workoutSessionId") ?? "").trim();
   if (!workoutSessionId) return NextResponse.json({ error: "missing_workout_session_id" }, { status: 400 });
 
-  const state = await getCurrentWorkoutState(workoutSessionId);
+  const state = await getCurrentWorkoutStateForProfile(workoutSessionId, access.userProfileId);
   if (!state) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
 
   return NextResponse.json({ state });

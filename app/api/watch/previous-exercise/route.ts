@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const sessionId = String(body.sessionId ?? "").trim();
   if (!sessionId) return NextResponse.json({ error: "missing_session_id" }, { status: 400 });
 
-  const payload = await previousWatchExercise(sessionId);
+  const payload = await previousWatchExercise(sessionId, access.userProfileId);
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
   return NextResponse.json({ payload });
 }

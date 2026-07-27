@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/src/lib/prisma";
+import { hashWatchDeviceToken } from "@/src/lib/watch-device-token";
 
 type WatchAccessResult =
-  | { ok: true; mode: "session" | "token" | "legacy" }
+  | { ok: true; mode: "session" | "device" | "token" | "legacy"; userProfileId?: string; profileEmail?: string | null }
   | { ok: false; response: NextResponse };
 
 function getExpectedWatchToken() {
@@ -16,7 +18,44 @@ function safeTokenEquals(actual: string, expected: string) {
 export async function requireWatchAccess(request: Request): Promise<WatchAccessResult> {
   const session = await auth().catch(() => null);
   if (session?.user?.email) {
-    return { ok: true, mode: "session" };
+    const email = session.user.email.trim().toLowerCase();
+    const profile = await prisma.userProfile.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+
+    if (profile) {
+      return { ok: true, mode: "session", userProfileId: profile.id, profileEmail: profile.email };
+    }
+
+    return { ok: true, mode: "session", profileEmail: email };
+  }
+
+  const deviceToken = request.headers.get("x-watch-device-token")?.trim() || "";
+  if (deviceToken) {
+    const device = await prisma.watchDevice.findUnique({
+      where: { tokenHash: hashWatchDeviceToken(deviceToken) },
+      select: {
+        id: true,
+        revokedAt: true,
+        userProfileId: true,
+        userProfile: { select: { email: true } },
+      },
+    });
+
+    if (device && !device.revokedAt) {
+      await prisma.watchDevice.update({
+        where: { id: device.id },
+        data: { lastSeenAt: new Date() },
+      });
+
+      return {
+        ok: true,
+        mode: "device",
+        userProfileId: device.userProfileId,
+        profileEmail: device.userProfile.email,
+      };
+    }
   }
 
   const expectedToken = getExpectedWatchToken();

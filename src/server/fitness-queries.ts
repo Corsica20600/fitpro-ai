@@ -350,7 +350,7 @@ export async function getAuthenticatedUserProfile() {
 export async function getAccountSettingsData() {
   const profile = await getAuthenticatedUserProfile();
 
-  const [workoutSessions, completedSessions, programs, progressMetrics, latestSession] = await Promise.all([
+  const [workoutSessions, completedSessions, programs, progressMetrics, latestSession, watchDevices] = await Promise.all([
     prisma.workoutSession.count({ where: { userProfileId: profile.id } }),
     prisma.workoutSession.count({ where: { userProfileId: profile.id, status: "COMPLETED" } }),
     prisma.program.count({ where: { userProfileId: profile.id } }),
@@ -366,6 +366,16 @@ export async function getAccountSettingsData() {
         createdAt: true,
       },
     }),
+    prisma.watchDevice.findMany({
+      where: { userProfileId: profile.id, revokedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        label: true,
+        lastSeenAt: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   return {
@@ -377,13 +387,14 @@ export async function getAccountSettingsData() {
       progressMetrics,
     },
     latestSession,
+    watchDevices,
   };
 }
 
 export async function getAccountExportData() {
   const profile = await getAuthenticatedUserProfile();
 
-  const [programs, workoutSessions, progressMetrics] = await Promise.all([
+  const [programs, workoutSessions, progressMetrics, watchDevices] = await Promise.all([
     prisma.program.findMany({
       where: { userProfileId: profile.id },
       orderBy: { createdAt: "desc" },
@@ -433,6 +444,17 @@ export async function getAccountExportData() {
       where: { userProfileId: profile.id },
       orderBy: { measuredAt: "desc" },
     }),
+    prisma.watchDevice.findMany({
+      where: { userProfileId: profile.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        label: true,
+        lastSeenAt: true,
+        revokedAt: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   return {
@@ -453,6 +475,7 @@ export async function getAccountExportData() {
     programs,
     workoutSessions,
     progressMetrics,
+    watchDevices,
   };
 }
 

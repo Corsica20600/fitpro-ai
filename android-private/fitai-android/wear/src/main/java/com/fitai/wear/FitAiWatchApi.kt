@@ -11,6 +11,7 @@ import java.net.URL
 class FitAiWatchApi(
     private val baseUrl: String = BuildConfig.FITAI_SYNC_BASE_URL.trimEnd('/'),
     private val watchToken: String = BuildConfig.FITAI_WATCH_TOKEN,
+    private val watchDeviceToken: String = BuildConfig.FITAI_WATCH_DEVICE_TOKEN,
 ) {
     suspend fun currentSession(sessionId: String? = null): WatchPayload = requestPayload(
         path = if (sessionId.isNullOrBlank()) {
@@ -70,6 +71,9 @@ class FitAiWatchApi(
             connectTimeout = 8_000
             readTimeout = 8_000
             setRequestProperty("accept", "application/json")
+            if (watchDeviceToken.isNotBlank()) {
+                setRequestProperty("x-watch-device-token", watchDeviceToken)
+            }
             if (watchToken.isNotBlank()) {
                 setRequestProperty("x-watch-token", watchToken)
             }

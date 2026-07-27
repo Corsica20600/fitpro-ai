@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     currentSetIndex: body.currentSetIndex == null ? undefined : Number(body.currentSetIndex),
     status: body.status,
     lastSyncAt: body.lastSyncAt,
+    userProfileId: access.userProfileId,
   });
 
   if (!state) return NextResponse.json({ error: "session_not_found" }, { status: 404 });

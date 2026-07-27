@@ -1176,7 +1176,8 @@ button, input, select { font-family: inherit; }
 .settings-data-card,
 .settings-danger-card,
 .settings-legal-card,
-.settings-service-card {
+.settings-service-card,
+.settings-watch-pairing-card {
   display: grid;
   gap: 12px;
 }
@@ -1186,7 +1187,8 @@ button, input, select { font-family: inherit; }
 .settings-data-card h2,
 .settings-danger-card h2,
 .settings-legal-card h2,
-.settings-service-card h2 {
+.settings-service-card h2,
+.settings-watch-pairing-card h2 {
   margin: 0;
   color: #f7fbff;
   font-size: 1.18rem;
@@ -1263,6 +1265,74 @@ button, input, select { font-family: inherit; }
   color: var(--fit-success);
   font-weight: 900;
   padding: 12px 14px;
+}
+
+.settings-watch-token-form {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-token-box {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(55, 215, 255, .28);
+  border-radius: 20px;
+  background: rgba(55, 215, 255, .08);
+  padding: 12px;
+}
+
+.settings-token-box span,
+.settings-token-box small {
+  color: #aebfe0;
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.settings-token-box code {
+  overflow-wrap: anywhere;
+  border-radius: 14px;
+  background: rgba(2, 7, 19, .72);
+  color: #f7fbff;
+  font-size: .78rem;
+  font-weight: 900;
+  padding: 10px;
+}
+
+.settings-watch-device-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-watch-device {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(111, 151, 219, .22);
+  border-radius: 18px;
+  background: rgba(6, 15, 30, .72);
+  padding: 10px;
+}
+
+.settings-watch-device strong,
+.settings-watch-device span {
+  display: block;
+}
+
+.settings-watch-device strong {
+  color: #f7fbff;
+  font-size: .9rem;
+}
+
+.settings-watch-device span {
+  color: #9eb1d5;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.settings-watch-device .ghost-btn {
+  min-height: 38px;
+  padding: 0 12px;
 }
 
 .settings-legal-card {

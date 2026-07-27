@@ -45,10 +45,14 @@ async function ensureDeviceSession(workoutSessionId: string) {
 }
 
 export async function getCurrentWorkoutState(workoutSessionId: string): Promise<WorkoutStatePayload | null> {
+  return getCurrentWorkoutStateForProfile(workoutSessionId);
+}
+
+export async function getCurrentWorkoutStateForProfile(workoutSessionId: string, userProfileId?: string): Promise<WorkoutStatePayload | null> {
   if (!workoutSessionId) return null;
 
   const session = await prisma.workoutSession.findUnique({
-    where: { id: workoutSessionId },
+    where: userProfileId ? { id: workoutSessionId, userProfileId } : { id: workoutSessionId },
     include: {
       sets: {
         include: {
@@ -121,9 +125,22 @@ export async function updateSetCompleted(input: {
   actualReps?: number | null;
   actualWeightKg?: number | null;
   restSeconds?: number | null;
+  userProfileId?: string;
 }) {
   const { workoutSessionId, exerciseId, setIndex } = input;
   if (!workoutSessionId || !exerciseId || !Number.isFinite(setIndex) || setIndex < 1) return null;
+
+  const session = input.userProfileId
+    ? await prisma.workoutSession.findUnique({
+        where: { id: workoutSessionId, userProfileId: input.userProfileId },
+        select: { id: true },
+      })
+    : await prisma.workoutSession.findUnique({
+        where: { id: workoutSessionId },
+        select: { id: true },
+      });
+
+  if (!session) return null;
 
   const existing = await prisma.workoutSet.findFirst({
     where: { workoutSessionId, exerciseId, setIndex },
@@ -182,11 +199,17 @@ export async function updateSetCompleted(input: {
     },
   });
 
-  return getCurrentWorkoutState(workoutSessionId);
+  return getCurrentWorkoutStateForProfile(workoutSessionId, input.userProfileId);
 }
 
-export async function goToNextExercise(workoutSessionId: string) {
+export async function goToNextExercise(workoutSessionId: string, userProfileId?: string) {
   if (!workoutSessionId) return null;
+  const session = userProfileId
+    ? await prisma.workoutSession.findUnique({ where: { id: workoutSessionId, userProfileId }, select: { id: true } })
+    : await prisma.workoutSession.findUnique({ where: { id: workoutSessionId }, select: { id: true } });
+
+  if (!session) return null;
+
   const current = await ensureDeviceSession(workoutSessionId);
 
   await prisma.watchSession.update({
@@ -199,7 +222,7 @@ export async function goToNextExercise(workoutSessionId: string) {
     },
   });
 
-  return getCurrentWorkoutState(workoutSessionId);
+  return getCurrentWorkoutStateForProfile(workoutSessionId, userProfileId);
 }
 
 export async function syncWorkoutState(input: {
@@ -208,8 +231,14 @@ export async function syncWorkoutState(input: {
   currentSetIndex?: number;
   status?: "ACTIVE" | "PAUSED" | "COMPLETED";
   lastSyncAt?: string;
+  userProfileId?: string;
 }) {
   if (!input.workoutSessionId) return null;
+  const session = input.userProfileId
+    ? await prisma.workoutSession.findUnique({ where: { id: input.workoutSessionId, userProfileId: input.userProfileId }, select: { id: true } })
+    : await prisma.workoutSession.findUnique({ where: { id: input.workoutSessionId }, select: { id: true } });
+
+  if (!session) return null;
 
   const fallback = await ensureDeviceSession(input.workoutSessionId);
   const syncDate = input.lastSyncAt ? new Date(input.lastSyncAt) : new Date();
@@ -233,5 +262,5 @@ export async function syncWorkoutState(input: {
     },
   });
 
-  return getCurrentWorkoutState(input.workoutSessionId);
+  return getCurrentWorkoutStateForProfile(input.workoutSessionId, input.userProfileId);
 }

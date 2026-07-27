@@ -38,8 +38,13 @@ android {
             ?: System.getenv("FITAI_WATCH_TOKEN")
             ?: readRootEnv("FITAI_WATCH_TOKEN")
             ?: ""
+        val watchDeviceToken = (project.findProperty("FITAI_WATCH_DEVICE_TOKEN") as String?)
+            ?: System.getenv("FITAI_WATCH_DEVICE_TOKEN")
+            ?: readRootEnv("FITAI_WATCH_DEVICE_TOKEN")
+            ?: ""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
         buildConfigField("String", "FITAI_WATCH_TOKEN", "\"$watchToken\"")
+        buildConfigField("String", "FITAI_WATCH_DEVICE_TOKEN", "\"$watchDeviceToken\"")
     }
 
     buildTypes {

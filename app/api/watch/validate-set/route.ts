@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     sessionId,
     actualReps: body.actualReps == null ? null : Number(body.actualReps),
     weight: body.weight == null ? null : Number(body.weight),
+    userProfileId: access.userProfileId,
   });
 
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });

@@ -8,6 +8,7 @@ import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { deleteAccountAction } from "@/src/server/account-actions";
 import { createBillingCheckoutAction, openBillingPortalAction } from "@/src/server/billing-actions";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
+import { createWatchDeviceTokenAction, revokeWatchDeviceAction } from "@/src/server/watch-pairing-actions";
 
 export const metadata = privatePageMetadata(
   "Paramètres",
@@ -59,6 +60,10 @@ type SettingsPageProps = {
     billing?: string | string[];
     billingError?: string | string[];
     deleteError?: string | string[];
+    watch?: string | string[];
+    watchError?: string | string[];
+    watchLabel?: string | string[];
+    watchToken?: string | string[];
   }>;
 };
 
@@ -105,11 +110,19 @@ export default async function SettingsPage(props: SettingsPageProps) {
       billing?: string | string[];
       billingError?: string | string[];
       deleteError?: string | string[];
+      watch?: string | string[];
+      watchError?: string | string[];
+      watchLabel?: string | string[];
+      watchToken?: string | string[];
     }),
   ]);
   const deleteError = getFirstParam(searchParams.deleteError);
   const billing = getFirstParam(searchParams.billing);
   const billingError = getBillingErrorMessage(getFirstParam(searchParams.billingError));
+  const watch = getFirstParam(searchParams.watch);
+  const watchError = getFirstParam(searchParams.watchError);
+  const watchLabel = getFirstParam(searchParams.watchLabel);
+  const watchToken = getFirstParam(searchParams.watchToken);
   const email = session?.user?.email ?? accountData.profile.email ?? "Compte Google";
   const name = accountData.profile.displayName || session?.user?.name || "Utilisateur FitAI";
   const connected = Boolean(session?.user?.email);
@@ -274,6 +287,59 @@ export default async function SettingsPage(props: SettingsPageProps) {
           </GlassCard>
         ))}
       </section>
+
+      <GlassCard className="settings-watch-pairing-card">
+        <div>
+          <p className="eyebrow">Montre Wear OS</p>
+          <h2>Pairing avancé</h2>
+          <p className="muted">
+            Génère un token personnel pour relier une montre au compte {email}. Les anciennes montres peuvent encore
+            fonctionner avec le token global, mais ce pairing isole mieux les comptes.
+          </p>
+        </div>
+        {watchToken ? (
+          <div className="settings-token-box">
+            <span>Token généré pour {watchLabel || "Montre Wear OS"}</span>
+            <code>{watchToken}</code>
+            <small>Copie-le dans `FITAI_WATCH_DEVICE_TOKEN` puis rebuild l&apos;APK montre. Il ne sera plus affiché ensuite.</small>
+          </div>
+        ) : null}
+        {watch === "revoked" ? (
+          <p className="settings-success-message">Montre révoquée. Elle ne pourra plus accéder à ce compte.</p>
+        ) : null}
+        {watchError === "device" ? (
+          <p className="settings-danger-error">Montre introuvable ou déjà révoquée.</p>
+        ) : null}
+        <form action={createWatchDeviceTokenAction} className="settings-watch-token-form">
+          <label>
+            <span>Nom de la montre</span>
+            <input className="input" name="label" type="text" placeholder="Galaxy Watch Ultra" autoComplete="off" />
+          </label>
+          <button type="submit" className="ghost-btn full-line">
+            Générer un token de montre
+          </button>
+        </form>
+        <div className="settings-watch-device-list">
+          {accountData.watchDevices.length > 0 ? (
+            accountData.watchDevices.map((device) => (
+              <article key={device.id} className="settings-watch-device">
+                <div>
+                  <strong>{device.label}</strong>
+                  <span>
+                    Dernière synchro : {device.lastSeenAt ? formatDate(device.lastSeenAt) : "jamais"}
+                  </span>
+                </div>
+                <form action={revokeWatchDeviceAction}>
+                  <input type="hidden" name="deviceId" value={device.id} />
+                  <button type="submit" className="ghost-btn danger">Révoquer</button>
+                </form>
+              </article>
+            ))
+          ) : (
+            <p className="muted">Aucune montre personnelle pairée pour le moment.</p>
+          )}
+        </div>
+      </GlassCard>
 
       <GlassCard className="settings-legal-card">
         <div>

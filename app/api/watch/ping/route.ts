@@ -7,7 +7,16 @@ export async function GET(request: Request) {
   const access = await requireWatchAccess(request);
   if (!access.ok) return access.response;
 
-  const profile = await getOrCreateDemoProfile();
+  const profile = access.userProfileId
+    ? await prisma.userProfile.findUnique({
+        where: { id: access.userProfileId },
+        select: { id: true, email: true },
+      })
+    : await getOrCreateDemoProfile();
+
+  if (!profile) {
+    return NextResponse.json({ error: "watch_profile_not_found" }, { status: 404 });
+  }
 
   const activeSession = await prisma.workoutSession.findFirst({
     where: {
