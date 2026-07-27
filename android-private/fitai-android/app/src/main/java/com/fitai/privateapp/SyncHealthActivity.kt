@@ -152,8 +152,6 @@ class SyncHealthActivity : AppCompatActivity() {
 
     private fun requestPermissionsIfNeeded() {
         val prefs = getSharedPreferences("fitai_sync", MODE_PRIVATE)
-        val alreadyRequested = prefs.getBoolean("health_perm_requested", false)
-        if (alreadyRequested) return
 
         lifecycleScope.launch {
             if (healthConnectProvider.isAvailable()) {
