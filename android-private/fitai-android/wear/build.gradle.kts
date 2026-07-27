@@ -14,11 +14,29 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        fun readRootEnv(name: String): String? {
+            val rootEnv = rootProject.projectDir.parentFile?.parentFile?.resolve(".env")
+                ?: return null
+            if (!rootEnv.exists()) return null
+
+            return rootEnv.readLines()
+                .asSequence()
+                .map { it.trim() }
+                .filter { it.isNotBlank() && !it.startsWith("#") }
+                .firstOrNull { it.startsWith("$name=") }
+                ?.substringAfter("=")
+                ?.trim()
+                ?.trim('"', '\'')
+                ?.takeIf { it.isNotBlank() }
+        }
+
         val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?)
             ?: System.getenv("FITAI_SYNC_BASE_URL")
+            ?: readRootEnv("FITAI_SYNC_BASE_URL")
             ?: "https://fitai-pro-zeta.vercel.app"
         val watchToken = (project.findProperty("FITAI_WATCH_TOKEN") as String?)
             ?: System.getenv("FITAI_WATCH_TOKEN")
+            ?: readRootEnv("FITAI_WATCH_TOKEN")
             ?: ""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
         buildConfigField("String", "FITAI_WATCH_TOKEN", "\"$watchToken\"")
