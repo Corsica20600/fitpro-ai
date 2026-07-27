@@ -11,6 +11,7 @@ const privacySections = [
       "Compte Google : adresse e-mail et nom affiché pour identifier ton compte.",
       "Données d'entraînement : programmes, séances, séries, charges, répétitions et progression.",
       "Données d'abonnement : identifiants client et abonnement Stripe, statut de paiement et période d'accès.",
+      "Données d'intégrations : statut Spotify, Health Connect ou Samsung Health, permissions demandées et date de synchronisation.",
       "Données techniques : synchronisation montre et état des intégrations quand elles sont activées.",
     ],
   },
@@ -19,7 +20,7 @@ const privacySections = [
     items: [
       "Retrouver ton historique sur plusieurs appareils.",
       "Calculer tes statistiques, volumes et tendances de progression.",
-      "Gérer l'abonnement, les accès premium et les futures connexions santé, montre et musique.",
+      "Gérer l'abonnement, les accès premium et les connexions santé, montre et musique choisies par l'utilisateur.",
     ],
   },
   {
@@ -27,7 +28,7 @@ const privacySections = [
     items: [
       "Tu peux exporter tes données depuis les paramètres.",
       "Tu peux demander la suppression définitive du compte depuis les paramètres.",
-      "Les accès santé ou musique resteront optionnels et explicites.",
+      "Les accès santé ou musique restent optionnels, explicites et révocables depuis les paramètres.",
     ],
   },
 ] as const;

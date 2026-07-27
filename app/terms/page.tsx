@@ -26,7 +26,7 @@ const termsSections = [
     items: [
       "L'application peut évoluer pendant la phase de préparation commerciale.",
       "Un export des données est disponible depuis les paramètres.",
-      "Les intégrations externes seront optionnelles et dépendront des services connectés.",
+      "Les intégrations externes comme Spotify, Health Connect ou Samsung Health sont optionnelles et dépendent des services connectés.",
     ],
   },
 ] as const;

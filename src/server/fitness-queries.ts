@@ -350,7 +350,7 @@ export async function getAuthenticatedUserProfile() {
 export async function getAccountSettingsData() {
   const profile = await getAuthenticatedUserProfile();
 
-  const [workoutSessions, completedSessions, programs, progressMetrics, latestSession, watchDevices] = await Promise.all([
+  const [workoutSessions, completedSessions, programs, progressMetrics, latestSession, watchDevices, integrations] = await Promise.all([
     prisma.workoutSession.count({ where: { userProfileId: profile.id } }),
     prisma.workoutSession.count({ where: { userProfileId: profile.id, status: "COMPLETED" } }),
     prisma.program.count({ where: { userProfileId: profile.id } }),
@@ -376,6 +376,20 @@ export async function getAccountSettingsData() {
         createdAt: true,
       },
     }),
+    prisma.integrationConnection.findMany({
+      where: { userProfileId: profile.id },
+      select: {
+        provider: true,
+        status: true,
+        displayName: true,
+        scopes: true,
+        lastSyncAt: true,
+        connectedAt: true,
+        disconnectedAt: true,
+        tokenExpiresAt: true,
+        metadata: true,
+      },
+    }),
   ]);
 
   return {
@@ -388,13 +402,14 @@ export async function getAccountSettingsData() {
     },
     latestSession,
     watchDevices,
+    integrations,
   };
 }
 
 export async function getAccountExportData() {
   const profile = await getAuthenticatedUserProfile();
 
-  const [programs, workoutSessions, progressMetrics, watchDevices] = await Promise.all([
+  const [programs, workoutSessions, progressMetrics, watchDevices, integrations] = await Promise.all([
     prisma.program.findMany({
       where: { userProfileId: profile.id },
       orderBy: { createdAt: "desc" },
@@ -455,6 +470,21 @@ export async function getAccountExportData() {
         createdAt: true,
       },
     }),
+    prisma.integrationConnection.findMany({
+      where: { userProfileId: profile.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        provider: true,
+        status: true,
+        displayName: true,
+        scopes: true,
+        lastSyncAt: true,
+        connectedAt: true,
+        disconnectedAt: true,
+        tokenExpiresAt: true,
+        metadata: true,
+      },
+    }),
   ]);
 
   return {
@@ -476,6 +506,7 @@ export async function getAccountExportData() {
     workoutSessions,
     progressMetrics,
     watchDevices,
+    integrations,
   };
 }
 

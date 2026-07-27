@@ -103,6 +103,19 @@ enum SubscriptionStatus {
   PAUSED
 }
 
+enum IntegrationProvider {
+  SPOTIFY
+  HEALTH_CONNECT
+  SAMSUNG_HEALTH
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  PENDING
+  CONNECTED
+  ERROR
+}
+
 enum MetricType {
   BODY_WEIGHT
   BODY_FAT
@@ -114,29 +127,54 @@ enum MetricType {
 }
 
 model UserProfile {
-  id                            String             @id @default(cuid())
+  id                            String                  @id @default(cuid())
   displayName                   String
-  email                         String?            @unique
+  email                         String?                 @unique
   age                           Int?
   heightCm                      Int?
   weightKg                      Float?
   trainingLevel                 ProgramLevel?
   primaryGoal                   ProgramGoal?
   sessionsPerWeek               Int?
-  stripeCustomerId              String?            @unique
-  stripeSubscriptionId          String?            @unique
-  subscriptionStatus            SubscriptionStatus @default(FREE)
+  stripeCustomerId              String?                 @unique
+  stripeSubscriptionId          String?                 @unique
+  subscriptionStatus            SubscriptionStatus      @default(FREE)
   subscriptionPriceId           String?
   subscriptionCurrentPeriodEnd  DateTime?
-  subscriptionCancelAtPeriodEnd Boolean            @default(false)
-  createdAt                     DateTime           @default(now())
-  updatedAt                     DateTime           @updatedAt
+  subscriptionCancelAtPeriodEnd Boolean                 @default(false)
+  createdAt                     DateTime                @default(now())
+  updatedAt                     DateTime                @updatedAt
   programs                      Program[]
+  integrationConnections        IntegrationConnection[]
   watchDevices                  WatchDevice[]
   workoutSessions               WorkoutSession[]
   progressMetrics               ProgressMetric[]
 
   @@index([subscriptionStatus])
+}
+
+model IntegrationConnection {
+  id                String              @id @default(cuid())
+  userProfileId     String
+  provider          IntegrationProvider
+  status            IntegrationStatus   @default(PENDING)
+  externalAccountId String?
+  displayName       String?
+  scopes            String[]
+  accessToken       String?
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  metadata          Json?
+  lastSyncAt        DateTime?
+  connectedAt       DateTime?
+  disconnectedAt    DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  userProfile       UserProfile         @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([userProfileId, provider])
+  @@index([provider, status])
+  @@index([userProfileId, status])
 }
 
 model WatchDevice {

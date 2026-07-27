@@ -55,9 +55,37 @@ export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) 
     })),
   });
 
+  await prisma.integrationConnection.upsert({
+    where: { userProfileId_provider: { userProfileId: profile.id, provider: "SAMSUNG_HEALTH" } },
+    update: {
+      status: "CONNECTED",
+      displayName: "Samsung Health",
+      scopes: ["steps", "heart_rate", "sleep_minutes", "calories", "distance_m"],
+      lastSyncAt: new Date(),
+      connectedAt: new Date(),
+      disconnectedAt: null,
+      metadata: {
+        source: "private_android_bridge",
+        inserted: valid.length,
+      },
+    },
+    create: {
+      userProfileId: profile.id,
+      provider: "SAMSUNG_HEALTH",
+      status: "CONNECTED",
+      displayName: "Samsung Health",
+      scopes: ["steps", "heart_rate", "sleep_minutes", "calories", "distance_m"],
+      lastSyncAt: new Date(),
+      connectedAt: new Date(),
+      metadata: {
+        source: "private_android_bridge",
+        inserted: valid.length,
+      },
+    },
+  });
+
   return {
     inserted: valid.length,
     ignored: records.length - valid.length,
   };
 }
-

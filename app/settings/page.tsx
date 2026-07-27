@@ -8,7 +8,9 @@ import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { deleteAccountAction } from "@/src/server/account-actions";
 import { createBillingCheckoutAction, openBillingPortalAction } from "@/src/server/billing-actions";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
+import { disconnectIntegrationAction, enableHealthConnectPreparationAction } from "@/src/server/integration-actions";
 import { createWatchDeviceTokenAction, revokeWatchDeviceAction } from "@/src/server/watch-pairing-actions";
+import { isSpotifyConfigured } from "@/src/server/spotify";
 
 export const metadata = privatePageMetadata(
   "Paramètres",
@@ -17,20 +19,6 @@ export const metadata = privatePageMetadata(
 
 function getSettingSections(watchPairingEnabled: boolean) {
   return [
-  {
-    eyebrow: "Santé",
-    title: "Health Connect",
-    description: "Point d'entrée propre pour Samsung Health, Google Fit/Fitbit et les données santé.",
-    status: "Bientôt",
-    tone: "success",
-  },
-  {
-    eyebrow: "Musique",
-    title: "Spotify",
-    description: "Connexion musique pour lancer les playlists d'entraînement depuis la séance.",
-    status: "Bientôt",
-    tone: "accent",
-  },
   {
     eyebrow: "Montre",
     title: "Wear OS",
@@ -61,6 +49,8 @@ type SettingsPageProps = {
     billing?: string | string[];
     billingError?: string | string[];
     deleteError?: string | string[];
+    integration?: string | string[];
+    integrationError?: string | string[];
     watch?: string | string[];
     watchError?: string | string[];
     watchLabel?: string | string[];
@@ -101,8 +91,25 @@ function getBillingErrorMessage(error: string | undefined) {
   return null;
 }
 
+function getIntegrationMessage(value: string | undefined) {
+  if (value === "spotify-connected") return "Spotify est connecté à ton compte.";
+  if (value === "health-ready") return "Health Connect est préparé pour l'app Android.";
+  if (value === "disconnected") return "Connexion désactivée.";
+  return null;
+}
+
+function getIntegrationErrorMessage(value: string | undefined) {
+  if (value === "spotify-config") return "Spotify n'est pas encore configuré côté Vercel.";
+  if (value === "spotify-denied") return "Connexion Spotify annulée.";
+  if (value === "spotify-state") return "Connexion Spotify expirée, relance la connexion.";
+  if (value === "spotify-callback") return "Impossible de finaliser Spotify pour le moment.";
+  if (value === "provider") return "Intégration inconnue.";
+  return null;
+}
+
 export default async function SettingsPage(props: SettingsPageProps) {
   const watchPairingEnabled = Boolean(process.env.FITAI_WATCH_TOKEN?.trim());
+  const spotifyConfigured = isSpotifyConfigured();
   const settingSections = getSettingSections(watchPairingEnabled);
   const [session, accountData, searchParams] = await Promise.all([
     auth().catch(() => null),
@@ -111,6 +118,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
       billing?: string | string[];
       billingError?: string | string[];
       deleteError?: string | string[];
+      integration?: string | string[];
+      integrationError?: string | string[];
       watch?: string | string[];
       watchError?: string | string[];
       watchLabel?: string | string[];
@@ -120,6 +129,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const deleteError = getFirstParam(searchParams.deleteError);
   const billing = getFirstParam(searchParams.billing);
   const billingError = getBillingErrorMessage(getFirstParam(searchParams.billingError));
+  const integrationMessage = getIntegrationMessage(getFirstParam(searchParams.integration));
+  const integrationError = getIntegrationErrorMessage(getFirstParam(searchParams.integrationError));
   const watch = getFirstParam(searchParams.watch);
   const watchError = getFirstParam(searchParams.watchError);
   const watchLabel = getFirstParam(searchParams.watchLabel);
@@ -131,6 +142,11 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const subscriptionStatus = accountData.profile.subscriptionStatus;
   const subscriptionActive = subscriptionStatus === "ACTIVE" || subscriptionStatus === "TRIALING";
   const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
+  const spotify = accountData.integrations.find((item) => item.provider === "SPOTIFY");
+  const healthConnect = accountData.integrations.find((item) => item.provider === "HEALTH_CONNECT");
+  const samsungHealth = accountData.integrations.find((item) => item.provider === "SAMSUNG_HEALTH");
+  const spotifyConnected = spotify?.status === "CONNECTED";
+  const healthPrepared = healthConnect?.status === "PENDING" || healthConnect?.status === "CONNECTED";
   const latestSessionDate = accountData.latestSession?.endedAt
     ?? accountData.latestSession?.startedAt
     ?? accountData.latestSession?.createdAt
@@ -275,6 +291,88 @@ export default async function SettingsPage(props: SettingsPageProps) {
           </a>
         ) : null}
       </GlassCard>
+
+      <section className="settings-grid" aria-label="Intégrations connectées">
+        {integrationMessage ? (
+          <p className="settings-success-message">{integrationMessage}</p>
+        ) : null}
+        {integrationError ? (
+          <p className="settings-danger-error">{integrationError}</p>
+        ) : null}
+        <GlassCard className="settings-service-card">
+          <div>
+            <p className="eyebrow">Musique</p>
+            <h2>Spotify</h2>
+            <p className="muted">
+              Connecte Spotify pour préparer les playlists d&apos;entraînement, l&apos;ouverture rapide et les futures
+              commandes pendant la séance.
+            </p>
+            {spotify?.displayName ? (
+              <p className="settings-footnote">
+                <span>Compte</span>
+                <strong>{spotify.displayName}</strong>
+              </p>
+            ) : null}
+          </div>
+          <span className={`chip ${spotifyConnected ? "success" : spotifyConfigured ? "accent" : "warning"}`}>
+            {spotifyConnected ? "Connecté" : spotifyConfigured ? "Prêt" : "À configurer"}
+          </span>
+          {spotifyConnected ? (
+            <form action={disconnectIntegrationAction}>
+              <input type="hidden" name="provider" value="SPOTIFY" />
+              <button type="submit" className="ghost-btn full-line">Déconnecter Spotify</button>
+            </form>
+          ) : (
+            <a className={`primary-button full-line ${spotifyConfigured ? "" : "is-disabled"}`.trim()} href={spotifyConfigured ? "/api/integrations/spotify/connect" : "/settings?integrationError=spotify-config"}>
+              Connecter Spotify
+            </a>
+          )}
+        </GlassCard>
+
+        <GlassCard className="settings-service-card">
+          <div>
+            <p className="eyebrow">Santé Android</p>
+            <h2>Health Connect</h2>
+            <p className="muted">
+              Prépare la connexion officielle Android pour lire les séances, pas, fréquence cardiaque et calories après
+              consentement explicite dans l&apos;app mobile.
+            </p>
+          </div>
+          <span className={`chip ${healthPrepared ? "success" : "warning"}`}>
+            {healthPrepared ? "Préparé" : "À préparer"}
+          </span>
+          {healthPrepared ? (
+            <form action={disconnectIntegrationAction}>
+              <input type="hidden" name="provider" value="HEALTH_CONNECT" />
+              <button type="submit" className="ghost-btn full-line">Désactiver Health Connect</button>
+            </form>
+          ) : (
+            <form action={enableHealthConnectPreparationAction}>
+              <button type="submit" className="ghost-btn full-line">Préparer Health Connect</button>
+            </form>
+          )}
+        </GlassCard>
+
+        <GlassCard className="settings-service-card">
+          <div>
+            <p className="eyebrow">Samsung</p>
+            <h2>Samsung Health</h2>
+            <p className="muted">
+              Passerelle privée déjà disponible pour tes essais Samsung. Pour le Play Store, Health Connect restera la
+              voie la plus universelle.
+            </p>
+            {samsungHealth?.lastSyncAt ? (
+              <p className="settings-footnote">
+                <span>Dernière synchro</span>
+                <strong>{formatDate(samsungHealth.lastSyncAt)}</strong>
+              </p>
+            ) : null}
+          </div>
+          <span className={`chip ${process.env.SAMSUNG_SYNC_TOKEN?.trim() ? "success" : "warning"}`}>
+            {process.env.SAMSUNG_SYNC_TOKEN?.trim() ? "Token serveur" : "Non configuré"}
+          </span>
+        </GlassCard>
+      </section>
 
       <section className="settings-grid" aria-label="Connexions et services">
         {settingSections.map((section) => (
