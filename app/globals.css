@@ -4481,16 +4481,17 @@ summary:focus-visible {
 .workout-sets-adjust,
 .workout-reps-control {
   width: 100%;
-  max-width: 100%;
+  max-width: 320px;
   margin-inline: auto;
 }
 
 .workout-sets-adjust {
-  grid-template-columns: minmax(44px, 52px) minmax(0, 1fr) minmax(44px, 52px);
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  gap: 8px;
 }
 
 .workout-reps-control {
-  grid-template-columns: minmax(48px, 56px) minmax(0, 1fr) minmax(48px, 56px);
+  grid-template-columns: 54px minmax(0, 1fr) 54px;
 }
 
 .workout-sets-adjust .ghost-btn,
@@ -4504,6 +4505,12 @@ summary:focus-visible {
   min-width: 0;
   width: 100%;
   text-align: center;
+}
+
+.workout-input-grid {
+  max-width: 320px;
+  width: 100%;
+  margin-inline: auto;
 }
 
 .watch-page-v2 {

@@ -889,9 +889,9 @@ export function GuidedWorkoutClient({
         cue={exercise.technicalCue || (Math.min(nextSetIndex, setRows.length) === setRows.length ? "Dernière série, propre et contrôlée." : null)}
       >
         <div className="workout-sets-adjust">
-          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(-1)}>- série</button>
+          <button type="button" className="ghost-btn" aria-label="Retirer une série" onClick={() => void onAdjustSets(-1)}>-</button>
           <strong>{Math.max(1, setRows.length)} séries</strong>
-          <button type="button" className="ghost-btn" onClick={() => void onAdjustSets(1)}>+ série</button>
+          <button type="button" className="ghost-btn" aria-label="Ajouter une série" onClick={() => void onAdjustSets(1)}>+</button>
         </div>
         <div className="workout-input-grid">
           <div className="workout-active-reps">
