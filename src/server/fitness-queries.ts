@@ -1474,9 +1474,11 @@ export async function getProgressDataForDemoUser(periodOrExerciseId?: string) {
   const bestWeightSet = allCurrentSets
     .filter((set) => (set.actualWeightKg ?? 0) > 0)
     .sort((a, b) => (b.actualWeightKg ?? 0) - (a.actualWeightKg ?? 0))[0] ?? null;
-  const bestVolumeSession = currentSessions.sort((a, b) => b.volume - a.volume)[0] ?? null;
-  const longestSession = currentSessions.filter((session) => session.durationSeconds > 0).sort((a, b) => b.durationSeconds - a.durationSeconds)[0] ?? null;
-  const mostSetsSession = currentSessions.sort((a, b) => b.setCount - a.setCount)[0] ?? null;
+  const bestVolumeSession = [...currentSessions].sort((a, b) => b.volume - a.volume)[0] ?? null;
+  const longestSession = currentSessions
+    .filter((session) => session.durationSeconds > 0)
+    .sort((a, b) => b.durationSeconds - a.durationSeconds)[0] ?? null;
+  const mostSetsSession = [...currentSessions].sort((a, b) => b.setCount - a.setCount)[0] ?? null;
 
   const exerciseUsage = new Map<string, { id: string; name: string; sets: number; volume: number }>();
   const muscleUsage = new Map<string, { group: string; sets: number; volume: number }>();
@@ -1534,6 +1536,7 @@ export async function getProgressDataForDemoUser(periodOrExerciseId?: string) {
       }
     }
   }
+  const latestSessions = [...currentSessions].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return {
     period: {
@@ -1607,9 +1610,9 @@ export async function getProgressDataForDemoUser(periodOrExerciseId?: string) {
       averageSessionsPerWeek,
       favoriteDay: favoriteDay ? { label: favoriteDay[0], sessions: favoriteDay[1] } : null,
       bestStreakWeeks,
-      latestSessionAt: currentSessions[0]?.date ?? null,
+      latestSessionAt: latestSessions[0]?.date ?? null,
     },
-    recentSessions: currentSessions.slice(0, 8).map((session) => ({
+    recentSessions: latestSessions.slice(0, 8).map((session) => ({
       id: session.id,
       date: session.date,
       title: session.title,

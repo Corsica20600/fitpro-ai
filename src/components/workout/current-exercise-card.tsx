@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 
 type CurrentExerciseCardProps = {
   exercise: {
@@ -41,9 +42,11 @@ export function CurrentExerciseCard({
   cue,
   children,
 }: CurrentExerciseCardProps) {
-  const title = exercise.nameFr || exercise.name;
-  const muscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
-  const equipment = exercise.equipmentFr[0] || exercise.equipment[0] || "Poids du corps";
+  const override = getExerciseOverride(exercise.slug);
+  const title = override?.displayNameFr || exercise.nameFr || exercise.name;
+  const muscle = override?.primaryMuscleFr || exercise.primaryMusclesFr[0] || "Corps complet";
+  const equipment = exercise.equipmentFr[0] || "Poids du corps";
+  const cueFr = override?.cueFr || cue;
 
   return (
     <section className="current-exercise-card">
@@ -65,7 +68,7 @@ export function CurrentExerciseCard({
           <span>{plannedWeightLabel}</span>
           {previousWeightLabel ? <span>{previousWeightLabel}</span> : null}
         </div>
-        {cue ? <p className="muted">{cue}</p> : null}
+        {cueFr ? <p className="muted">{cueFr}</p> : null}
         {children}
         <Link href={`/exercises/${exercise.slug}`} className="outline-link">Voir la fiche exercice</Link>
       </div>

@@ -103,7 +103,11 @@ export default async function WorkoutPage() {
             programName={formatWorkoutLabel(currentSession.program?.name)}
             startedAt={(currentSession.startedAt ?? currentSession.createdAt).toISOString()}
             exercises={sessionExercises.map((item) => {
-              const displayName = getExerciseOverride(item.slug)?.displayNameFr || item.nameFr || item.name;
+              const override = getExerciseOverride(item.slug);
+              const displayName = override?.displayNameFr || item.nameFr || item.name;
+              const primaryMusclesFr = override?.primaryMuscleFr
+                ? [override.primaryMuscleFr, ...item.primaryMusclesFr.filter((muscle) => muscle !== override.primaryMuscleFr)]
+                : item.primaryMusclesFr;
 
               return {
                 id: item.id,
@@ -113,7 +117,7 @@ export default async function WorkoutPage() {
                 category: item.category,
                 movementType: item.movementType,
                 primaryMuscles: item.primaryMuscles,
-                primaryMusclesFr: item.primaryMusclesFr,
+                primaryMusclesFr,
                 equipment: item.equipment,
                 equipmentFr: item.equipmentFr,
                 difficulty: item.difficulty,
@@ -126,7 +130,7 @@ export default async function WorkoutPage() {
                 plannedWeightKg: item.plan?.plannedWeightKg ?? null,
                 plannedRestSeconds: item.plan?.restSeconds ?? null,
                 programExerciseId: item.plan?.programExerciseId ?? null,
-                technicalCue: item.shortTechnicalCues[0] ?? null,
+                technicalCue: override?.cueFr || null,
                 media: item.media.map((media) => ({
                   id: media.id,
                   type: media.type,

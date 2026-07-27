@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 
 type NextExerciseCardProps = {
   exercise?: {
+    slug?: string;
     name: string;
     nameFr: string | null;
     primaryMuscles: string[];
@@ -26,8 +28,9 @@ export function NextExerciseCard({ exercise }: NextExerciseCardProps) {
     );
   }
 
-  const title = exercise.nameFr || exercise.name;
-  const muscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
+  const override = exercise.slug ? getExerciseOverride(exercise.slug) : null;
+  const title = override?.displayNameFr || exercise.nameFr || exercise.name;
+  const muscle = override?.primaryMuscleFr || exercise.primaryMusclesFr[0] || "Corps complet";
   const image = exercise.fallbackThumbnailPath || exercise.fallbackImagePath;
 
   return (
