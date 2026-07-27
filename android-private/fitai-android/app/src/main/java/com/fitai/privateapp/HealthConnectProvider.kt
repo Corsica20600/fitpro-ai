@@ -31,8 +31,12 @@ class HealthConnectProvider(private val context: Context) {
 
     suspend fun missingPermissions(): Set<String> {
         if (!isAvailable()) return permissions
-        val granted = client().permissionController.getGrantedPermissions()
-        return permissions - granted
+        return permissions - grantedPermissions()
+    }
+
+    suspend fun grantedPermissions(): Set<String> {
+        if (!isAvailable()) return emptySet()
+        return client().permissionController.getGrantedPermissions()
     }
 
     suspend fun readLatestMetrics(): HealthReadResult {

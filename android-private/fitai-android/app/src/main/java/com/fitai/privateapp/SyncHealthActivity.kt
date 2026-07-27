@@ -25,14 +25,22 @@ class SyncHealthActivity : AppCompatActivity() {
         ) { granted ->
             lifecycleScope.launch {
                 val missing = HealthConnectProvider.permissions - granted
+                val grantedRequired = granted.intersect(HealthConnectProvider.permissions)
                 binding.textPermissionState.text = if (missing.isEmpty()) {
                     "Permissions Health Connect accordees."
+                } else if (grantedRequired.isNotEmpty()) {
+                    "Permissions Health Connect partielles (${grantedRequired.size}/${HealthConnectProvider.permissions.size})."
                 } else {
                     "Permissions Health Connect incompletes."
                 }
                 if (syncPendingAfterHealthConnectPermission) {
                     syncPendingAfterHealthConnectPermission = false
-                    if (missing.isEmpty()) syncNow() else binding.buttonSync.isEnabled = true
+                    if (grantedRequired.isNotEmpty()) {
+                        syncHealthConnect(requestMissingPermissions = false)
+                    } else {
+                        binding.buttonSync.isEnabled = true
+                        binding.textStatus.text = "Aucune permission Health Connect accordee."
+                    }
                 }
             }
         }
@@ -95,9 +103,9 @@ class SyncHealthActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun syncHealthConnect() {
+    private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true) {
         val missing = healthConnectProvider.missingPermissions()
-        if (missing.isNotEmpty()) {
+        if (missing.isNotEmpty() && requestMissingPermissions) {
             binding.textPermissionState.text = "Autorisation Health Connect requise."
             binding.textStatus.text = "Ouverture des permissions Health Connect..."
             syncPendingAfterHealthConnectPermission = true
@@ -105,7 +113,19 @@ class SyncHealthActivity : AppCompatActivity() {
             return
         }
 
-        binding.textPermissionState.text = "Permissions Health Connect accordees."
+        val granted = healthConnectProvider.grantedPermissions().intersect(HealthConnectProvider.permissions)
+        if (granted.isEmpty()) {
+            binding.buttonSync.isEnabled = true
+            binding.textPermissionState.text = "Permissions Health Connect incompletes."
+            binding.textStatus.text = "Aucune permission Health Connect accordee."
+            return
+        }
+
+        binding.textPermissionState.text = if (missing.isEmpty()) {
+            "Permissions Health Connect accordees."
+        } else {
+            "Permissions Health Connect partielles (${granted.size}/${HealthConnectProvider.permissions.size})."
+        }
         val readResult = healthConnectProvider.readLatestMetrics()
         if (readResult.records.isEmpty()) {
             binding.buttonSync.isEnabled = true
@@ -138,8 +158,11 @@ class SyncHealthActivity : AppCompatActivity() {
         lifecycleScope.launch {
             if (healthConnectProvider.isAvailable()) {
                 val missing = healthConnectProvider.missingPermissions()
+                val granted = healthConnectProvider.grantedPermissions().intersect(HealthConnectProvider.permissions)
                 binding.textPermissionState.text = if (missing.isEmpty()) {
                     "Permissions Health Connect accordees."
+                } else if (granted.isNotEmpty()) {
+                    "Permissions Health Connect partielles (${granted.size}/${HealthConnectProvider.permissions.size})."
                 } else {
                     "Permissions Health Connect a accorder."
                 }
