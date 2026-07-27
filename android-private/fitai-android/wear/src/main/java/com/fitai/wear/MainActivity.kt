@@ -207,8 +207,8 @@ private fun ActiveSetScreen(state: WatchScreenState.Ready, viewModel: WatchViewM
         Spacer(Modifier.height(6.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             BigActionButton("Valider", enabled = enabled, onClick = viewModel::validateSet)
-            Spacer(Modifier.height(4.dp))
-            NavRow(state, viewModel)
+            Spacer(Modifier.height(5.dp))
+            FinishButton(state, viewModel)
         }
     }
 }
@@ -248,10 +248,10 @@ private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 RoundActionButton("-15", enabled, viewModel::removeRest)
                 RoundActionButton("+15", enabled, viewModel::addRest)
-                RoundActionButton("Skip", enabled, viewModel::skipRest)
+                RoundActionButton("Passer", enabled, viewModel::skipRest)
             }
-            Spacer(Modifier.height(4.dp))
-            NavRow(state, viewModel)
+            Spacer(Modifier.height(5.dp))
+            FinishButton(state, viewModel)
         }
     }
 }
@@ -276,13 +276,13 @@ private fun Header(title: String, syncLabel: String, error: String?) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = title.cleanExerciseTitle(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(0.82f),
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Black,
-            lineHeight = 14.sp,
+            lineHeight = 13.sp,
         )
         Text(
             text = error ?: syncLabel,
@@ -292,6 +292,19 @@ private fun Header(title: String, syncLabel: String, error: String?) {
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+@Composable
+private fun FinishButton(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val enabled = state.busyAction == null
+    SmallButton(
+        text = if (state.finishConfirm) "OK Fin" else "Fin",
+        enabled = enabled,
+        danger = state.finishConfirm,
+        onClick = {
+            if (state.finishConfirm) viewModel.completeSession() else viewModel.requestFinish()
+        },
+    )
 }
 
 @Composable

@@ -22,7 +22,16 @@ type OrderedExercise = {
   totalSets: number;
   targetReps: number;
   restSeconds: number;
+  plannedWeightKg: number | null;
 };
+
+function parseWeightKgFromText(text?: string | null) {
+  if (!text) return null;
+  const match = text.match(/(\d+(?:[.,]\d+)?)\s*kg/i);
+  if (!match?.[1]) return null;
+  const value = Number(match[1].replace(",", "."));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
 
 async function resolveSession(sessionId?: string) {
   if (sessionId) {
@@ -54,10 +63,27 @@ async function resolveSession(sessionId?: string) {
 
 async function getOrderedExercisesForSession(session: {
   id: string;
+  userProfileId: string;
   programId: string | null;
   programDayId: string | null;
   sets: Array<{ exerciseId: string; exercise: { id: string; name: string; nameFr: string | null } }>;
 }) {
+  const latestWeightsRows = await prisma.workoutSet.findMany({
+    where: {
+      workoutSession: { userProfileId: session.userProfileId },
+      actualWeightKg: { gt: 0 },
+    },
+    orderBy: [{ createdAt: "desc" }],
+    select: { exerciseId: true, actualWeightKg: true },
+    take: 500,
+  });
+  const latestWeightByExercise = new Map<string, number>();
+  for (const row of latestWeightsRows) {
+    if (!latestWeightByExercise.has(row.exerciseId) && row.actualWeightKg != null) {
+      latestWeightByExercise.set(row.exerciseId, row.actualWeightKg);
+    }
+  }
+
   if (session.programId) {
     const program = await prisma.program.findUnique({
       where: { id: session.programId },
@@ -90,6 +116,7 @@ async function getOrderedExercisesForSession(session: {
           totalSets: Math.max(1, item.sets ?? 3),
           targetReps: item.repsMin ?? item.repsMax ?? DEFAULT_REPS[0],
           restSeconds: item.restSeconds ?? 90,
+          plannedWeightKg: parseWeightKgFromText(item.repsText) ?? latestWeightByExercise.get(item.exerciseId) ?? null,
         }));
         if (fromProgramDay.length > 0) return fromProgramDay;
       }
@@ -105,6 +132,7 @@ async function getOrderedExercisesForSession(session: {
         totalSets: 3,
         targetReps: DEFAULT_REPS[0],
         restSeconds: 90,
+        plannedWeightKg: latestWeightByExercise.get(set.exerciseId) ?? null,
       });
     }
   }
@@ -122,6 +150,7 @@ async function getOrderedExercisesForSession(session: {
     totalSets: 3,
     targetReps: DEFAULT_REPS[0],
     restSeconds: 90,
+    plannedWeightKg: latestWeightByExercise.get(item.id) ?? null,
   }));
 }
 
@@ -161,7 +190,7 @@ export async function getWatchPayload(sessionId?: string): Promise<WatchPayload 
     setIndex: Math.min(setIndex, totalSets),
     totalSets,
     targetReps,
-    weight: latestSetForCurrent?.actualWeightKg ?? latestCompletedSet?.actualWeightKg ?? null,
+    weight: latestSetForCurrent?.actualWeightKg ?? currentExercise.plannedWeightKg ?? null,
     restRemaining,
     status: session.status,
   };
