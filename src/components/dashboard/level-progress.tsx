@@ -17,8 +17,8 @@ type LevelProgressProps = {
 export function LevelProgress({ level, streakWeeks }: LevelProgressProps) {
   return (
     <GlassCard elevated className="grid gap-4 p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+      <div className="dashboard-level-head flex justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[var(--fit-accent-cyan)]">
             Progression
           </p>
@@ -35,6 +35,7 @@ export function LevelProgress({ level, streakWeeks }: LevelProgressProps) {
           valueLabel={`${level.progressPercent}%`}
           label="XP"
           ariaLabel={`Progression niveau ${level.level}: ${level.progressPercent}%`}
+          className="dashboard-level-ring"
         />
       </div>
       <ProgressBar
