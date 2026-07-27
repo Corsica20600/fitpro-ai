@@ -1299,6 +1299,101 @@ button, input, select { font-family: inherit; }
   font-weight: 800;
 }
 
+.landing-page {
+  gap: 14px;
+}
+
+.landing-hero {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  overflow: hidden;
+  padding: 28px;
+  border: 1px solid rgba(70, 160, 255, .34);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 84% 8%, rgba(55, 215, 255, .24), transparent 32%),
+    linear-gradient(150deg, rgba(16, 31, 58, .96), rgba(4, 9, 19, .98));
+  box-shadow: 0 24px 55px rgba(0, 0, 0, .35);
+}
+
+.landing-hero h1 {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0;
+  color: #f8fbff;
+  font-size: clamp(2.45rem, 13vw, 5.8rem);
+  line-height: .86;
+  letter-spacing: -.075em;
+}
+
+.landing-hero .muted,
+.landing-hero .eyebrow,
+.landing-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-hero .muted {
+  max-width: 620px;
+  font-size: 1rem;
+}
+
+.landing-hero__orb {
+  position: absolute;
+  right: -72px;
+  top: -62px;
+  width: 210px;
+  height: 210px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(127, 255, 222, .46), rgba(47, 143, 255, .2) 48%, transparent 72%);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.landing-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-stats {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-stat-card {
+  min-height: 92px;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+}
+
+.landing-stat-card span {
+  color: #37d7ff;
+  font-size: .75rem;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.landing-stat-card strong {
+  color: #f8fbff;
+  font-size: 1.05rem;
+}
+
+.landing-pillars-card {
+  display: grid;
+  gap: 12px;
+}
+
+.landing-pillars-card h2 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: 1.22rem;
+}
+
 .legal-link-row {
   display: flex;
   align-items: center;
@@ -1371,6 +1466,16 @@ button, input, select { font-family: inherit; }
 @media (min-width: 560px) {
   .settings-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-actions,
+  .landing-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .landing-actions {
+    max-width: 520px;
+    grid-template-columns: 1.1fr .9fr;
   }
 }
 
