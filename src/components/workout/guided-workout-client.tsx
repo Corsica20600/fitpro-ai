@@ -554,6 +554,42 @@ export function GuidedWorkoutClient({
     }
   }
 
+  async function onAdjustRest(deltaSeconds: number) {
+    unlockRestAudio();
+    const currentRemaining = Math.max(0, restRemaining);
+    const optimisticRemaining = Math.max(0, currentRemaining + deltaSeconds);
+    if (optimisticRemaining > 0) {
+      startRestTimer(optimisticRemaining);
+    } else {
+      clearRestTimer();
+      skipRestRequestedRef.current = true;
+    }
+    lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:${optimisticRemaining}`;
+
+    try {
+      const response = await fetch("/api/watch/adjust-rest", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sessionId, deltaSeconds }),
+      });
+      if (!response.ok) throw new Error("adjust_rest_failed");
+
+      const data = await response.json() as {
+        payload?: { restRemaining?: number; exerciseIndex?: number; setIndex?: number };
+      };
+      const serverRemaining = Math.max(0, Number(data.payload?.restRemaining ?? optimisticRemaining));
+      if (serverRemaining > 0) {
+        startRestTimer(serverRemaining);
+      } else {
+        clearRestTimer();
+      }
+      lastSyncedWatchPositionRef.current = `${Math.max(1, Number(data.payload?.exerciseIndex ?? exerciseIndex + 1)) - 1}:${Math.max(1, Number(data.payload?.setIndex ?? nextSetIndex))}:${serverRemaining}`;
+      skipRestRequestedRef.current = false;
+    } catch {
+      // Keep the local timer usable even if sync is temporarily unavailable.
+    }
+  }
+
   async function onCompleteWorkout(forceComplete = false) {
     unlockRestAudio();
     setEnding(true);
@@ -693,8 +729,8 @@ export function GuidedWorkoutClient({
           totalSeconds={restTotal}
           context={`Exercice ${currentExercisePosition}/${totalExercises} · Série ${currentSetPosition}/${Math.max(1, setRows.length)}`}
           nextLabel={`Ensuite: ${exercise.nameFr || exercise.name} · cible ${currentSetTargetReps} reps`}
-          onAdd15={() => startRestTimer(restRemaining + 15)}
-          onRemove15={() => startRestTimer(Math.max(0, restRemaining - 15))}
+          onAdd15={() => void onAdjustRest(15)}
+          onRemove15={() => void onAdjustRest(-15)}
           onSkip={onSkipRest}
         />
         <NextExerciseCard exercise={nextExercise} />

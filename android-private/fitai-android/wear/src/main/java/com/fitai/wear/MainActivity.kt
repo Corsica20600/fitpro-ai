@@ -105,7 +105,7 @@ private fun WatchChrome(content: @Composable () -> Unit) {
                         ),
                     ),
                 )
-                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 56.dp),
+                .padding(horizontal = 18.dp, vertical = 18.dp),
             contentAlignment = Alignment.Center,
         ) {
             content()
@@ -173,36 +173,38 @@ private fun ActiveSetScreen(state: WatchScreenState.Ready, viewModel: WatchViewM
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.Center,
     ) {
         Header(payload.exerciseName, state.syncLabel, state.error)
+        Spacer(Modifier.height(4.dp))
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "Série ${payload.setIndex}/${payload.totalSets}",
                 color = Color(0xFF9CCBFF),
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "${payload.targetReps}",
-                fontSize = 56.sp,
+                fontSize = 48.sp,
                 fontWeight = FontWeight.Black,
-                lineHeight = 56.sp,
+                lineHeight = 48.sp,
             )
             Text(
                 text = "répétitions",
                 color = Color(0xFFEAF3FF),
-                fontSize = 15.sp,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
             )
             Text(
                 text = payload.weight?.let { "${trimWeight(it)} kg" } ?: "Poids à confirmer",
                 color = Color(0xFFB7C9EA),
-                fontSize = 13.sp,
+                fontSize = 12.sp,
             )
         }
 
+        Spacer(Modifier.height(6.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             BigActionButton("Valider", enabled = enabled, onClick = viewModel::validateSet)
             Spacer(Modifier.height(4.dp))
@@ -218,32 +220,35 @@ private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel)
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.Center,
     ) {
         Header("Repos", state.syncLabel, state.error)
+        Spacer(Modifier.height(4.dp))
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Respire", color = Color(0xFFB7C9EA), fontSize = 14.sp)
+            Text("Respire", color = Color(0xFFB7C9EA), fontSize = 12.sp)
             Text(
                 text = formatRest(state.displayRestRemaining),
-                fontSize = if (state.displayRestRemaining >= 60) 48.sp else 68.sp,
+                fontSize = if (state.displayRestRemaining >= 60) 44.sp else 60.sp,
                 fontWeight = FontWeight.Black,
-                lineHeight = 68.sp,
+                lineHeight = 60.sp,
             )
             Text(
                 text = state.payload.exerciseName,
                 color = Color(0xFFB7C9EA),
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )
         }
 
+        Spacer(Modifier.height(6.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                RoundActionButton("+15 s", enabled, viewModel::addRest)
-                RoundActionButton("Passer", enabled, viewModel::skipRest)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                RoundActionButton("-15", enabled, viewModel::removeRest)
+                RoundActionButton("+15", enabled, viewModel::addRest)
+                RoundActionButton("Skip", enabled, viewModel::skipRest)
             }
             Spacer(Modifier.height(4.dp))
             NavRow(state, viewModel)
@@ -275,14 +280,14 @@ private fun Header(title: String, syncLabel: String, error: String?) {
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            fontSize = 15.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Black,
-            lineHeight = 16.sp,
+            lineHeight = 14.sp,
         )
         Text(
             text = error ?: syncLabel,
             color = if (error == null) Color(0xFF56F0C2) else Color(0xFFFFB86B),
-            fontSize = 10.sp,
+            fontSize = 9.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -315,8 +320,8 @@ private fun BigActionButton(text: String, enabled: Boolean, onClick: () -> Unit)
     val haptics = LocalHapticFeedback.current
     Button(
         modifier = Modifier
-            .fillMaxWidth(0.78f)
-            .height(44.dp),
+            .fillMaxWidth(0.70f)
+            .height(38.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             backgroundColor = Color(0xFF2E8BFF),
@@ -328,7 +333,7 @@ private fun BigActionButton(text: String, enabled: Boolean, onClick: () -> Unit)
             onClick()
         },
     ) {
-        Text(text, fontSize = 16.sp, fontWeight = FontWeight.Black)
+        Text(text, fontSize = 14.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -336,7 +341,7 @@ private fun BigActionButton(text: String, enabled: Boolean, onClick: () -> Unit)
 private fun RoundActionButton(text: String, enabled: Boolean, onClick: () -> Unit) {
     val haptics = LocalHapticFeedback.current
     Button(
-        modifier = Modifier.size(width = 76.dp, height = 40.dp),
+        modifier = Modifier.size(width = 54.dp, height = 34.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             backgroundColor = Color(0xFF152C56),
@@ -348,7 +353,7 @@ private fun RoundActionButton(text: String, enabled: Boolean, onClick: () -> Uni
             onClick()
         },
     ) {
-        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text(text, fontSize = 10.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
     }
 }
 
@@ -356,7 +361,7 @@ private fun RoundActionButton(text: String, enabled: Boolean, onClick: () -> Uni
 private fun SmallButton(text: String, enabled: Boolean, danger: Boolean = false, onClick: () -> Unit) {
     val haptics = LocalHapticFeedback.current
     Button(
-        modifier = Modifier.size(44.dp),
+        modifier = Modifier.size(38.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             backgroundColor = if (danger) Color(0xFF7F1D1D) else Color(0xFF12264A),
@@ -368,7 +373,7 @@ private fun SmallButton(text: String, enabled: Boolean, danger: Boolean = false,
             onClick()
         },
     ) {
-        Text(text, fontSize = 10.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text(text, fontSize = 8.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
     }
 }
 

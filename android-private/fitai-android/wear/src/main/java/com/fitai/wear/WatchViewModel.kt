@@ -38,6 +38,10 @@ class WatchViewModel(
         api.addRest(payload.sessionId, 15)
     }
 
+    fun removeRest() = perform("remove-rest", optimistic = { addOptimisticRest(-15) }) { payload ->
+        api.removeRest(payload.sessionId, 15)
+    }
+
     fun nextExercise() = perform("next") { payload -> api.nextExercise(payload.sessionId) }
 
     fun previousExercise() = perform("previous") { payload -> api.previousExercise(payload.sessionId) }
@@ -148,7 +152,7 @@ class WatchViewModel(
     private fun addOptimisticRest(seconds: Int) {
         val now = SystemClock.elapsedRealtime()
         val remaining = remainingFromDeadline(deadline, now)
-        deadline = createRestDeadline(remaining + seconds, now)
+        deadline = createRestDeadline((remaining + seconds).coerceAtLeast(0), now)
         updateDisplayRemaining()
     }
 }

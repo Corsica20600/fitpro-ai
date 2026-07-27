@@ -38,6 +38,12 @@ class FitAiWatchApi(
         extra = mapOf("deltaSeconds" to seconds),
     )
 
+    suspend fun removeRest(sessionId: String, seconds: Int): WatchPayload = postAction(
+        path = "/api/watch/adjust-rest",
+        sessionId = sessionId,
+        extra = mapOf("deltaSeconds" to -seconds),
+    )
+
     suspend fun nextExercise(sessionId: String): WatchPayload = postAction("/api/watch/next-exercise", sessionId)
 
     suspend fun previousExercise(sessionId: String): WatchPayload = postAction("/api/watch/previous-exercise", sessionId)
