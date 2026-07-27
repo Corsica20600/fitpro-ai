@@ -31,7 +31,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DataDeletionPage() {
+type DataDeletionPageProps = {
+  searchParams?: Promise<{ accountDeleted?: string | string[] }>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function DataDeletionPage(props: DataDeletionPageProps) {
+  const searchParams = await (props.searchParams ?? Promise.resolve({} as { accountDeleted?: string | string[] }));
+  const accountDeleted = firstParam(searchParams.accountDeleted) === "1";
+
   return (
     <AppShell className="legal-page">
       <PageHeader
@@ -39,6 +50,16 @@ export default function DataDeletionPage() {
         title="Suppression du compte et des données"
         description="Page publique destinée à expliquer comment demander la suppression d'un compte FitAI Pro et des données associées."
       />
+
+      {accountDeleted ? (
+        <GlassCard className="legal-card" elevated>
+          <p className="eyebrow">Compte supprimé</p>
+          <h2>La suppression a été effectuée</h2>
+          <p className="muted">
+            Le profil FitAI Pro connecté et les données associées ont été supprimés. Tu es maintenant déconnecté.
+          </p>
+        </GlassCard>
+      ) : null}
 
       <GlassCard className="legal-card" elevated>
         <p className="eyebrow">Statut</p>

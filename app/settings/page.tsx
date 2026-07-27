@@ -4,6 +4,7 @@ import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
+import { deleteAccountAction } from "@/src/server/account-actions";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
 
 export const metadata = privatePageMetadata(
@@ -58,13 +59,23 @@ function formatDate(date: Date | null | undefined) {
   }).format(date);
 }
 
-export default async function SettingsPage() {
+type SettingsPageProps = {
+  searchParams?: Promise<{ deleteError?: string | string[] }>;
+};
+
+function getDeleteError(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function SettingsPage(props: SettingsPageProps) {
   const watchPairingEnabled = Boolean(process.env.FITAI_WATCH_TOKEN?.trim());
   const settingSections = getSettingSections(watchPairingEnabled);
-  const [session, accountData] = await Promise.all([
+  const [session, accountData, searchParams] = await Promise.all([
     auth().catch(() => null),
     getAccountSettingsData(),
+    props.searchParams ?? Promise.resolve({} as { deleteError?: string | string[] }),
   ]);
+  const deleteError = getDeleteError(searchParams.deleteError);
   const email = session?.user?.email ?? accountData.profile.email ?? "longin.erwan@gmail.com";
   const name = accountData.profile.displayName || session?.user?.name || "Erwan";
   const connected = Boolean(session?.user?.email);
@@ -178,6 +189,41 @@ export default async function SettingsPage() {
           <Link href="/data-deletion">Suppression</Link>
         </div>
       </GlassCard>
+
+      {connected ? (
+        <GlassCard className="settings-danger-card">
+          <div>
+            <p className="eyebrow">Zone sensible</p>
+            <h2>Supprimer mon compte</h2>
+            <p className="muted">
+              Suppression définitive du profil, des séances, des séries, des programmes, des mesures et de la
+              synchronisation montre liés à {email}. Exporte tes données avant si tu veux garder une copie.
+            </p>
+          </div>
+          {deleteError === "confirmation" ? (
+            <p className="settings-danger-error">
+              Confirmation incorrecte. Saisis exactement ton e-mail, le mot SUPPRIMER et coche la case.
+            </p>
+          ) : null}
+          <form action={deleteAccountAction} className="settings-delete-form">
+            <label>
+              <span>E-mail du compte</span>
+              <input className="input" name="confirmEmail" type="email" placeholder={email} autoComplete="off" />
+            </label>
+            <label>
+              <span>Mot de confirmation</span>
+              <input className="input" name="confirmText" type="text" placeholder="SUPPRIMER" autoComplete="off" />
+            </label>
+            <label className="settings-checkbox-row">
+              <input name="understood" type="checkbox" />
+              <span>Je comprends que cette action est définitive et que mes statistiques seront supprimées.</span>
+            </label>
+            <button type="submit" className="ghost-btn danger full-line">
+              Supprimer définitivement mon compte
+            </button>
+          </form>
+        </GlassCard>
+      ) : null}
     </AppShell>
   );
 }
