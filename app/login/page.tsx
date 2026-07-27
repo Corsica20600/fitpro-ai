@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { auth, signIn } from "@/auth";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
@@ -47,6 +48,11 @@ export default async function LoginPage(props: LoginPageProps) {
         <p className="login-card__note">
           Accès privé limité au compte autorisé pendant la phase de commercialisation.
         </p>
+        <div className="legal-link-row" aria-label="Documents légaux">
+          <Link href="/privacy">Confidentialité</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms">Conditions</Link>
+        </div>
       </GlassCard>
     </AppShell>
   );

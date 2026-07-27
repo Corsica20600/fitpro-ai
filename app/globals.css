@@ -1173,6 +1173,7 @@ button, input, select { font-family: inherit; }
 
 .settings-account-card,
 .settings-data-card,
+.settings-legal-card,
 .settings-service-card {
   display: grid;
   gap: 12px;
@@ -1180,6 +1181,7 @@ button, input, select { font-family: inherit; }
 
 .settings-account-card h2,
 .settings-data-card h2,
+.settings-legal-card h2,
 .settings-service-card h2 {
   margin: 0;
   color: #f7fbff;
@@ -1244,6 +1246,10 @@ button, input, select { font-family: inherit; }
   text-decoration: none;
 }
 
+.settings-legal-card {
+  border-color: rgba(111, 151, 219, .22);
+}
+
 .login-page {
   min-height: calc(100svh - 150px);
   justify-content: center;
@@ -1291,6 +1297,59 @@ button, input, select { font-family: inherit; }
   color: #8297bf;
   font-size: .78rem;
   font-weight: 800;
+}
+
+.legal-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #7f94bd;
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.legal-link-row a {
+  color: #b9cdf4;
+  text-decoration: none;
+}
+
+.legal-link-row a:hover {
+  color: #f8fbff;
+}
+
+.legal-page {
+  gap: 14px;
+}
+
+.legal-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.legal-card {
+  display: grid;
+  gap: 10px;
+}
+
+.legal-card h2 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: 1.16rem;
+}
+
+.legal-list {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-left: 18px;
+  color: #b7c6e4;
+  font-size: .95rem;
+  line-height: 1.45;
+}
+
+.legal-list li::marker {
+  color: #37d7ff;
 }
 
 .settings-service-card {

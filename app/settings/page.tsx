@@ -1,4 +1,5 @@
 import { auth, signIn, signOut } from "@/auth";
+import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
@@ -148,6 +149,21 @@ export default async function SettingsPage() {
           </GlassCard>
         ))}
       </section>
+
+      <GlassCard className="settings-legal-card">
+        <div>
+          <p className="eyebrow">Documents</p>
+          <h2>Cadre de publication</h2>
+          <p className="muted">
+            Base de confidentialité et conditions pour préparer une future publication Play Store.
+          </p>
+        </div>
+        <div className="legal-link-row">
+          <Link href="/privacy">Confidentialité</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms">Conditions</Link>
+        </div>
+      </GlassCard>
     </AppShell>
   );
 }
