@@ -29,9 +29,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         supportActionBar?.hide()
-        binding.buttonOpenSync.setOnClickListener {
-            startActivity(Intent(this, SyncHealthActivity::class.java))
-        }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.webViewFitAi.canGoBack()) {
