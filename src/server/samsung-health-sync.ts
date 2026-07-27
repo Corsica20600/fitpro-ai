@@ -8,6 +8,28 @@ export type SamsungMetricInput = {
   sourceDevice?: string;
 };
 
+type HealthSyncProvider = "samsung_health" | "health_connect";
+
+const providerConfig: Record<
+  HealthSyncProvider,
+  {
+    connectionProvider: "SAMSUNG_HEALTH" | "HEALTH_CONNECT";
+    displayName: string;
+    source: string;
+  }
+> = {
+  samsung_health: {
+    connectionProvider: "SAMSUNG_HEALTH",
+    displayName: "Samsung Health",
+    source: "private_android_bridge",
+  },
+  health_connect: {
+    connectionProvider: "HEALTH_CONNECT",
+    displayName: "Health Connect",
+    source: "android_health_connect",
+  },
+};
+
 function toUnit(metric: SamsungMetricInput["metric"]) {
   if (metric === "steps") return "steps";
   if (metric === "heart_rate") return "bpm";
@@ -27,8 +49,9 @@ function parseMeasuredAt(value: string) {
   return date;
 }
 
-export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) {
+export async function ingestHealthMetrics(records: SamsungMetricInput[], provider: HealthSyncProvider) {
   const profile = await getOrCreateDemoProfile();
+  const config = providerConfig[provider];
   const valid = records.filter((item) => {
     if (!item || typeof item !== "object") return false;
     if (!isFiniteNumber(item.value)) return false;
@@ -48,7 +71,7 @@ export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) 
       unit: toUnit(item.metric),
       measuredAt: parseMeasuredAt(item.measuredAt) ?? new Date(),
       notes: JSON.stringify({
-        provider: "samsung_health",
+        provider,
         metric: item.metric,
         sourceDevice: item.sourceDevice ?? null,
       }),
@@ -56,29 +79,29 @@ export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) 
   });
 
   await prisma.integrationConnection.upsert({
-    where: { userProfileId_provider: { userProfileId: profile.id, provider: "SAMSUNG_HEALTH" } },
+    where: { userProfileId_provider: { userProfileId: profile.id, provider: config.connectionProvider } },
     update: {
       status: "CONNECTED",
-      displayName: "Samsung Health",
-      scopes: ["steps", "heart_rate", "sleep_minutes", "calories", "distance_m"],
+      displayName: config.displayName,
+      scopes: Array.from(new Set(valid.map((item) => item.metric))),
       lastSyncAt: new Date(),
       connectedAt: new Date(),
       disconnectedAt: null,
       metadata: {
-        source: "private_android_bridge",
+        source: config.source,
         inserted: valid.length,
       },
     },
     create: {
       userProfileId: profile.id,
-      provider: "SAMSUNG_HEALTH",
+      provider: config.connectionProvider,
       status: "CONNECTED",
-      displayName: "Samsung Health",
-      scopes: ["steps", "heart_rate", "sleep_minutes", "calories", "distance_m"],
+      displayName: config.displayName,
+      scopes: Array.from(new Set(valid.map((item) => item.metric))),
       lastSyncAt: new Date(),
       connectedAt: new Date(),
       metadata: {
-        source: "private_android_bridge",
+        source: config.source,
         inserted: valid.length,
       },
     },
@@ -88,4 +111,8 @@ export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) 
     inserted: valid.length,
     ignored: records.length - valid.length,
   };
+}
+
+export async function ingestSamsungHealthMetrics(records: SamsungMetricInput[]) {
+  return ingestHealthMetrics(records, "samsung_health");
 }

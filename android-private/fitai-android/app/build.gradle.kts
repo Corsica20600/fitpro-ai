@@ -23,8 +23,9 @@ android {
             ?: System.getenv("FITAI_SYNC_TOKEN")
             ?: System.getenv("SAMSUNG_SYNC_TOKEN")
             ?: ""
-        buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"https://fitai-pro-zeta.vercel.app\"")
-        buildConfigField("String", "FITAI_SYNC_TOKEN", "\"Erwan20620@/\"")
+        fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+        buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
+        buildConfigField("String", "FITAI_SYNC_TOKEN", buildConfigString(syncToken))
     }
 
     buildTypes {
@@ -55,5 +56,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.activity:activity-ktx:1.9.2")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

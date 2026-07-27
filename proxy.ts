@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 const apiRoutes = ["/api/account", "/api/health", "/api/programs", "/api/workout"];
+const tokenProtectedApiRoutes = ["/api/health/connect/sync", "/api/health/samsung/sync"];
 
 function isApiRoute(pathname: string) {
   return apiRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+function isTokenProtectedApiRoute(pathname: string) {
+  return tokenProtectedApiRoutes.includes(pathname);
 }
 
 function getLoginUrl(requestUrl: string, pathname: string, search: string) {
@@ -16,6 +21,10 @@ function getLoginUrl(requestUrl: string, pathname: string, search: string) {
 export default auth((request) => {
   const isConnected = Boolean(request.auth?.user?.email);
   const { pathname, search } = request.nextUrl;
+
+  if (isTokenProtectedApiRoute(pathname)) {
+    return NextResponse.next();
+  }
 
   if (isConnected) {
     return NextResponse.next();

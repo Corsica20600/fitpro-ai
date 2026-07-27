@@ -6,11 +6,16 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object SamsungSyncApi {
-    fun push(baseUrl: String, token: String, records: List<SamsungMetricRecord>): SyncResult {
+    fun push(
+        baseUrl: String,
+        token: String,
+        records: List<SamsungMetricRecord>,
+        source: HealthSyncSource = HealthSyncSource.SAMSUNG_HEALTH,
+    ): SyncResult {
         if (token.isBlank()) return SyncResult(false, "FITAI_SYNC_TOKEN manquant")
         if (records.isEmpty()) return SyncResult(false, "Aucune mesure a envoyer")
 
-        val endpoint = baseUrl.trimEnd('/') + "/api/health/samsung/sync"
+        val endpoint = baseUrl.trimEnd('/') + source.endpointPath
         val payload = JSONObject().apply {
             put("records", JSONArray().apply {
                 records.forEach { rec ->
@@ -53,4 +58,3 @@ object SamsungSyncApi {
         }
     }
 }
-
