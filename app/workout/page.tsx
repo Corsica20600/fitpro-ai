@@ -7,7 +7,23 @@ import { PrimaryAction } from "@/src/components/ui/primary-action";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
 import { AppShortcutLink } from "@/src/components/integrations/app-shortcut-link";
+import { getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { spotifyIntegration } from "@/src/lib/integrations";
+
+function formatWorkoutLabel(label?: string | null) {
+  if (!label) return null;
+  const normalized = label.trim().toLowerCase();
+  const map: Record<string, string> = {
+    "full body": "Corps complet",
+    "upper body": "Haut du corps",
+    "lower body": "Bas du corps",
+    push: "Poussée",
+    pull: "Tirage",
+    legs: "Jambes",
+  };
+
+  return map[normalized] ?? label;
+}
 
 export default async function WorkoutPage() {
   await connection();
@@ -17,7 +33,7 @@ export default async function WorkoutPage() {
     ? lastPerformedProgramId
     : (programs.find((program) => program.status === "ACTIVE")?.id ?? "");
   const heroTitle = currentSession
-    ? (currentSession.title || "Séance du jour")
+    ? (formatWorkoutLabel(currentSession.title) || "Séance du jour")
     : "Séance guidée";
   const heroImage = heroExercise?.fallbackImagePath || heroExercise?.fallbackThumbnailPath || "/media/exercises/air-bike/0.jpg";
 
@@ -40,7 +56,7 @@ export default async function WorkoutPage() {
             <select name="programId" className="input" defaultValue={defaultProgramId ?? ""}>
               <option value="">Sans programme</option>
               {programs.map((program) => (
-                <option key={program.id} value={program.id}>{program.name}</option>
+                <option key={program.id} value={program.id}>{formatWorkoutLabel(program.name) || program.name}</option>
               ))}
             </select>
             <PrimaryAction type="submit" className="premium-glow">Démarrer</PrimaryAction>
@@ -82,37 +98,41 @@ export default async function WorkoutPage() {
           </WorkoutCard>
           <GuidedWorkoutClient
             sessionId={currentSession.id}
-            sessionTitle={currentSession.title || heroTitle}
-            programName={currentSession.program?.name ?? null}
+            sessionTitle={formatWorkoutLabel(currentSession.title) || heroTitle}
+            programName={formatWorkoutLabel(currentSession.program?.name)}
             startedAt={(currentSession.startedAt ?? currentSession.createdAt).toISOString()}
-            exercises={sessionExercises.map((item) => ({
-              id: item.id,
-              slug: item.slug,
-              name: item.name,
-              nameFr: item.nameFr,
-              primaryMuscles: item.primaryMuscles,
-              primaryMusclesFr: item.primaryMusclesFr,
-              equipment: item.equipment,
-              equipmentFr: item.equipmentFr,
-              difficulty: item.difficulty,
-              fallbackImagePath: item.fallbackImagePath,
-              fallbackThumbnailPath: item.fallbackThumbnailPath,
-              fallbackAnimationPath: item.fallbackAnimationPath,
-              plannedSets: item.plan?.sets ?? null,
-              plannedRepsMin: item.plan?.repsMin ?? null,
-              plannedRepsMax: item.plan?.repsMax ?? null,
-              plannedWeightKg: item.plan?.plannedWeightKg ?? null,
-              plannedRestSeconds: item.plan?.restSeconds ?? null,
-              programExerciseId: item.plan?.programExerciseId ?? null,
-              technicalCue: item.shortTechnicalCues[0] ?? null,
-              media: item.media.map((media) => ({
-                id: media.id,
-                type: media.type,
-                publicUrl: media.publicUrl,
-                url: media.url,
-                format: media.format,
-              })),
-            }))}
+            exercises={sessionExercises.map((item) => {
+              const displayName = getExerciseOverride(item.slug)?.displayNameFr || item.nameFr || item.name;
+
+              return {
+                id: item.id,
+                slug: item.slug,
+                name: displayName,
+                nameFr: displayName,
+                primaryMuscles: item.primaryMuscles,
+                primaryMusclesFr: item.primaryMusclesFr,
+                equipment: item.equipment,
+                equipmentFr: item.equipmentFr,
+                difficulty: item.difficulty,
+                fallbackImagePath: item.fallbackImagePath,
+                fallbackThumbnailPath: item.fallbackThumbnailPath,
+                fallbackAnimationPath: item.fallbackAnimationPath,
+                plannedSets: item.plan?.sets ?? null,
+                plannedRepsMin: item.plan?.repsMin ?? null,
+                plannedRepsMax: item.plan?.repsMax ?? null,
+                plannedWeightKg: item.plan?.plannedWeightKg ?? null,
+                plannedRestSeconds: item.plan?.restSeconds ?? null,
+                programExerciseId: item.plan?.programExerciseId ?? null,
+                technicalCue: item.shortTechnicalCues[0] ?? null,
+                media: item.media.map((media) => ({
+                  id: media.id,
+                  type: media.type,
+                  publicUrl: media.publicUrl,
+                  url: media.url,
+                  format: media.format,
+                })),
+              };
+            })}
             existingSets={currentSession.sets.map((set) => ({
               id: set.id,
               exerciseId: set.exerciseId,
