@@ -47,6 +47,7 @@ function formatDuration(seconds: number) {
 function formatDate(value: Date | null | undefined) {
   if (!value) return null;
   return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
     day: "2-digit",
     month: "short",
     year: "numeric",

@@ -1268,12 +1268,12 @@ function startOfLocalMonth(date: Date) {
 
 function formatBucketLabel(date: Date, kind: ProgressBucketKind) {
   if (kind === "month") {
-    return new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(date);
+    return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", month: "short" }).format(date);
   }
   if (kind === "week") {
-    return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(date);
+    return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "short" }).format(date);
   }
-  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", day: "2-digit", month: "short" }).format(date);
 }
 
 function getBucketKey(date: Date, kind: ProgressBucketKind) {
@@ -1472,7 +1472,7 @@ export async function getProgressDataForDemoUser(periodOrExerciseId?: string) {
   const activeWeeks = currentWeekKeys.size;
   const averageSessionsPerWeek = periodConfig.days > 0 ? Math.round((current.sessions / (periodConfig.days / 7)) * 10) / 10 : 0;
   const favoriteDay = [...currentSessions.reduce((map, session) => {
-    const label = new Intl.DateTimeFormat("fr-FR", { weekday: "long" }).format(session.date);
+    const label = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long" }).format(session.date);
     map.set(label, (map.get(label) ?? 0) + 1);
     return map;
   }, new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1])[0] ?? null;

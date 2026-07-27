@@ -47,6 +47,7 @@ function formatDate(date: Date | null | undefined) {
   if (!date) return "Aucune séance";
 
   return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
     day: "2-digit",
     month: "short",
     year: "numeric",
