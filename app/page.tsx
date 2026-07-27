@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -25,6 +26,14 @@ const pillars = [
   "Statistiques, volume et progression",
   "Export des données et base RGPD",
 ] as const;
+
+export const metadata: Metadata = {
+  title: "Accueil",
+  description: "Découvre FitAI Pro, l'application fitness premium avec historique, programmes et synchronisation Wear OS.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const session = await auth().catch(() => null);

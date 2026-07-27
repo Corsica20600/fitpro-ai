@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth, signIn } from "@/auth";
@@ -16,6 +17,14 @@ function getSafeCallbackUrl(value: string | string[] | undefined) {
 
 type LoginPageProps = {
   searchParams: Promise<{ callbackUrl?: string | string[] }>;
+};
+
+export const metadata: Metadata = {
+  title: "Connexion",
+  description: "Connecte ton compte Google à FitAI Pro pour retrouver ton historique et sécuriser tes entraînements.",
+  alternates: {
+    canonical: "/login",
+  },
 };
 
 export default async function LoginPage(props: LoginPageProps) {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
@@ -21,6 +22,14 @@ const retainedData = [
   "Données strictement nécessaires aux obligations légales ou antifraude, si elles existent.",
   "Données déjà anonymisées ne permettant plus d'identifier le compte.",
 ] as const;
+
+export const metadata: Metadata = {
+  title: "Suppression des données",
+  description: "Procédure publique pour demander la suppression d'un compte FitAI Pro et des données associées.",
+  alternates: {
+    canonical: "/data-deletion",
+  },
+};
 
 export default function DataDeletionPage() {
   return (

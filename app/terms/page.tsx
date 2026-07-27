@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
@@ -29,6 +30,14 @@ const termsSections = [
     ],
   },
 ] as const;
+
+export const metadata: Metadata = {
+  title: "Conditions d'utilisation",
+  description: "Conditions d'utilisation préparatoires de FitAI Pro pour cadrer l'usage de l'application.",
+  alternates: {
+    canonical: "/terms",
+  },
+};
 
 export default function TermsPage() {
   return (

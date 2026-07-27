@@ -4,15 +4,36 @@ import Link from "next/link";
 import Script from "next/script";
 import { auth } from "@/auth";
 import { BottomNav } from "@/src/components/ui/bottom-nav";
+import { absoluteUrl, getSiteUrl } from "@/src/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FitAI Pro",
-  description: "Coach fitness intelligent",
+  metadataBase: new URL(getSiteUrl()),
+  applicationName: "FitAI Pro",
+  title: {
+    default: "FitAI Pro",
+    template: "%s | FitAI Pro",
+  },
+  description: "Application fitness premium pour suivre tes séances, ton historique et ta montre Wear OS.",
   manifest: "/manifest.webmanifest",
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "FitAI Pro",
+    "fitness",
+    "musculation",
+    "coach sportif",
+    "Wear OS",
+    "suivi entraînement",
+    "programme musculation",
+  ],
+  authors: [{ name: "FitAI Pro" }],
+  creator: "FitAI Pro",
+  publisher: "FitAI Pro",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -27,6 +48,28 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "FitAI Pro",
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: "/",
+    siteName: "FitAI Pro",
+    title: "FitAI Pro",
+    description: "Pilote tes entraînements, ton historique et ta montre Wear OS depuis un compte sécurisé.",
+    images: [
+      {
+        url: absoluteUrl("/icons/icon-512.png"),
+        width: 512,
+        height: 512,
+        alt: "Logo FitAI Pro",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "FitAI Pro",
+    description: "Application fitness premium avec historique, programmes et synchronisation Wear OS.",
+    images: [absoluteUrl("/icons/icon-512.png")],
   },
 };
 

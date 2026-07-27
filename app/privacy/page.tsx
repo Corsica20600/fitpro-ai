@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
@@ -29,6 +30,14 @@ const privacySections = [
     ],
   },
 ] as const;
+
+export const metadata: Metadata = {
+  title: "Confidentialité",
+  description: "Politique de confidentialité préparatoire de FitAI Pro : données collectées, usage et contrôle utilisateur.",
+  alternates: {
+    canonical: "/privacy",
+  },
+};
 
 export default function PrivacyPage() {
   return (
