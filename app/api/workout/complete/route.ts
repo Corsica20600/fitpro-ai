@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
+import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
       ? (session.program.days.find((item) => item.id === session.programDayId) ?? session.program.days[0] ?? null)
       : (session.program.days[0] ?? null))
     : null;
+  const replacements = getSessionExerciseReplacements(session.notes);
+  const replacementExercises = await resolveReplacementExercises(session.notes);
 
   const doneByExercise = new Map<string, number>();
   for (const set of session.sets) {
@@ -57,13 +60,16 @@ export async function POST(request: Request) {
   const missingSets = day && day.exercises.length > 0
     ? day.exercises
         .map((exercise) => {
+          const replacement = replacements[exercise.id];
+          const effectiveExerciseId = replacement?.exerciseId ?? exercise.exerciseId;
+          const effectiveExercise = replacementExercises.get(effectiveExerciseId) ?? exercise.exercise;
           const planned = Math.max(1, exercise.sets ?? 1);
-          const done = doneByExercise.get(exercise.exerciseId) ?? 0;
+          const done = (doneByExercise.get(effectiveExerciseId) ?? 0) + (replacement?.originalExerciseId ? (doneByExercise.get(replacement.originalExerciseId) ?? 0) : 0);
           if (done >= planned) return null;
           return {
-            exerciseId: exercise.exerciseId,
+            exerciseId: effectiveExerciseId,
             programExerciseId: exercise.id,
-            exerciseName: exercise.exercise.nameFr || exercise.exercise.name,
+            exerciseName: effectiveExercise.nameFr || effectiveExercise.name,
             plannedSets: planned,
             doneSets: done,
             missingSets: planned - done,

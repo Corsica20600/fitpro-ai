@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
+import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 const DEMO_EMAIL = "demo@fitai.local";
 
@@ -765,15 +766,17 @@ export async function getWorkoutPageData() {
         : (sessionProgram.days[0] ?? null);
 
       if (dayForToday) {
+        const replacements = getSessionExerciseReplacements(currentSession.notes);
+        const replacementExercises = await resolveReplacementExercises(currentSession.notes);
         sessionExercises = dayForToday.exercises.map((programExercise) => ({
-          ...(toFrCompat(programExercise.exercise) as ExerciseWithFrCompat),
+          ...(toFrCompat(replacementExercises.get(replacements[programExercise.id]?.exerciseId ?? "") ?? programExercise.exercise) as ExerciseWithFrCompat),
           plan: {
             sets: programExercise.sets ?? null,
             repsMin: programExercise.repsMin ?? null,
             repsMax: programExercise.repsMax ?? null,
             plannedWeightKg:
               parseWeightKgFromText(programExercise.repsText) ??
-              latestWeightByExercise.get(programExercise.exerciseId) ??
+              latestWeightByExercise.get(replacements[programExercise.id]?.exerciseId ?? programExercise.exerciseId) ??
               null,
             restSeconds: programExercise.restSeconds ?? null,
             orderDayIndex: dayForToday.dayIndex,

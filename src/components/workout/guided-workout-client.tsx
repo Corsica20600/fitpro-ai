@@ -14,6 +14,9 @@ type WorkoutExercise = {
   slug: string;
   name: string;
   nameFr: string | null;
+  category: string;
+  categoryFr?: string;
+  movementType: string;
   primaryMuscles: string[];
   primaryMusclesFr: string[];
   equipment: string[];
@@ -58,6 +61,26 @@ type CompletedSet = {
   createdAt: string;
 };
 
+type ReplacementOption = Pick<
+  WorkoutExercise,
+  | "id"
+  | "slug"
+  | "name"
+  | "nameFr"
+  | "category"
+  | "categoryFr"
+  | "movementType"
+  | "difficulty"
+  | "primaryMuscles"
+  | "primaryMusclesFr"
+  | "equipment"
+  | "equipmentFr"
+  | "fallbackImagePath"
+  | "fallbackThumbnailPath"
+  | "fallbackAnimationPath"
+  | "media"
+>;
+
 type WorkoutSummary = {
   durationSeconds: number | null;
   exercisesCount: number;
@@ -89,7 +112,7 @@ export function GuidedWorkoutClient({
   sessionTitle,
   programName,
   startedAt,
-  exercises,
+  exercises: initialExercises,
   existingSets,
 }: {
   sessionId: string;
@@ -100,10 +123,11 @@ export function GuidedWorkoutClient({
   existingSets: ExistingSet[];
 }) {
   const router = useRouter();
-  const initialRestChoice = exercises[0]?.plannedRestSeconds && exercises[0].plannedRestSeconds > 0
-    ? exercises[0].plannedRestSeconds
+  const initialRestChoice = initialExercises[0]?.plannedRestSeconds && initialExercises[0].plannedRestSeconds > 0
+    ? initialExercises[0].plannedRestSeconds
     : 90;
 
+  const [exercises, setExercises] = useState(initialExercises);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [restChoice, setRestChoice] = useState(initialRestChoice);
   const [restRemaining, setRestRemaining] = useState(0);
@@ -127,6 +151,12 @@ export function GuidedWorkoutClient({
   });
   const [completionError, setCompletionError] = useState<string | null>(null);
   const [canRepairCompletion, setCanRepairCompletion] = useState(false);
+  const [replacementOpen, setReplacementOpen] = useState(false);
+  const [replacementLoading, setReplacementLoading] = useState(false);
+  const [replacementError, setReplacementError] = useState<string | null>(null);
+  const [replacementOptions, setReplacementOptions] = useState<ReplacementOption[]>([]);
+  const [replacingExerciseId, setReplacingExerciseId] = useState<string | null>(null);
+  const [replacementOriginByExercise, setReplacementOriginByExercise] = useState<Record<string, string>>({});
   const [repsByKey, setRepsByKey] = useState<Record<string, number>>({});
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
   const [plannedSetsByExercise, setPlannedSetsByExercise] = useState<Record<string, number>>({});
@@ -191,8 +221,9 @@ export function GuidedWorkoutClient({
   const exercise = exercises[exerciseIndex];
   const isActiveWorkoutSurface = restRemaining <= 0;
   const plannedRepsForExercise = buildPlannedReps(exercise, plannedSetsByExercise[exercise.id]);
+  const replacedFromExerciseId = replacementOriginByExercise[exercise.id] ?? null;
   const completedForExercise = completedSets
-    .filter((item) => item.exerciseId === exercise.id)
+    .filter((item) => item.exerciseId === exercise.id || item.exerciseId === replacedFromExerciseId)
     .sort((a, b) => a.setIndex - b.setIndex);
   const nextSetIndex = completedForExercise.length + 1;
   const setRows = plannedRepsForExercise.map((planned, idx) => ({
@@ -590,6 +621,82 @@ export function GuidedWorkoutClient({
     }
   }
 
+  async function openReplacementPanel() {
+    unlockRestAudio();
+    setReplacementOpen(true);
+    setReplacementLoading(true);
+    setReplacementError(null);
+    setReplacementOptions([]);
+
+    try {
+      const response = await fetch(`/api/workout/replace-exercise?sessionId=${encodeURIComponent(sessionId)}&exerciseId=${encodeURIComponent(exercise.id)}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("alternatives_failed");
+      const data = await response.json() as { alternatives?: ReplacementOption[] };
+      setReplacementOptions(data.alternatives ?? []);
+      if (!data.alternatives?.length) {
+        setReplacementError("Aucune alternative de même gamme trouvée.");
+      }
+    } catch {
+      setReplacementError("Impossible de charger les alternatives pour le moment.");
+    } finally {
+      setReplacementLoading(false);
+    }
+  }
+
+  async function onReplaceExercise(option: ReplacementOption) {
+    if (option.id === exercise.id || replacingExerciseId) return;
+    setReplacingExerciseId(option.id);
+    setReplacementError(null);
+
+    try {
+      const response = await fetch("/api/workout/replace-exercise", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          programExerciseId: exercise.programExerciseId,
+          currentExerciseId: exercise.id,
+          targetExerciseId: option.id,
+          currentExerciseIndex: exerciseIndex,
+          currentSetIndex: Math.max(1, nextSetIndex),
+        }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(payload.error || "replace_failed");
+      }
+
+      const data = await response.json() as { exercise?: ReplacementOption };
+      const replacement = data.exercise ?? option;
+      const previousExerciseId = exercise.id;
+      const nextExercise: WorkoutExercise = {
+        ...exercise,
+        ...replacement,
+        plannedSets: exercise.plannedSets,
+        plannedRepsMin: exercise.plannedRepsMin,
+        plannedRepsMax: exercise.plannedRepsMax,
+        plannedWeightKg: exercise.plannedWeightKg,
+        plannedRestSeconds: exercise.plannedRestSeconds,
+        programExerciseId: exercise.programExerciseId,
+        technicalCue: exercise.technicalCue,
+      };
+
+      setExercises((prev) => prev.map((item, idx) => (idx === exerciseIndex ? nextExercise : item)));
+      setReplacementOriginByExercise((prev) => ({
+        ...prev,
+        [replacement.id]: prev[previousExerciseId] ?? previousExerciseId,
+      }));
+      lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:${Math.max(0, restRemaining)}`;
+      setReplacementOpen(false);
+    } catch (error) {
+      setReplacementError(error instanceof Error ? error.message : "Remplacement impossible.");
+    } finally {
+      setReplacingExerciseId(null);
+    }
+  }
+
   async function onCompleteWorkout(forceComplete = false) {
     unlockRestAudio();
     setEnding(true);
@@ -864,6 +971,9 @@ export function GuidedWorkoutClient({
         <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet}>
           Passer la série
         </button>
+        <button type="button" className="outline-link" onClick={() => void openReplacementPanel()}>
+          Remplacer
+        </button>
         <button type="button" className="outline-link" onClick={() => void onCompleteWorkout()} disabled={ending}>
           {ending ? "..." : "Arrêter la séance"}
         </button>
@@ -874,6 +984,45 @@ export function GuidedWorkoutClient({
           </button>
         ) : null}
       </section>
+      {replacementOpen ? (
+        <section className="workout-replace-backdrop" role="dialog" aria-modal="true" aria-label="Remplacer cet exercice" onClick={(event) => event.stopPropagation()}>
+          <div className="workout-replace-sheet">
+            <div className="workout-replace-head">
+              <div>
+                <p className="eyebrow">Même gamme</p>
+                <h2>Remplacer discrètement</h2>
+                <p className="muted">{exercise.nameFr || exercise.name} · {exercise.categoryFr || exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Même groupe"}</p>
+              </div>
+              <button type="button" className="ghost-btn workout-replace-close" onClick={() => setReplacementOpen(false)}>Fermer</button>
+            </div>
+            {replacementLoading ? <p className="chip">Recherche des meilleures alternatives...</p> : null}
+            {replacementError ? <p className="chip danger">{replacementError}</p> : null}
+            <div className="workout-replace-list">
+              {replacementOptions.map((option) => {
+                const title = option.nameFr || option.name;
+                const muscle = option.primaryMusclesFr[0] || option.primaryMuscles[0] || option.categoryFr || "Même gamme";
+                const equipment = option.equipmentFr[0] || option.equipment[0] || "Matériel libre";
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className="workout-replace-option"
+                    onClick={() => void onReplaceExercise(option)}
+                    disabled={replacingExerciseId != null}
+                  >
+                    <span>
+                      <strong>{title}</strong>
+                      <small>{muscle} · {equipment}</small>
+                    </span>
+                    <b>{replacingExerciseId === option.id ? "..." : "Choisir"}</b>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="muted workout-replace-note">Les séries déjà faites restent dans l&apos;historique sur l&apos;ancien exercice. Les prochaines compteront sur le remplaçant.</p>
+          </div>
+        </section>
+      ) : null}
     </section>
   );
 }

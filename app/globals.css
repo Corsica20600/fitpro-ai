@@ -1572,6 +1572,83 @@ button, input, select { font-family: inherit; }
   text-align: center;
 }
 .workout-finish-card__chips { justify-content: center; }
+.workout-replace-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  align-items: end;
+  padding: 14px;
+  background: linear-gradient(180deg, rgba(1, 5, 12, .28), rgba(1, 5, 12, .82));
+  backdrop-filter: blur(10px);
+}
+.workout-replace-sheet {
+  max-height: min(76vh, 620px);
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid rgba(98, 190, 255, .32);
+  border-radius: 28px;
+  background:
+    radial-gradient(110% 80% at 90% 0%, rgba(44, 169, 255, .2), transparent 52%),
+    linear-gradient(180deg, rgba(16, 30, 55, .98), rgba(5, 11, 22, .99));
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, .58), 0 0 28px rgba(39, 142, 255, .16);
+}
+.workout-replace-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.workout-replace-head h2 {
+  margin: 0;
+  color: #f7fbff;
+  font-size: 1.25rem;
+}
+.workout-replace-close {
+  min-height: 40px;
+  padding-inline: 12px;
+}
+.workout-replace-list {
+  display: grid;
+  gap: 8px;
+}
+.workout-replace-option {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(120, 168, 255, .2);
+  border-radius: 18px;
+  color: #eef6ff;
+  background: linear-gradient(135deg, rgba(18, 34, 61, .92), rgba(9, 18, 34, .96));
+  text-align: left;
+}
+.workout-replace-option strong,
+.workout-replace-option small {
+  display: block;
+}
+.workout-replace-option small {
+  margin-top: 4px;
+  color: #aebfe0;
+  font-size: .76rem;
+}
+.workout-replace-option b {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #06182e;
+  background: linear-gradient(135deg, #86f5d0, #39cfff);
+  font-size: .75rem;
+}
+.workout-replace-note {
+  margin: 0;
+  font-size: .78rem;
+}
 .history-group-list,
 .history-session-list,
 .history-day-group { display: grid; gap: 12px; }
@@ -1632,7 +1709,13 @@ button, input, select { font-family: inherit; }
 @media (min-width: 560px) {
   .workout-input-grid,
   .history-session-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .workout-secondary-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workout-secondary-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .workout-replace-backdrop {
+    justify-items: center;
+  }
+  .workout-replace-sheet {
+    width: min(620px, 100%);
+  }
 }
 
 /* Step 8: programs and watch refresh */

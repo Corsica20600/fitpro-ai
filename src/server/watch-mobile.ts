@@ -1,5 +1,6 @@
 import { prisma } from "@/src/lib/prisma";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
+import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 const DEFAULT_REPS = [12, 10, 10];
 
@@ -66,6 +67,7 @@ async function getOrderedExercisesForSession(session: {
   userProfileId: string;
   programId: string | null;
   programDayId: string | null;
+  notes: string | null;
   sets: Array<{ exerciseId: string; exercise: { id: string; name: string; nameFr: string | null } }>;
 }) {
   const latestWeightsRows = await prisma.workoutSet.findMany({
@@ -110,13 +112,15 @@ async function getOrderedExercisesForSession(session: {
         : (program.days[0] ?? null);
 
       if (dayForToday) {
+        const replacements = getSessionExerciseReplacements(session.notes);
+        const replacementExercises = await resolveReplacementExercises(session.notes);
         const fromProgramDay = dayForToday.exercises.map((item) => ({
-          exerciseId: item.exerciseId,
-          exerciseName: item.exercise.nameFr || item.exercise.name,
+          exerciseId: replacements[item.id]?.exerciseId ?? item.exerciseId,
+          exerciseName: (replacementExercises.get(replacements[item.id]?.exerciseId ?? "") ?? item.exercise).nameFr || (replacementExercises.get(replacements[item.id]?.exerciseId ?? "") ?? item.exercise).name,
           totalSets: Math.max(1, item.sets ?? 3),
           targetReps: item.repsMin ?? item.repsMax ?? DEFAULT_REPS[0],
           restSeconds: item.restSeconds ?? 90,
-          plannedWeightKg: parseWeightKgFromText(item.repsText) ?? latestWeightByExercise.get(item.exerciseId) ?? null,
+          plannedWeightKg: parseWeightKgFromText(item.repsText) ?? latestWeightByExercise.get(replacements[item.id]?.exerciseId ?? item.exerciseId) ?? null,
         }));
         if (fromProgramDay.length > 0) return fromProgramDay;
       }

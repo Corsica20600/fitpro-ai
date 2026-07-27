@@ -97,6 +97,7 @@ export default async function WorkoutPage() {
             />
           </WorkoutCard>
           <GuidedWorkoutClient
+            key={currentSession.id}
             sessionId={currentSession.id}
             sessionTitle={formatWorkoutLabel(currentSession.title) || heroTitle}
             programName={formatWorkoutLabel(currentSession.program?.name)}
@@ -109,6 +110,8 @@ export default async function WorkoutPage() {
                 slug: item.slug,
                 name: displayName,
                 nameFr: displayName,
+                category: item.category,
+                movementType: item.movementType,
                 primaryMuscles: item.primaryMuscles,
                 primaryMusclesFr: item.primaryMusclesFr,
                 equipment: item.equipment,
