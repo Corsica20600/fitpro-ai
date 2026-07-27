@@ -945,36 +945,30 @@ button, input, select { font-family: inherit; }
   text-shadow: 0 2px 16px rgba(47, 157, 255, .42);
 }
 
-.account-pill-form {
-  margin: 0;
-}
-
-.account-pill {
+.settings-top-link {
   min-height: 42px;
-  display: inline-grid;
-  align-content: center;
-  justify-items: center;
-  gap: 1px;
-  padding: 7px 12px;
+  width: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(120, 168, 255, .24);
   border-radius: 999px;
   color: #f5f9ff;
   background: linear-gradient(135deg, rgba(20, 36, 62, .92), rgba(8, 16, 30, .94));
   box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
-  font-size: .78rem;
-  font-weight: 900;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease;
 }
 
-.account-pill small {
-  color: #7ee7ff;
-  font-size: .62rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.settings-top-link svg {
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
 }
 
-.account-pill--login {
-  color: #06182e;
-  background: linear-gradient(135deg, #8ef5c9, #37d7ff);
+.settings-top-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(55, 215, 255, .46);
+  background: linear-gradient(135deg, rgba(22, 46, 78, .96), rgba(10, 22, 42, .98));
 }
 
 .dashboard-focus {
@@ -1171,6 +1165,54 @@ button, input, select { font-family: inherit; }
   height: 10px;
   border-radius: 999px;
   display: inline-block;
+}
+
+.settings-page {
+  gap: 14px;
+}
+
+.settings-account-card,
+.settings-service-card {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-account-card h2,
+.settings-service-card h2 {
+  margin: 0;
+  color: #f7fbff;
+  font-size: 1.18rem;
+}
+
+.settings-account-card form {
+  margin: 0;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-service-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-service-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -35px -45px auto;
+  width: 110px;
+  height: 110px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(55, 215, 255, .12), transparent 66%);
+  pointer-events: none;
+}
+
+@media (min-width: 560px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .progress-dashboard {

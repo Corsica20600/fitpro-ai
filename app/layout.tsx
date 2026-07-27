@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import Script from "next/script";
-import { AccountPill } from "@/src/components/auth/account-pill";
 import { BottomNav } from "@/src/components/ui/bottom-nav";
 import "./globals.css";
 
@@ -46,7 +46,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <span className="app-brand-main">FitAI</span>
               <span className="app-brand-pro">PRO</span>
             </div>
-            <AccountPill />
+            <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 2.5A8 8 0 0 0 7 6L4.6 5 2.6 8.5l2 1.5c-.1.5-.1 1-.1 1.5s0 1 .1 1.5l-2 1.5 2 3.5L7 18a8 8 0 0 0 2.6 1.5L10 22h4l.4-2.5A8 8 0 0 0 17 18l2.4 1 2-3.5-2-1.5ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" />
+              </svg>
+            </Link>
           </header>
           <main className="screen">{children}</main>
           <BottomNav />
