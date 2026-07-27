@@ -1240,6 +1240,55 @@ button, input, select { font-family: inherit; }
   text-align: right;
 }
 
+.login-page {
+  min-height: calc(100svh - 150px);
+  justify-content: center;
+}
+
+.login-card {
+  position: relative;
+  overflow: hidden;
+  gap: 16px;
+  padding: 26px;
+}
+
+.login-card h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #f8fbff;
+  font-size: clamp(2rem, 11vw, 3.4rem);
+  line-height: .92;
+  letter-spacing: -.06em;
+}
+
+.login-card form,
+.login-card .muted,
+.login-card .eyebrow,
+.login-card__note {
+  position: relative;
+  z-index: 1;
+}
+
+.login-card__halo {
+  position: absolute;
+  inset: -80px -70px auto auto;
+  width: 190px;
+  height: 190px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(65, 221, 255, .36), rgba(47, 143, 255, .14) 45%, transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.login-card__note {
+  margin: 0;
+  color: #8297bf;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
 .settings-service-card {
   position: relative;
   overflow: hidden;
