@@ -6,9 +6,7 @@ import { HeroVisual } from "@/src/components/ui/hero-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
-import { AppShortcutLink } from "@/src/components/integrations/app-shortcut-link";
 import { getExerciseOverride } from "@/src/lib/exercise-overrides";
-import { spotifyIntegration } from "@/src/lib/integrations";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 
 export const metadata = privatePageMetadata(
@@ -68,13 +66,7 @@ export default async function WorkoutPage() {
             <PrimaryAction type="submit" className="premium-glow">Démarrer</PrimaryAction>
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
-            <span className="chip warning">Conseil : lance ta playlist avant la première série.</span>
-            <AppShortcutLink
-              label={`Ouvrir ${spotifyIntegration.appName}`}
-              deepLinkUrl={spotifyIntegration.deepLinkUrl}
-              fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
-              className="ghost-btn"
-            />
+            <span className="chip warning">Conseil : prépare ta playlist avant la première série.</span>
           </div>
         </WorkoutCard>
       ) : sessionExercises.length === 0 ? (
@@ -82,25 +74,13 @@ export default async function WorkoutPage() {
           <h2 className="section-title">Aucun exercice disponible</h2>
           <p className="muted">Importe d&apos;abord des exercices pour lancer une séance guidée.</p>
           <span className="chip danger">Action requise: ajoute au moins un exercice</span>
-          <AppShortcutLink
-            label={`Ouvrir ${spotifyIntegration.appName}`}
-            deepLinkUrl={spotifyIntegration.deepLinkUrl}
-            fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
-            className="ghost-btn"
-          />
         </WorkoutCard>
       ) : (
         <>
           <WorkoutCard light>
             <p className="eyebrow">Focus musique</p>
             <span className="chip orange">Mode focus actif</span>
-            <p className="muted">Garde le tempo, contrôle la descente.</p>
-            <AppShortcutLink
-              label={`Ouvrir ${spotifyIntegration.appName}`}
-              deepLinkUrl={spotifyIntegration.deepLinkUrl}
-              fallbackWebUrl={spotifyIntegration.fallbackWebUrl}
-              className="ghost-btn"
-            />
+            <p className="muted">Garde le tempo, contrôle la descente. Spotify se connecte maintenant depuis Paramètres.</p>
           </WorkoutCard>
           <GuidedWorkoutClient
             key={currentSession.id}
