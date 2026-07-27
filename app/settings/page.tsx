@@ -11,7 +11,8 @@ export const metadata = privatePageMetadata(
   "Paramètres privés FitAI Pro pour compte, export de données et intégrations.",
 );
 
-const settingSections = [
+function getSettingSections(watchPairingEnabled: boolean) {
+  return [
   {
     eyebrow: "Abonnement",
     title: "FitAI Pro",
@@ -36,11 +37,14 @@ const settingSections = [
   {
     eyebrow: "Montre",
     title: "Wear OS",
-    description: "Synchronisation montre avec pairing par token côté API, prêt pour le prochain APK.",
-    status: "Actif",
+    description: watchPairingEnabled
+      ? "Synchronisation montre protégée par token côté API."
+      : "Synchronisation montre en compatibilité temporaire, ajoute FITAI_WATCH_TOKEN dans Vercel.",
+    status: watchPairingEnabled ? "Sécurisé" : "Compatibilité",
     tone: "violet",
   },
-] as const;
+  ] as const;
+}
 
 function formatDate(date: Date | null | undefined) {
   if (!date) return "Aucune séance";
@@ -55,6 +59,8 @@ function formatDate(date: Date | null | undefined) {
 }
 
 export default async function SettingsPage() {
+  const watchPairingEnabled = Boolean(process.env.FITAI_WATCH_TOKEN?.trim());
+  const settingSections = getSettingSections(watchPairingEnabled);
   const [session, accountData] = await Promise.all([
     auth().catch(() => null),
     getAccountSettingsData(),
