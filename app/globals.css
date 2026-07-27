@@ -1240,6 +1240,10 @@ button, input, select { font-family: inherit; }
   text-align: right;
 }
 
+.settings-export-link {
+  text-decoration: none;
+}
+
 .login-page {
   min-height: calc(100svh - 150px);
   justify-content: center;

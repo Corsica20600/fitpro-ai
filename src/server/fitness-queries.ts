@@ -277,11 +277,7 @@ function getCoachInsight(input: {
   };
 }
 
-export async function getOrCreateDemoProfile() {
-  const session = await auth().catch(() => null);
-  const activeEmail = normalizeEmail(session?.user?.email) ?? PRIMARY_USER_EMAIL;
-  const displayName = session?.user?.name?.trim() || "Erwan";
-
+async function getOrCreateProfileForEmail(activeEmail: string, displayName: string) {
   const existing = await prisma.userProfile.findUnique({
     where: { email: activeEmail },
   });
@@ -318,8 +314,27 @@ export async function getOrCreateDemoProfile() {
   });
 }
 
+export async function getOrCreateDemoProfile() {
+  const session = await auth().catch(() => null);
+  const activeEmail = normalizeEmail(session?.user?.email) ?? PRIMARY_USER_EMAIL;
+  const displayName = session?.user?.name?.trim() || "Erwan";
+
+  return getOrCreateProfileForEmail(activeEmail, displayName);
+}
+
 export async function getCurrentUserProfile() {
   return getOrCreateDemoProfile();
+}
+
+export async function getAuthenticatedUserProfile() {
+  const session = await auth().catch(() => null);
+  const activeEmail = normalizeEmail(session?.user?.email);
+
+  if (!activeEmail) {
+    throw new Error("AUTH_REQUIRED");
+  }
+
+  return getOrCreateProfileForEmail(activeEmail, session?.user?.name?.trim() || "Erwan");
 }
 
 export async function getAccountSettingsData() {
@@ -352,6 +367,82 @@ export async function getAccountSettingsData() {
       progressMetrics,
     },
     latestSession,
+  };
+}
+
+export async function getAccountExportData() {
+  const profile = await getAuthenticatedUserProfile();
+
+  const [programs, workoutSessions, progressMetrics] = await Promise.all([
+    prisma.program.findMany({
+      where: { userProfileId: profile.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        days: {
+          orderBy: { dayIndex: "asc" },
+          include: {
+            exercises: {
+              orderBy: { orderIndex: "asc" },
+              include: {
+                exercise: {
+                  select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    nameFr: true,
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.workoutSession.findMany({
+      where: { userProfileId: profile.id },
+      orderBy: [{ startedAt: "desc" }, { createdAt: "desc" }],
+      include: {
+        sets: {
+          orderBy: [{ completedAt: "asc" }, { createdAt: "asc" }],
+          include: {
+            exercise: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                nameFr: true,
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    prisma.progressMetric.findMany({
+      where: { userProfileId: profile.id },
+      orderBy: { measuredAt: "desc" },
+    }),
+  ]);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    profile: {
+      id: profile.id,
+      displayName: profile.displayName,
+      email: profile.email,
+      age: profile.age,
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      trainingLevel: profile.trainingLevel,
+      primaryGoal: profile.primaryGoal,
+      sessionsPerWeek: profile.sessionsPerWeek,
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+    },
+    programs,
+    workoutSessions,
+    progressMetrics,
   };
 }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-const apiRoutes = ["/api/health", "/api/programs", "/api/workout"];
+const apiRoutes = ["/api/account", "/api/health", "/api/programs", "/api/workout"];
 
 function isApiRoute(pathname: string) {
   return apiRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -37,6 +37,7 @@ export const config = {
     "/progress/:path*",
     "/settings/:path*",
     "/workout/:path*",
+    "/api/account/:path*",
     "/api/health/:path*",
     "/api/programs/:path*",
     "/api/workout/:path*",

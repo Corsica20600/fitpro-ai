@@ -129,6 +129,11 @@ export default async function SettingsPage() {
           <span>Dernière activité</span>
           <strong>{formatDate(latestSessionDate)}</strong>
         </div>
+        {connected ? (
+          <a className="ghost-btn full-line settings-export-link" href="/api/account/export">
+            Exporter mes données
+          </a>
+        ) : null}
       </GlassCard>
 
       <section className="settings-grid" aria-label="Connexions et services">
