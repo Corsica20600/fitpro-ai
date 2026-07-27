@@ -102,6 +102,10 @@ function getIntegrationErrorMessage(value: string | undefined) {
   if (value === "spotify-config") return "Spotify n'est pas encore configuré côté Vercel.";
   if (value === "spotify-denied") return "Connexion Spotify annulée.";
   if (value === "spotify-state") return "Connexion Spotify expirée, relance la connexion.";
+  if (value === "spotify-client") return "Client secret Spotify incorrect ou Client ID/Secret inversés dans Vercel.";
+  if (value === "spotify-redirect") return "Redirect URI Spotify non identique entre Vercel et le dashboard Spotify.";
+  if (value === "spotify-token") return "Spotify refuse l'échange du token. Vérifie les identifiants et relance la connexion.";
+  if (value === "spotify-profile") return "Spotify est connecté mais le profil utilisateur n'a pas pu être lu.";
   if (value === "spotify-callback") return "Impossible de finaliser Spotify pour le moment.";
   if (value === "provider") return "Intégration inconnue.";
   return null;

@@ -15,6 +15,16 @@ export function getSpotifyRedirectUri() {
   return process.env.SPOTIFY_REDIRECT_URI?.trim() || absoluteUrl("/api/integrations/spotify/callback");
 }
 
+export class SpotifyIntegrationError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "SpotifyIntegrationError";
+  }
+}
+
 export function getSpotifyAuthorizeUrl(state: string) {
   const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
 
@@ -36,7 +46,7 @@ export async function exchangeSpotifyCode(code: string) {
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
 
   if (!clientId || !clientSecret) {
-    throw new Error("SPOTIFY_CONFIG_MISSING");
+    throw new SpotifyIntegrationError("spotify-config", "Spotify client credentials are missing.");
   }
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
@@ -54,7 +64,22 @@ export async function exchangeSpotifyCode(code: string) {
   });
 
   if (!response.ok) {
-    throw new Error("SPOTIFY_TOKEN_EXCHANGE_FAILED");
+    let details: { error?: string; error_description?: string } = {};
+    try {
+      details = (await response.json()) as { error?: string; error_description?: string };
+    } catch {
+      details = {};
+    }
+
+    if (details.error === "invalid_client") {
+      throw new SpotifyIntegrationError("spotify-client", details.error_description || "Invalid Spotify client credentials.");
+    }
+
+    if (details.error === "invalid_grant") {
+      throw new SpotifyIntegrationError("spotify-redirect", details.error_description || "Invalid Spotify redirect URI or expired code.");
+    }
+
+    throw new SpotifyIntegrationError("spotify-token", details.error_description || "Spotify token exchange failed.");
   }
 
   return response.json() as Promise<{
@@ -73,7 +98,7 @@ export async function getSpotifyMe(accessToken: string) {
   });
 
   if (!response.ok) {
-    throw new Error("SPOTIFY_PROFILE_FAILED");
+    throw new SpotifyIntegrationError("spotify-profile", "Spotify profile request failed.");
   }
 
   return response.json() as Promise<{

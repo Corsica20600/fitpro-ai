@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { absoluteUrl } from "@/src/lib/site-url";
 import { encryptIntegrationSecret } from "@/src/lib/integration-crypto";
 import { prisma } from "@/src/lib/prisma";
-import { getSpotifyMe, exchangeSpotifyCode } from "@/src/server/spotify";
+import { getSpotifyMe, exchangeSpotifyCode, SpotifyIntegrationError } from "@/src/server/spotify";
 import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
 
 const STATE_COOKIE = "fitai_spotify_oauth_state";
@@ -78,7 +78,11 @@ export async function GET(request: Request) {
     });
 
     return settingsRedirect("/settings?integration=spotify-connected");
-  } catch {
+  } catch (error) {
+    if (error instanceof SpotifyIntegrationError) {
+      return settingsRedirect(`/settings?integrationError=${encodeURIComponent(error.code)}`);
+    }
+
     return settingsRedirect("/settings?integrationError=spotify-callback");
   }
 }

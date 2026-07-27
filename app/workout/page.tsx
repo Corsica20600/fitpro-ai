@@ -69,6 +69,9 @@ export default async function WorkoutPage() {
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
             <span className="chip warning">Conseil : prépare ta playlist avant la première série.</span>
+            <span className={`chip ${spotifyConnected ? "success" : "warning"}`}>
+              {spotifyConnected ? "Spotify connecté" : "Spotify non connecté"}
+            </span>
             <SpotifyOpenLink connected={spotifyConnected} className="ghost-btn" />
           </div>
         </WorkoutCard>
@@ -83,6 +86,9 @@ export default async function WorkoutPage() {
           <WorkoutCard light>
             <p className="eyebrow">Focus musique</p>
             <span className="chip orange">Mode focus actif</span>
+            <span className={`chip ${spotifyConnected ? "success" : "warning"}`}>
+              {spotifyConnected ? "Spotify connecté" : "Spotify non connecté"}
+            </span>
             <p className="muted">
               {spotifyConnected
                 ? `Compte Spotify connecté${spotifyConnection?.displayName ? ` : ${spotifyConnection.displayName}` : ""}.`

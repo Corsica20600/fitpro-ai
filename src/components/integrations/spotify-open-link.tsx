@@ -23,7 +23,7 @@ export function SpotifyOpenLink({ connected, className = "ghost-btn" }: SpotifyO
   if (!connected) {
     return (
       <Link href="/settings" className={className}>
-        Connecter Spotify
+        Connecter Spotify dans Paramètres
       </Link>
     );
   }
