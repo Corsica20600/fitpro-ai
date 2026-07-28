@@ -13,12 +13,6 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#0b0f14",
     icons: [
       {
-        src: "/brand/traknio-icon.svg",
-        sizes: "512x512",
-        type: "image/svg+xml",
-        purpose: "any",
-      },
-      {
         src: "/icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",

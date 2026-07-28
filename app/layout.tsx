@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
 import { auth } from "@/auth";
@@ -90,22 +91,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div className="app-shell">
           <header className="app-topbar">
             <div className="app-brand" aria-label={BRAND.name}>
-              <svg className="app-brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                <defs>
-                  <linearGradient id="traknio-topbar-gradient" x1="7" y1="12" x2="42" y2="34" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#00D9FF" />
-                    <stop offset="0.52" stopColor="#287CFF" />
-                    <stop offset="1" stopColor="#8F32FF" />
-                  </linearGradient>
-                </defs>
-                <g className="app-brand-mark__shape">
-                  <path d="M8 34h4.2l5.4-17.5h-4.2L8 34Z" />
-                  <path d="M15.5 34h4.2l7.3-23.6h-4.2L15.5 34Z" />
-                  <path d="M23 34h4.2l9.4-30.4h-4.2L23 34Z" />
-                  <path d="M21.7 10.6h22.8l-4.8 5.3H28.4l-2 6.5h8.4L31.5 33c-.7 2.1-2.1 3.7-4.1 4.5l-5.7 2.5 7.4-24.1h-13Z" />
-                </g>
-              </svg>
-              <span className="app-brand-main">{BRAND.name}</span>
+              <span className="app-brand-mark">
+                <Image
+                  src="/brand/traknio-logo-mark-exact.png"
+                  alt=""
+                  width={128}
+                  height={74}
+                  priority
+                />
+              </span>
+              <Image
+                src="/brand/traknio-wordmark-exact.png"
+                alt={BRAND.name}
+                width={520}
+                height={71}
+                className="app-brand-wordmark"
+                priority
+              />
             </div>
             {isConnected ? (
               <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">
