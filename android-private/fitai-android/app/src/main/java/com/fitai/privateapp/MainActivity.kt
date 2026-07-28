@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowInsetsController
 import android.webkit.CookieManager
+import android.webkit.WebResourceError
+import android.webkit.WebResourceResponse
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -22,8 +24,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityMainBinding
-    private val fitAiUrl = "https://fitai-pro-zeta.vercel.app"
-    private val allowedHosts = setOf("fitai-pro-zeta.vercel.app")
+    private val fitAiUrl = BuildConfig.FITAI_SYNC_BASE_URL.trimEnd('/')
+    private val allowedHosts = setOfNotNull(Uri.parse(fitAiUrl).host?.lowercase())
     private val samsungFallbackUrl = "https://www.samsung.com/global/galaxy/apps/samsung-health/"
     private val spotifyFallbackUrl = "https://open.spotify.com/"
 
@@ -46,6 +48,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         setupWebView()
+        binding.webRetryButton.setOnClickListener {
+            binding.webErrorPanel.visibility = View.GONE
+            binding.webViewFitAi.reload()
+        }
     }
 
     private fun applyDarkSystemBars() {
@@ -73,12 +79,36 @@ class MainActivity : AppCompatActivity() {
         binding.webViewFitAi.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                binding.webErrorPanel.visibility = View.GONE
                 binding.webLoading.visibility = View.VISIBLE
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 binding.webLoading.visibility = View.GONE
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?,
+            ) {
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame == true) {
+                    showWebError()
+                }
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                errorResponse: WebResourceResponse?,
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                val statusCode = errorResponse?.statusCode ?: return
+                if (request?.isForMainFrame == true && statusCode >= 500) {
+                    showWebError()
+                }
             }
 
             @Deprecated("Deprecated in Java")
@@ -93,6 +123,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.webViewFitAi.loadUrl(buildInitialUrl())
+    }
+
+    private fun showWebError() {
+        binding.webLoading.visibility = View.GONE
+        binding.webErrorPanel.visibility = View.VISIBLE
     }
 
     private fun buildInitialUrl(): String {

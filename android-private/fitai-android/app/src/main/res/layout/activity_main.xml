@@ -16,4 +16,43 @@
         android:indeterminate="true"
         android:visibility="gone" />
 
+    <LinearLayout
+        android:id="@+id/webErrorPanel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/fitai_system_bar"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="28dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/webErrorTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/web_error_title"
+            android:textColor="#F7F9FF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/webErrorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/web_error_message"
+            android:textColor="#8A94A6"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/webRetryButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="@string/web_error_retry" />
+
+    </LinearLayout>
+
 </FrameLayout>
