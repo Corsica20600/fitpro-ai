@@ -63,6 +63,10 @@ export function AiProgramGeneratorPanel() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
+        if (data?.error === "ai_generation_limit_reached") {
+          setError(`Limite mensuelle atteinte : ${data.used}/${data.limit} programmes IA generes ce mois-ci.`);
+          return;
+        }
         setError(`Generation impossible (${data?.error ?? "unknown_error"})`);
         return;
       }

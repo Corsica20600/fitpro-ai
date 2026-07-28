@@ -149,8 +149,23 @@ model UserProfile {
   watchDevices                  WatchDevice[]
   workoutSessions               WorkoutSession[]
   progressMetrics               ProgressMetric[]
+  aiProgramGenerations          AiProgramGeneration[]
 
   @@index([subscriptionStatus])
+}
+
+model AiProgramGeneration {
+  id            String      @id @default(cuid())
+  userProfileId String
+  periodKey     String
+  goal          String
+  level         String
+  status        String
+  createdAt     DateTime    @default(now())
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId, periodKey, createdAt])
+  @@index([periodKey, status])
 }
 
 model IntegrationConnection {

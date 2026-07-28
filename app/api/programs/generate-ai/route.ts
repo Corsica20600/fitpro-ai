@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateAiProgram } from "@/src/server/ai-program-generator";
+import { completeAiProgramGeneration, reserveAiProgramGeneration } from "@/src/server/ai-generation-limits";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -18,6 +19,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "invalid_level" }, { status: 400 });
   }
 
+  const reservation = await reserveAiProgramGeneration({ goal, level });
+  if (!reservation.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: reservation.error,
+        limit: reservation.limit,
+        used: reservation.used,
+        remaining: reservation.remaining,
+        periodKey: reservation.periodKey,
+      },
+      { status: 429 },
+    );
+  }
+
   const result = await generateAiProgram({
     goal: goal as "MUSCLE_GAIN" | "FAT_LOSS" | "STRENGTH" | "RECOMPOSITION",
     level: level as "BEGINNER" | "INTERMEDIATE" | "ADVANCED",
@@ -28,9 +44,11 @@ export async function POST(request: Request) {
     restrictions,
   });
 
+  await completeAiProgramGeneration(reservation.usageId, result.ok);
+
   if (!result.ok) {
-    return NextResponse.json(result, { status: 422 });
+    return NextResponse.json({ ...result, usage: reservation }, { status: 422 });
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, usage: reservation });
 }
