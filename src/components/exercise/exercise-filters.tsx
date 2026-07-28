@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import { levelToFr } from "@/src/lib/exercise-i18n";
 
 type ExerciseFiltersProps = {
@@ -27,30 +28,39 @@ export function ExerciseFilters({ search, muscle, equipment, difficulty, filters
       />
 
       <label className="field-label" htmlFor="exercise-muscle">Muscle</label>
-      <select id="exercise-muscle" name="muscle" defaultValue={muscle} className="input">
-        <option value="">Tous les muscles</option>
-        {filters.muscles.map((item) => (
-          <option key={item} value={item}>{item}</option>
-        ))}
-      </select>
+      <BrandSelect
+        id="exercise-muscle"
+        name="muscle"
+        defaultValue={muscle}
+        options={[
+          { value: "", label: "Tous les muscles" },
+          ...filters.muscles.map((item) => ({ value: item, label: item })),
+        ]}
+      />
 
       <label className="field-label" htmlFor="exercise-equipment">Matériel</label>
-      <select id="exercise-equipment" name="equipment" defaultValue={equipment} className="input">
-        <option value="">Tout le matériel</option>
-        {filters.equipment.map((item) => (
-          <option key={item} value={item}>{item}</option>
-        ))}
-      </select>
+      <BrandSelect
+        id="exercise-equipment"
+        name="equipment"
+        defaultValue={equipment}
+        options={[
+          { value: "", label: "Tout le matériel" },
+          ...filters.equipment.map((item) => ({ value: item, label: item })),
+        ]}
+      />
 
       {filters.difficulties?.length ? (
         <>
           <label className="field-label" htmlFor="exercise-difficulty">Difficulté</label>
-          <select id="exercise-difficulty" name="difficulty" defaultValue={difficulty} className="input">
-            <option value="">Tous les niveaux</option>
-            {filters.difficulties.map((item) => (
-              <option key={item} value={item}>{levelToFr(item)}</option>
-            ))}
-          </select>
+          <BrandSelect
+            id="exercise-difficulty"
+            name="difficulty"
+            defaultValue={difficulty}
+            options={[
+              { value: "", label: "Tous les niveaux" },
+              ...filters.difficulties.map((item) => ({ value: item, label: levelToFr(item) })),
+            ]}
+          />
         </>
       ) : null}
 

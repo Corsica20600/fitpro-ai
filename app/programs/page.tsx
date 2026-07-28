@@ -9,6 +9,7 @@ import { ProgramCard } from "@/src/components/programs/program-card";
 import { ProgramExercisePicker } from "@/src/components/programs/program-exercise-picker";
 import { ProgramDayExercisesEditor } from "@/src/components/programs/program-day-exercises-editor";
 import { ProgramSummary } from "@/src/components/programs/program-summary";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import {
   addExerciseToProgramDayAction,
   createSimpleProgramAction,
@@ -95,12 +96,17 @@ export default async function ProgramsPage() {
 
           <label className="field-label">Objectif</label>
           <div className="grid-2">
-            <select name="goal" className="input">
-              {GOALS.map((g) => <option key={g} value={g}>{goalToFr(g)}</option>)}
-            </select>
-            <select name="level" className="input">
-              {LEVELS.map((l) => <option key={l} value={l}>{levelToFr(l as "BEGINNER" | "INTERMEDIATE" | "ADVANCED")}</option>)}
-            </select>
+            <BrandSelect
+              name="goal"
+              options={GOALS.map((g) => ({ value: g, label: goalToFr(g) }))}
+            />
+            <BrandSelect
+              name="level"
+              options={LEVELS.map((l) => ({
+                value: l,
+                label: levelToFr(l as "BEGINNER" | "INTERMEDIATE" | "ADVANCED"),
+              }))}
+            />
           </div>
 
           <PrimaryButton type="submit">Créer programme</PrimaryButton>

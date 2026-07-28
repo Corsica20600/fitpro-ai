@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 
 type GeneratedProgram = {
@@ -102,17 +103,25 @@ export function AiProgramGeneratorPanel() {
     <section className="card">
       <p className="eyebrow">IA programme</p>
       <form action={onGenerate} className="form-grid">
-        <select name="goal" className="input" defaultValue="MUSCLE_GAIN">
-          <option value="MUSCLE_GAIN">Prise de muscle</option>
-          <option value="FAT_LOSS">Perte de gras</option>
-          <option value="STRENGTH">Force</option>
-          <option value="RECOMPOSITION">Recomposition</option>
-        </select>
-        <select name="level" className="input" defaultValue="INTERMEDIATE">
-          <option value="BEGINNER">Debutant</option>
-          <option value="INTERMEDIATE">Intermediaire</option>
-          <option value="ADVANCED">Avance</option>
-        </select>
+        <BrandSelect
+          name="goal"
+          defaultValue="MUSCLE_GAIN"
+          options={[
+            { value: "MUSCLE_GAIN", label: "Prise de muscle" },
+            { value: "FAT_LOSS", label: "Perte de gras" },
+            { value: "STRENGTH", label: "Force" },
+            { value: "RECOMPOSITION", label: "Recomposition" },
+          ]}
+        />
+        <BrandSelect
+          name="level"
+          defaultValue="INTERMEDIATE"
+          options={[
+            { value: "BEGINNER", label: "Debutant" },
+            { value: "INTERMEDIATE", label: "Intermediaire" },
+            { value: "ADVANCED", label: "Avance" },
+          ]}
+        />
         <input name="sessionDurationMin" type="number" min={25} max={120} defaultValue={60} className="input" placeholder="Duree seance (min)" />
         <input name="availableEquipment" className="input" placeholder="Materiel (csv) ex: halteres, barre, machine" />
         <input name="priorityMuscles" className="input" placeholder="Muscles prioritaires (csv)" />

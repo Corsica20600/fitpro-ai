@@ -20,6 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { useRouter } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 
 type ExerciseOption = {
@@ -198,18 +199,15 @@ function SortableExerciseCard({
         </form>
         <form onSubmit={(event) => { void handleReplaceSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>
           <label className="field-label">Remplacer par</label>
-          <select
+          <BrandSelect
             name="exerciseId"
-            className="input"
             value={replaceExerciseId}
-            onChange={(event) => setReplaceExerciseId(event.target.value)}
-          >
-            {exerciseOptions.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {(opt.nameFr || opt.name)} · {(opt.primaryMusclesFr[0] || opt.primaryMuscles[0] || "Full body")}
-              </option>
-            ))}
-          </select>
+            onValueChange={setReplaceExerciseId}
+            options={exerciseOptions.map((opt) => ({
+              value: opt.id,
+              label: `${opt.nameFr || opt.name} · ${opt.primaryMusclesFr[0] || opt.primaryMuscles[0] || "Full body"}`,
+            }))}
+          />
           <PrimaryButton type="submit" disabled={replacing || replaceExerciseId === ex.exerciseId}>
             {replacing ? "Remplacement..." : "Remplacer l'exercice"}
           </PrimaryButton>

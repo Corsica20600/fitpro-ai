@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 
 type ProgramOption = {
@@ -37,39 +38,29 @@ export function AddToProgramForm({
       <input type="hidden" name="exerciseId" value={exerciseId} />
 
       <label className="field-label">Programme</label>
-      <select
+      <BrandSelect
         name="programId"
-        className="input"
         value={programId}
-        onChange={(event) => {
-          const nextProgramId = event.target.value;
+        onValueChange={(nextProgramId) => {
           setProgramId(nextProgramId);
           const nextProgram = programs.find((p) => p.id === nextProgramId);
           setDayId(nextProgram?.days[0]?.id ?? "");
         }}
-      >
-        {programs.map((program) => (
-          <option key={program.id} value={program.id}>
-            {program.name}
-          </option>
-        ))}
-      </select>
+        options={programs.map((program) => ({ value: program.id, label: program.name }))}
+      />
 
       {days.length > 1 ? (
         <>
           <label className="field-label">Séance du programme</label>
-          <select
+          <BrandSelect
             name="dayId"
-            className="input"
             value={effectiveDayId}
-            onChange={(event) => setDayId(event.target.value)}
-          >
-            {days.map((day) => (
-              <option key={day.id} value={day.id}>
-                {day.title || `Séance ${day.dayIndex}`}
-              </option>
-            ))}
-          </select>
+            onValueChange={setDayId}
+            options={days.map((day) => ({
+              value: day.id,
+              label: day.title || `Séance ${day.dayIndex}`,
+            }))}
+          />
         </>
       ) : (
         <input type="hidden" name="dayId" value={effectiveDayId} />

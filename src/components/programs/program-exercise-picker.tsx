@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 
 type DayOption = {
   id: string;
@@ -95,18 +96,15 @@ export function ProgramExercisePicker({
       {days.length > 1 ? (
         <>
           <label className="field-label" htmlFor={`day-${programId}`}>Séance cible</label>
-          <select
+          <BrandSelect
             id={`day-${programId}`}
-            className="input"
             value={dayId}
-            onChange={(event) => setDayId(event.target.value)}
-          >
-            {days.map((day) => (
-              <option key={day.id} value={day.id}>
-                {day.title || `Séance ${day.dayIndex}`}
-              </option>
-            ))}
-          </select>
+            onValueChange={setDayId}
+            options={days.map((day) => ({
+              value: day.id,
+              label: day.title || `Séance ${day.dayIndex}`,
+            }))}
+          />
         </>
       ) : null}
 

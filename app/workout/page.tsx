@@ -4,6 +4,7 @@ import { getWorkoutPageData } from "@/src/server/fitness-queries";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { HeroVisual } from "@/src/components/ui/hero-visual";
 import { PrimaryAction } from "@/src/components/ui/primary-action";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { SpotifyOpenLink } from "@/src/components/integrations/spotify-open-link";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
@@ -59,12 +60,17 @@ export default async function WorkoutPage() {
         <WorkoutCard light>
           <h2 className="section-title">Démarrer une séance</h2>
           <form action={startWorkoutSessionAction} className="form-grid">
-            <select name="programId" className="input" defaultValue={defaultProgramId ?? ""}>
-              <option value="">Sans programme</option>
-              {programs.map((program) => (
-                <option key={program.id} value={program.id}>{formatWorkoutLabel(program.name) || program.name}</option>
-              ))}
-            </select>
+            <BrandSelect
+              name="programId"
+              defaultValue={defaultProgramId ?? ""}
+              options={[
+                { value: "", label: "Sans programme" },
+                ...programs.map((program) => ({
+                  value: program.id,
+                  label: formatWorkoutLabel(program.name) || program.name,
+                })),
+              ]}
+            />
             <PrimaryAction type="submit" className="premium-glow">Démarrer</PrimaryAction>
           </form>
           <div className="stack" style={{ marginTop: 10 }}>
