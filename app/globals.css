@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   --brand-navy: #0A1328;
   --brand-blue: #1E58FF;
@@ -4081,6 +4087,21 @@ body::before {
   }
 }
 
+@media (max-width: 480px) {
+  .program-day-item {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .program-day-item-visual {
+    justify-self: center;
+  }
+
+  .program-day-item > div {
+    min-width: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -4130,6 +4151,7 @@ body::before {
 .app-shell {
   width: min(100%, 620px);
   max-width: 620px;
+  min-width: 0;
   height: 100dvh;
   max-height: 100dvh;
   display: flex;
@@ -4223,9 +4245,11 @@ body::before {
 .stack,
 .fit-page-stack {
   gap: 16px;
+  min-width: 0;
 }
 
 .screen {
+  width: 100%;
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
@@ -4664,6 +4688,29 @@ summary:focus-visible {
 .active-program-card,
 .watch-shell-v2 {
   min-width: 0;
+}
+
+.program-card-v2,
+.active-program-card,
+.program-day-panel,
+.program-day-list,
+.program-day-item,
+.program-card-metrics,
+.program-card-v2__details,
+.program-card-v2__actions {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.program-card-v2 .chips {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.program-card-v2 .chip {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .personal-record-card {
