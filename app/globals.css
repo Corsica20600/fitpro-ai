@@ -1,18 +1,24 @@
 @import "tailwindcss";
 
 :root {
+  --brand-navy: #0A1328;
+  --brand-blue: #1E58FF;
+  --brand-violet: #7A3CFF;
+  --brand-magenta: #C13CFF;
+  --brand-cyan: #00E0FF;
+  --brand-slate: #8A94A6;
   --bg: #020611;
-  --bg-soft: #0a1328;
+  --bg-soft: var(--brand-navy);
   --bg-elev: #111d3a;
   --card: #101a32;
-  --card-2: #0a1328;
+  --card-2: var(--brand-navy);
   --text: #f7f9ff;
-  --muted: #95a3c7;
+  --muted: var(--brand-slate);
   --line: #24304a;
   --line-soft: #1f293f;
-  --accent: #00d9ff;
-  --accent-2: #6e44ff;
-  --danger: #ff405d;
+  --accent: var(--brand-cyan);
+  --accent-2: var(--brand-violet);
+  --danger: var(--brand-magenta);
   --radius-card: 20px;
   --radius-ui: 14px;
   --shadow-card: 0 14px 30px rgba(2, 6, 19, .55);
@@ -28,13 +34,31 @@ body {
     linear-gradient(180deg, rgba(13, 21, 38, .4), transparent 26%),
     var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+  font-family: var(--font-exo-2), "Segoe UI", sans-serif;
   line-height: 1.5;
   overflow-x: hidden;
 }
 
 a { text-decoration: none; color: inherit; }
 button, input, select { font-family: inherit; }
+
+h1,
+h2,
+h3,
+h4,
+.section-title,
+.fit-page-header__title,
+.fit-section-title__heading {
+  font-family: var(--font-raleway), var(--font-exo-2), "Segoe UI", sans-serif;
+}
+
+.eyebrow,
+.app-brand,
+.bottom-nav,
+.chip,
+.watch-page-v2 {
+  font-family: var(--font-orbitron), var(--font-exo-2), "Segoe UI", sans-serif;
+}
 
 @keyframes fadeUp {
   from {
@@ -810,7 +834,7 @@ button, input, select { font-family: inherit; }
   width: 45%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #5aa4ff, #2f8fff);
+  background: linear-gradient(90deg, #5aa4ff, #1E58FF);
 }
 
 .set-list { display: grid; gap: 8px; }
@@ -1115,7 +1139,7 @@ button, input, select { font-family: inherit; }
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2f8fff, #67c2ff);
+  background: linear-gradient(90deg, #1E58FF, #67c2ff);
 }
 
 .progress-donut-wrap {
@@ -1508,7 +1532,7 @@ button, input, select { font-family: inherit; }
 }
 
 .landing-stat-card span {
-  color: #37d7ff;
+  color: #00E0FF;
   font-size: .75rem;
   font-weight: 950;
   letter-spacing: .18em;
@@ -1581,7 +1605,7 @@ button, input, select { font-family: inherit; }
 }
 
 .legal-list li::marker {
-  color: #37d7ff;
+  color: #00E0FF;
 }
 
 .settings-service-card {
@@ -1644,7 +1668,7 @@ button, input, select { font-family: inherit; }
 
 .progress-period-pill.active {
   color: #06182e;
-  background: linear-gradient(135deg, #8fc7ff, #2f8fff);
+  background: linear-gradient(135deg, #8fc7ff, #1E58FF);
   box-shadow: 0 12px 24px rgba(47, 143, 255, .32);
 }
 
@@ -1779,7 +1803,7 @@ button, input, select { font-family: inherit; }
 .progress-chart-track i {
   width: 100%;
   border-radius: 999px 999px 0 0;
-  background: linear-gradient(180deg, #83caff, #2f8fff 55%, #1763d6);
+  background: linear-gradient(180deg, #83caff, #1E58FF 55%, #1763d6);
 }
 
 .progress-chart-label {
@@ -1883,7 +1907,7 @@ button, input, select { font-family: inherit; }
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #37d7ff, #8ef5c9);
+  background: linear-gradient(90deg, #00E0FF, #8ef5c9);
 }
 
 .muscle-distribution-row em {
@@ -1940,7 +1964,7 @@ button, input, select { font-family: inherit; }
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #37d7ff, #8ef5c9);
+  background: linear-gradient(90deg, #00E0FF, #8ef5c9);
 }
 .current-exercise-card,
 .rest-timer-card,
@@ -2505,7 +2529,7 @@ button, input, select { font-family: inherit; }
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2f8fff, #66bcff);
+  background: linear-gradient(90deg, #1E58FF, #66bcff);
   box-shadow: 0 0 14px rgba(47, 143, 255, .45);
 }
 
@@ -2556,8 +2580,8 @@ button, input, select { font-family: inherit; }
   --card: #151518;
   --card-2: #111114;
   --line-soft: #232329;
-  --accent: #2f8fff;
-  --accent-2: #2f8fff;
+  --accent: #1E58FF;
+  --accent-2: #1E58FF;
 }
 
 body {
@@ -2967,7 +2991,7 @@ body {
 }
 
 .dashboard-progress-bar-card .dashboard-progress-track span {
-  background: linear-gradient(90deg, #2f8fff, #66bcff);
+  background: linear-gradient(90deg, #1E58FF, #66bcff);
   box-shadow: 0 0 14px rgba(47, 143, 255, .4);
 }
 
@@ -3121,11 +3145,11 @@ body {
   --line: #28416b;
   --line-soft: #1a2a47;
   --accent: #2a86ff;
-  --accent-2: #35d4ff;
+  --accent-2: #00E0FF;
   --success: #1fd79d;
   --warning: #ffcf52;
   --danger: #ff5a6e;
-  --violet: #8f7cff;
+  --violet: #7A3CFF;
   --orange: #ff9a4d;
   --radius-card: 22px;
   --radius-ui: 16px;
@@ -3172,7 +3196,7 @@ body {
 
 .primary-button {
   color: #f8fbff;
-  background: linear-gradient(135deg, #2f8fff, #2a6bff);
+  background: linear-gradient(135deg, #1E58FF, #1E58FF);
   box-shadow:
     0 14px 30px rgba(23, 96, 255, .4),
     inset 0 1px 0 rgba(220, 236, 255, .35),
@@ -3298,7 +3322,7 @@ body {
 }
 
 .dashboard-progress-track span {
-  background: linear-gradient(90deg, #2f8fff, #36d2ff);
+  background: linear-gradient(90deg, #1E58FF, #00E0FF);
   box-shadow: 0 0 16px rgba(47, 143, 255, .44);
 }
 
@@ -3308,7 +3332,7 @@ body {
 }
 
 .progress-bar-track i {
-  background: linear-gradient(90deg, #2f8fff, #35d4ff);
+  background: linear-gradient(90deg, #1E58FF, #00E0FF);
   box-shadow: 0 0 12px rgba(47, 143, 255, .36);
 }
 
@@ -3349,7 +3373,7 @@ body {
 }
 
 .workout-validate-main {
-  background: linear-gradient(135deg, #2f8fff, #2a6bff);
+  background: linear-gradient(135deg, #1E58FF, #1E58FF);
   box-shadow:
     0 16px 34px rgba(20, 94, 255, .45),
     inset 0 1px 0 rgba(210, 231, 255, .32);
@@ -3453,7 +3477,7 @@ body {
 /* === Fit Design System v2: premium shell/navigation foundation === */
 :root {
   --fit-bg: #020611;
-  --fit-bg-soft: #0a1328;
+  --fit-bg-soft: #0A1328;
   --fit-surface: rgba(12, 22, 42, .88);
   --fit-surface-solid: #0c162a;
   --fit-surface-raised: rgba(17, 31, 58, .94);
@@ -3461,11 +3485,11 @@ body {
   --fit-border: rgba(0, 217, 255, .24);
   --fit-border-strong: rgba(110, 68, 255, .5);
   --fit-text: #f7fbff;
-  --fit-text-muted: #a7b8da;
+  --fit-text-muted: #8A94A6;
   --fit-text-soft: #d9e7ff;
-  --fit-accent: #00d9ff;
-  --fit-accent-cyan: #00d9ff;
-  --fit-accent-violet: #6e44ff;
+  --fit-accent: #00E0FF;
+  --fit-accent-cyan: #00E0FF;
+  --fit-accent-violet: #7A3CFF;
   --fit-success: #1fd79d;
   --fit-warning: #ffcf52;
   --fit-orange: #ff9a4d;
@@ -4061,9 +4085,9 @@ body::before {
 
 /* === Final visual harmonization: Traknio technical premium identity === */
 :root {
-  --fit-blue: #287cff;
-  --fit-cyan: #00d9ff;
-  --fit-violet: #6e44ff;
+  --fit-blue: #1E58FF;
+  --fit-cyan: #00E0FF;
+  --fit-violet: #7A3CFF;
   --fit-green: #67d51b;
   --fit-orange: #ff8a16;
   --fit-gold: #ffcf52;
@@ -4084,7 +4108,7 @@ body {
     radial-gradient(780px 360px at 50% -16%, rgba(0, 217, 255, .2), transparent 68%),
     radial-gradient(520px 280px at 100% 8%, rgba(110, 68, 255, .14), transparent 72%),
     radial-gradient(460px 260px at 0% 78%, rgba(0, 217, 255, .08), transparent 70%),
-    linear-gradient(180deg, #0a1328 0%, #040916 42%, #020611 100%);
+    linear-gradient(180deg, #0A1328 0%, #040916 42%, #020611 100%);
 }
 
 body::before {
@@ -4167,9 +4191,9 @@ body::before {
 
 .app-brand-wordmark__a {
   position: relative;
-  color: #336dff;
+  color: var(--brand-blue);
   text-shadow:
-    0 0 12px rgba(51, 109, 255, .36),
+    0 0 12px rgba(30, 88, 255, .36),
     0 10px 18px rgba(0, 0, 0, .32);
 }
 
@@ -4181,7 +4205,7 @@ body::before {
   width: .18em;
   height: .18em;
   border-radius: 999px;
-  background: #6e44ff;
+  background: #7A3CFF;
   transform: translateX(-50%) skewX(8deg);
   box-shadow: 0 0 8px rgba(110, 68, 255, .52);
 }
@@ -4657,9 +4681,9 @@ summary:focus-visible {
 }
 
 .watch-page-v2 {
-  --watch-blue: #2f8fff;
-  --watch-cyan: #37d7ff;
-  --watch-violet: #9a72ff;
+  --watch-blue: #1E58FF;
+  --watch-cyan: #00E0FF;
+  --watch-violet: #7A3CFF;
   --watch-green: #67d51b;
   --watch-orange: #ff981a;
   --watch-red: #ff405d;

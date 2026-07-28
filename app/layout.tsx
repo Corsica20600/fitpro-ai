@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Exo_2, Orbitron, Raleway } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
@@ -9,8 +9,9 @@ import { BRAND } from "@/src/lib/brand";
 import { absoluteUrl, getSiteUrl } from "@/src/lib/site-url";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const exo2 = Exo_2({ variable: "--font-exo-2", subsets: ["latin"], display: "swap" });
+const orbitron = Orbitron({ variable: "--font-orbitron", subsets: ["latin"], display: "swap" });
+const raleway = Raleway({ variable: "--font-raleway", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -86,7 +87,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const isConnected = Boolean(session?.user?.email);
 
   return (
-    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="fr" className={`${exo2.variable} ${orbitron.variable} ${raleway.variable}`}>
       <body>
         <div className="app-shell">
           <header className="app-topbar">
