@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #07090f;
-  --bg-soft: #0e1320;
-  --bg-elev: #131a2b;
-  --card: #141c30;
-  --card-2: #0f1728;
+  --bg: #020611;
+  --bg-soft: #0a1328;
+  --bg-elev: #111d3a;
+  --card: #101a32;
+  --card-2: #0a1328;
   --text: #f7f9ff;
   --muted: #95a3c7;
   --line: #24304a;
   --line-soft: #1f293f;
-  --accent: #2f8fff;
-  --accent-2: #2f8fff;
-  --danger: #2f8fff;
+  --accent: #00d9ff;
+  --accent-2: #6e44ff;
+  --danger: #ff405d;
   --radius-card: 20px;
   --radius-ui: 14px;
   --shadow-card: 0 14px 30px rgba(2, 6, 19, .55);
@@ -924,9 +924,20 @@ button, input, select { font-family: inherit; }
 
 .app-brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 7px;
   letter-spacing: .01em;
+}
+
+.app-brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 16px rgba(55, 215, 255, .28));
+}
+
+.app-brand-mark__shape {
+  fill: url("#traknio-topbar-gradient");
 }
 
 .app-brand-main {
@@ -3445,20 +3456,20 @@ body {
 
 /* === Fit Design System v2: premium shell/navigation foundation === */
 :root {
-  --fit-bg: #030713;
-  --fit-bg-soft: #071020;
+  --fit-bg: #020611;
+  --fit-bg-soft: #0a1328;
   --fit-surface: rgba(12, 22, 42, .88);
   --fit-surface-solid: #0c162a;
   --fit-surface-raised: rgba(17, 31, 58, .94);
   --fit-surface-elevated: rgba(21, 39, 72, .96);
-  --fit-border: rgba(111, 162, 255, .24);
-  --fit-border-strong: rgba(130, 181, 255, .42);
+  --fit-border: rgba(0, 217, 255, .24);
+  --fit-border-strong: rgba(110, 68, 255, .5);
   --fit-text: #f7fbff;
   --fit-text-muted: #a7b8da;
   --fit-text-soft: #d9e7ff;
-  --fit-accent: #2f8fff;
-  --fit-accent-cyan: #37d7ff;
-  --fit-accent-violet: #8f7cff;
+  --fit-accent: #00d9ff;
+  --fit-accent-cyan: #00d9ff;
+  --fit-accent-violet: #6e44ff;
   --fit-success: #1fd79d;
   --fit-warning: #ffcf52;
   --fit-orange: #ff9a4d;
@@ -3562,7 +3573,7 @@ body::before {
 
 .app-brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   min-height: 42px;
   padding: 3px 8px 3px 2px;
@@ -3577,7 +3588,7 @@ body::before {
 
 .app-brand-main {
   color: var(--fit-text);
-  font-size: 2rem;
+  font-size: 1.9rem;
   text-shadow: 0 10px 24px rgba(0, 0, 0, .28);
 }
 
@@ -4052,11 +4063,11 @@ body::before {
   }
 }
 
-/* === Final visual harmonization: FitAI Pro technical premium identity === */
+/* === Final visual harmonization: Traknio technical premium identity === */
 :root {
-  --fit-blue: #2f8fff;
-  --fit-cyan: #37d7ff;
-  --fit-violet: #9a72ff;
+  --fit-blue: #287cff;
+  --fit-cyan: #00d9ff;
+  --fit-violet: #6e44ff;
   --fit-green: #67d51b;
   --fit-orange: #ff8a16;
   --fit-gold: #ffcf52;
@@ -4074,10 +4085,10 @@ body::before {
 
 body {
   background:
-    radial-gradient(780px 360px at 50% -16%, rgba(47, 143, 255, .22), transparent 68%),
-    radial-gradient(520px 280px at 100% 8%, rgba(55, 215, 255, .1), transparent 72%),
-    radial-gradient(460px 260px at 0% 78%, rgba(154, 114, 255, .08), transparent 70%),
-    linear-gradient(180deg, #050b18 0%, #030713 42%, #01040c 100%);
+    radial-gradient(780px 360px at 50% -16%, rgba(0, 217, 255, .2), transparent 68%),
+    radial-gradient(520px 280px at 100% 8%, rgba(110, 68, 255, .14), transparent 72%),
+    radial-gradient(460px 260px at 0% 78%, rgba(0, 217, 255, .08), transparent 70%),
+    linear-gradient(180deg, #0a1328 0%, #040916 42%, #020611 100%);
 }
 
 body::before {
@@ -4103,15 +4114,30 @@ body::before {
 }
 
 .app-brand-main {
-  font-size: 2.08rem;
-  letter-spacing: -.055em;
-  text-transform: none;
+  font-size: 1.66rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
 }
 
 .app-brand-pro {
   color: var(--fit-blue);
   text-transform: uppercase;
   text-shadow: 0 0 24px rgba(47, 143, 255, .56);
+}
+
+.app-brand-mark {
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  border: 1px solid rgba(55, 215, 255, .34);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 70% 20%, rgba(55, 215, 255, .2), transparent 55%),
+    linear-gradient(145deg, rgba(8, 16, 32, .9), rgba(4, 9, 20, .96));
+  box-shadow:
+    inset 0 1px 0 rgba(235, 247, 255, .12),
+    0 12px 28px rgba(0, 0, 0, .24),
+    0 0 20px rgba(154, 114, 255, .14);
 }
 
 .screen,
@@ -4869,6 +4895,96 @@ summary:focus-visible {
 
 .watch-page-v2 button:disabled {
   opacity: .55;
+}
+
+/* Traknio reference screens */
+.landing-page .landing-hero {
+  place-items: center;
+  gap: 18px;
+  padding: clamp(20px, 5vw, 34px) clamp(14px, 4vw, 28px);
+  border-color: rgba(37, 57, 87, .9);
+  border-radius: 8px;
+  background:
+    radial-gradient(420px 220px at 50% 24%, rgba(24, 47, 90, .44), transparent 66%),
+    linear-gradient(180deg, #080f21 0%, #020611 100%);
+}
+
+.landing-brand-reference {
+  width: min(100%, 520px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 18px 32px rgba(0, 0, 0, .38));
+}
+
+.login-page--reference {
+  align-items: center;
+  justify-content: center;
+}
+
+.login-page--reference .screen {
+  justify-content: center;
+}
+
+.login-reference-card {
+  width: min(100%, 260px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 217, 255, .18);
+  border-radius: 30px;
+  background: #020611;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, .58),
+    0 0 34px rgba(0, 217, 255, .14);
+}
+
+.login-reference-form,
+.login-reference-button {
+  display: block;
+  width: 100%;
+}
+
+.login-reference-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-reference-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.login-reference-card .legal-link-row {
+  padding: 9px 8px 12px;
+  background: linear-gradient(180deg, rgba(2, 6, 17, .98), #020611);
+  font-size: .66rem;
+}
+
+.watch-time-text {
+  top: 8.4%;
+}
+
+.watch-time-text img {
+  width: clamp(14px, 4vw, 18px);
+  height: auto;
+  display: block;
+}
+
+.watch-page-v2 {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(32, 48, 82, .7), transparent 34%),
+    radial-gradient(circle at 80% 76%, rgba(110, 68, 255, .16), transparent 36%),
+    linear-gradient(180deg, #10182b 0%, #050914 58%, #020611 100%);
+}
+
+.watch-round-shell {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .08),
+    inset 0 0 32px rgba(0, 217, 255, .08),
+    0 0 0 8px rgba(255, 255, 255, .035),
+    0 22px 42px rgba(0, 0, 0, .58);
 }
 
 @media (max-width: 340px), (max-height: 340px) {

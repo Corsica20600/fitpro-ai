@@ -11,7 +11,7 @@ import { getWorkoutHistorySummaryForDemoUser } from "@/src/server/fitness-querie
 
 export const metadata = privatePageMetadata(
   "Historique",
-  "Historique privé FitAI Pro des séances terminées, volumes et séries enregistrées.",
+  "Historique privé Traknio des séances terminées, volumes et séries enregistrées.",
 );
 
 function formatDate(date: Date) {

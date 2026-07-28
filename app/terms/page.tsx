@@ -3,12 +3,13 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { BRAND } from "@/src/lib/brand";
 
 const termsSections = [
   {
     title: "Usage de l'application",
     items: [
-      "FitAI Pro aide à organiser des entraînements, suivre des performances et synchroniser une montre Wear OS.",
+      `${BRAND.name} aide à organiser des entraînements, suivre des performances et synchroniser une montre Wear OS.`,
       "L'utilisateur reste responsable de l'exécution des exercices et de l'adaptation des charges à son niveau.",
       "Les contenus d'entraînement ne remplacent pas un avis médical ou l'accompagnement d'un professionnel.",
     ],
@@ -33,7 +34,7 @@ const termsSections = [
 
 export const metadata: Metadata = {
   title: "Conditions d'utilisation",
-  description: "Conditions d'utilisation préparatoires de FitAI Pro pour cadrer l'usage de l'application.",
+  description: `Conditions d'utilisation préparatoires de ${BRAND.name} pour cadrer l'usage de l'application.`,
   alternates: {
     canonical: "/terms",
   },
@@ -45,7 +46,7 @@ export default function TermsPage() {
       <PageHeader
         eyebrow="Base juridique"
         title="Conditions d'utilisation"
-        description="Version préparatoire pour cadrer l'usage de FitAI Pro avant une publication Play Store."
+        description={`Version préparatoire pour cadrer l'usage de ${BRAND.name} avant une publication Play Store.`}
       />
 
       <GlassCard className="legal-card" elevated>

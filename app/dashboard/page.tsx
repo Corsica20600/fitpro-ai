@@ -20,7 +20,7 @@ const shortcuts = [
 
 export const metadata = privatePageMetadata(
   "Tableau de bord",
-  "Tableau de bord privé FitAI Pro avec statistiques, objectifs et prochaine séance.",
+  "Tableau de bord privé Traknio avec statistiques, objectifs et prochaine séance.",
 );
 
 export default async function DashboardPage() {

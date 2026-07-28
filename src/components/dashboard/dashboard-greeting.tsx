@@ -39,7 +39,7 @@ function getGreetingCopy(moment: DayMoment) {
 
 export function DashboardGreeting({ firstName, weeklySessions, streakWeeks, weeklyGoal }: DashboardGreetingProps) {
   const [moment, setMoment] = useState<DayMoment>("afternoon");
-  const displayName = firstName?.trim() || "Utilisateur FitAI";
+  const displayName = firstName?.trim() || "Utilisateur Traknio";
   const copy = getGreetingCopy(moment);
   const activityLabel =
     weeklySessions > 0

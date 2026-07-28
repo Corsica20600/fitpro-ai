@@ -27,7 +27,7 @@ const LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 
 export const metadata = privatePageMetadata(
   "Programmes",
-  "Programmes privés FitAI Pro, génération, édition et organisation des séances.",
+  "Programmes privés Traknio, génération, édition et organisation des séances.",
 );
 
 function goalToFr(goal: string) {

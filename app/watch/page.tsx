@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   createRestDeadlineFromServer,
@@ -8,6 +9,7 @@ import {
   shouldReplaceRestDeadline,
   type WatchRestDeadline,
 } from "@/src/lib/watch-timer";
+import { BRAND } from "@/src/lib/brand";
 
 type WatchState = {
   sessionId: string;
@@ -228,7 +230,7 @@ export default function WatchPage() {
 
   const isResting = displayRestRemaining > 0;
   const isCompleted = state?.status === "COMPLETED";
-  const exerciseName = state ? shortExerciseName(state.exerciseName) : "FitAI Pro";
+  const exerciseName = state ? shortExerciseName(state.exerciseName) : BRAND.name;
   const progressPercent = state
     ? Math.max(0, Math.min(100, (((state.exerciseIndex - 1) + (state.setIndex / Math.max(1, state.totalSets))) / Math.max(1, state.totalExercises)) * 100))
     : 0;
@@ -249,7 +251,9 @@ export default function WatchPage() {
   return (
     <main className={`watch-page-v2 ${isResting ? "is-resting" : ""}`} data-watch-route="true">
       <section className="watch-round-shell" style={ringStyle} aria-live="polite">
-        <div className="watch-time-text">FitAI Pro</div>
+        <div className="watch-time-text">
+          <Image src="/brand/traknio-mark.svg" alt="" width={18} height={13} priority />
+        </div>
         <span className={`watch-sync-dot watch-sync-dot--${syncState}`}>{syncLabel}</span>
 
         {!state ? (
@@ -266,7 +270,7 @@ export default function WatchPage() {
           <div className="watch-empty-state watch-empty-state--done">
             <span className="watch-empty-state__orb" aria-hidden="true" />
             <h1>Séance terminée</h1>
-            <p>Synchronisation effectuée. Tu peux retrouver le détail dans l’historique FitAI Pro.</p>
+            <p>Synchronisation effectuée. Tu peux retrouver le détail dans l’historique {BRAND.name}.</p>
             <button type="button" className="watch-secondary-action" disabled={busyAction != null} onClick={() => void refreshState()}>
               Actualiser
             </button>

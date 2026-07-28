@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
+import { BRAND } from "@/src/lib/brand";
 
 type MediaLike = {
   type: "IMAGE" | "THUMBNAIL" | "ANIMATION";
@@ -74,7 +75,7 @@ export function ExerciseDetailSheet({
     <div className="stack exercise-detail-screen">
       <section className="exercise-tech-hero">
         <div className="exercise-tech-hero__copy">
-          <p className="exercise-tech-brand">FitAI Pro · Fiche technique</p>
+          <p className="exercise-tech-brand">{BRAND.name} · Fiche technique</p>
           <h1>
             {title}
             <span>{mainMuscle}</span>

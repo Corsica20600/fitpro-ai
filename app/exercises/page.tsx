@@ -14,7 +14,7 @@ const VALID_DIFFICULTIES = ["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const;
 
 export const metadata = privatePageMetadata(
   "Exercices",
-  "Catalogue privé des exercices FitAI Pro, filtres et fiches détaillées.",
+  "Catalogue privé des exercices Traknio, filtres et fiches détaillées.",
 );
 
 function firstParam(value: string | string[] | undefined) {

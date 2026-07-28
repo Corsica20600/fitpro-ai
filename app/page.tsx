@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
+import { BRAND } from "@/src/lib/brand";
 
 const highlights = [
   {
@@ -29,7 +31,7 @@ const pillars = [
 
 export const metadata: Metadata = {
   title: "Accueil",
-  description: "Découvre FitAI Pro, l'application fitness premium avec historique, programmes et synchronisation Wear OS.",
+  description: "Application privée d'entraînement connecté avec historique, programmes et synchronisation Wear OS.",
   alternates: {
     canonical: "/",
   },
@@ -45,13 +47,15 @@ export default async function HomePage() {
   return (
     <AppShell className="landing-page">
       <section className="landing-hero" aria-labelledby="landing-title">
-        <div className="landing-hero__orb" aria-hidden="true" />
-        <p className="eyebrow">FitAI Pro</p>
-        <h1 id="landing-title">Ton cockpit d&apos;entraînement connecté.</h1>
-        <p className="muted">
-          Une application premium pour piloter tes séances, ton historique et ta montre Wear OS depuis un compte
-          sécurisé.
-        </p>
+        <Image
+          src="/brand/traknio-logo-site.png"
+          alt={`${BRAND.name} - ${BRAND.tagline}`}
+          width={769}
+          height={395}
+          className="landing-brand-reference"
+          priority
+        />
+        <h1 id="landing-title" className="sr-only">{BRAND.name}</h1>
         <div className="landing-actions">
           <Link className="primary-button full-line" href="/login">
             Se connecter

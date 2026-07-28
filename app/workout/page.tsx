@@ -12,7 +12,7 @@ import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 
 export const metadata = privatePageMetadata(
   "Séance",
-  "Séance privée FitAI Pro avec suivi guidé, repos, séries et synchronisation montre.",
+  "Séance privée Traknio avec suivi guidé, repos, séries et synchronisation montre.",
 );
 
 function formatWorkoutLabel(label?: string | null) {

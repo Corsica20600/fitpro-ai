@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { BRAND } from "@/src/lib/brand";
 import { isStripeConfigured } from "@/src/lib/stripe";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { deleteAccountAction } from "@/src/server/account-actions";
@@ -14,7 +15,7 @@ import { isSpotifyConfigured } from "@/src/server/spotify";
 
 export const metadata = privatePageMetadata(
   "Paramètres",
-  "Paramètres privés FitAI Pro pour compte, export de données et intégrations.",
+  `Paramètres privés ${BRAND.name} pour compte, export de données et intégrations.`,
 );
 
 function getSettingSections(watchPairingEnabled: boolean) {
@@ -140,7 +141,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const watchLabel = getFirstParam(searchParams.watchLabel);
   const watchToken = getFirstParam(searchParams.watchToken);
   const email = session?.user?.email ?? accountData.profile.email ?? "Compte Google";
-  const name = accountData.profile.displayName || session?.user?.name || "Utilisateur FitAI";
+  const name = accountData.profile.displayName || session?.user?.name || `Utilisateur ${BRAND.name}`;
   const connected = Boolean(session?.user?.email);
   const stripeConfigured = isStripeConfigured();
   const subscriptionStatus = accountData.profile.subscriptionStatus;
@@ -197,7 +198,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
       <GlassCard className="settings-billing-card" elevated>
         <div>
           <p className="eyebrow">Abonnement</p>
-          <h2>FitAI Pro</h2>
+          <h2>{BRAND.name}</h2>
           <p className="muted">
             Paiement sécurisé par Stripe. Ton abonnement est rattaché au même compte Google que ton historique.
           </p>
@@ -260,7 +261,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
       <GlassCard className="settings-data-card">
         <div>
-          <p className="eyebrow">Données FitAI</p>
+          <p className="eyebrow">Données {BRAND.name}</p>
           <h2>Historique rattaché à {name}</h2>
           <p className="muted">
             Ton historique reste lié au profil Neon associé à ton compte Google. Les prochains modules commerciaux

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { BRAND } from "@/src/lib/brand";
 
 const privacySections = [
   {
@@ -35,7 +36,7 @@ const privacySections = [
 
 export const metadata: Metadata = {
   title: "Confidentialité",
-  description: "Politique de confidentialité préparatoire de FitAI Pro : données collectées, usage et contrôle utilisateur.",
+  description: `Politique de confidentialité préparatoire de ${BRAND.name} : données collectées, usage et contrôle utilisateur.`,
   alternates: {
     canonical: "/privacy",
   },
@@ -47,14 +48,14 @@ export default function PrivacyPage() {
       <PageHeader
         eyebrow="Base juridique"
         title="Confidentialité"
-        description="Document de travail pour la future version commerciale de FitAI Pro. À faire valider avant publication publique."
+        description={`Document de travail pour la future version commerciale de ${BRAND.name}. À faire valider avant publication publique.`}
       />
 
       <GlassCard className="legal-card" elevated>
         <p className="eyebrow">Dernière mise à jour</p>
         <h2>27 juillet 2026</h2>
         <p className="muted">
-          FitAI Pro est une application d&apos;entraînement. Les données personnelles servent uniquement à fournir le
+          {BRAND.name} est une application d&apos;entraînement. Les données personnelles servent uniquement à fournir le
           compte, l&apos;historique, la synchronisation et les fonctionnalités choisies par l&apos;utilisateur.
         </p>
       </GlassCard>

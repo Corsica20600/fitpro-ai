@@ -4,6 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { auth } from "@/auth";
 import { BottomNav } from "@/src/components/ui/bottom-nav";
+import { BRAND } from "@/src/lib/brand";
 import { absoluteUrl, getSiteUrl } from "@/src/lib/site-url";
 import "./globals.css";
 
@@ -12,18 +13,17 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  applicationName: "FitAI Pro",
+  applicationName: BRAND.name,
   title: {
-    default: "FitAI Pro",
-    template: "%s | FitAI Pro",
+    default: BRAND.name,
+    template: `%s | ${BRAND.name}`,
   },
-  description: "Application fitness premium pour suivre tes séances, ton historique et ta montre Wear OS.",
+  description: BRAND.description,
   manifest: "/manifest.webmanifest",
   alternates: {
     canonical: "/",
   },
   keywords: [
-    "FitAI Pro",
     "fitness",
     "musculation",
     "coach sportif",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
     "suivi entraînement",
     "programme musculation",
   ],
-  authors: [{ name: "FitAI Pro" }],
-  creator: "FitAI Pro",
-  publisher: "FitAI Pro",
+  authors: [{ name: BRAND.name }],
+  creator: BRAND.name,
+  publisher: BRAND.name,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -47,27 +47,27 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "FitAI Pro",
+    title: BRAND.shortName,
   },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: "/",
-    siteName: "FitAI Pro",
-    title: "FitAI Pro",
+    siteName: BRAND.name,
+    title: BRAND.name,
     description: "Pilote tes entraînements, ton historique et ta montre Wear OS depuis un compte sécurisé.",
     images: [
       {
         url: absoluteUrl("/icons/icon-512.png"),
         width: 512,
         height: 512,
-        alt: "Logo FitAI Pro",
+        alt: `Logo ${BRAND.name}`,
       },
     ],
   },
   twitter: {
     card: "summary",
-    title: "FitAI Pro",
+    title: BRAND.name,
     description: "Application fitness premium avec historique, programmes et synchronisation Wear OS.",
     images: [absoluteUrl("/icons/icon-512.png")],
   },
@@ -89,9 +89,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <div className="app-shell">
           <header className="app-topbar">
-            <div className="app-brand">
-              <span className="app-brand-main">FitAI</span>
-              <span className="app-brand-pro">PRO</span>
+            <div className="app-brand" aria-label={BRAND.name}>
+              <svg className="app-brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="traknio-topbar-gradient" x1="7" y1="12" x2="42" y2="34" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#00D9FF" />
+                    <stop offset="0.52" stopColor="#287CFF" />
+                    <stop offset="1" stopColor="#8F32FF" />
+                  </linearGradient>
+                </defs>
+                <g className="app-brand-mark__shape">
+                  <path d="M8 34h4.2l5.4-17.5h-4.2L8 34Z" />
+                  <path d="M15.5 34h4.2l7.3-23.6h-4.2L15.5 34Z" />
+                  <path d="M23 34h4.2l9.4-30.4h-4.2L23 34Z" />
+                  <path d="M21.7 10.6h22.8l-4.8 5.3H28.4l-2 6.5h8.4L31.5 33c-.7 2.1-2.1 3.7-4.1 4.5l-5.7 2.5 7.4-24.1h-13Z" />
+                </g>
+              </svg>
+              <span className="app-brand-main">{BRAND.name}</span>
             </div>
             {isConnected ? (
               <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">

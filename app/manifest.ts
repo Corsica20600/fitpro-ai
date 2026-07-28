@@ -1,16 +1,23 @@
 import type { MetadataRoute } from "next";
+import { BRAND } from "@/src/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FitAI Pro",
-    short_name: "FitAI",
-    description: "Coach fitness intelligent",
+    name: BRAND.name,
+    short_name: BRAND.shortName,
+    description: BRAND.tagline,
     start_url: "/",
     display: "standalone",
     orientation: "portrait",
     theme_color: "#0b0f14",
     background_color: "#0b0f14",
     icons: [
+      {
+        src: "/brand/traknio-icon.svg",
+        sizes: "512x512",
+        type: "image/svg+xml",
+        purpose: "any",
+      },
       {
         src: "/icons/icon-192.png",
         sizes: "192x192",

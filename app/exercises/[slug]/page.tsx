@@ -12,7 +12,7 @@ import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-
 
 export const metadata = privatePageMetadata(
   "Fiche exercice",
-  "Fiche exercice privée FitAI Pro avec technique, conseils, muscles et erreurs à éviter.",
+  "Fiche exercice privée Traknio avec technique, conseils, muscles et erreurs à éviter.",
 );
 
 function uniqueText(items: string[]) {

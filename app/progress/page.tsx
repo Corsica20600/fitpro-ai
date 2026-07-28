@@ -13,7 +13,7 @@ import { getProgressDataForDemoUser } from "@/src/server/fitness-queries";
 
 export const metadata = privatePageMetadata(
   "Progression",
-  "Progression privée FitAI Pro avec records, volumes, muscles et tendances.",
+  "Progression privée Traknio avec records, volumes, muscles et tendances.",
 );
 
 const PERIODS = [

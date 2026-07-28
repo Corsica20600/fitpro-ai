@@ -9,7 +9,7 @@ import { getWorkoutSessionDetailForDemoUser } from "@/src/server/fitness-queries
 
 export const metadata = privatePageMetadata(
   "Détail séance",
-  "Détail privé d'une séance FitAI Pro avec exercices, séries et volume.",
+  "Détail privé d'une séance Traknio avec exercices, séries et volume.",
 );
 
 function formatDate(date: Date) {

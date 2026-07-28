@@ -3,16 +3,17 @@ import Link from "next/link";
 import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
+import { BRAND } from "@/src/lib/brand";
 
 const deletionSteps = [
-  "Connecte-toi au compte Google utilisé dans FitAI Pro.",
+  `Connecte-toi au compte Google utilisé dans ${BRAND.name}.`,
   "Va dans Paramètres puis vérifie que l'historique affiché correspond bien au compte à supprimer.",
-  "Contacte le support officiel indiqué sur la fiche Play Store en demandant la suppression du compte FitAI Pro.",
+  `Contacte le support officiel indiqué sur la fiche Play Store en demandant la suppression du compte ${BRAND.name}.`,
   "Après vérification, le profil, les séances, les programmes et les mesures associées seront supprimés.",
 ] as const;
 
 const deletedData = [
-  "Profil FitAI Pro et adresse e-mail associée",
+  `Profil ${BRAND.name} et adresse e-mail associée`,
   "Programmes, séances, séries et historiques d'entraînement",
   "Mesures de progression enregistrées",
   "Préférences liées aux intégrations activées",
@@ -25,7 +26,7 @@ const retainedData = [
 
 export const metadata: Metadata = {
   title: "Suppression des données",
-  description: "Procédure publique pour demander la suppression d'un compte FitAI Pro et des données associées.",
+  description: `Procédure publique pour demander la suppression d'un compte ${BRAND.name} et des données associées.`,
   alternates: {
     canonical: "/data-deletion",
   },
@@ -48,7 +49,7 @@ export default async function DataDeletionPage(props: DataDeletionPageProps) {
       <PageHeader
         eyebrow="Gestion des données"
         title="Suppression du compte et des données"
-        description="Page publique destinée à expliquer comment demander la suppression d'un compte FitAI Pro et des données associées."
+        description={`Page publique destinée à expliquer comment demander la suppression d'un compte ${BRAND.name} et des données associées.`}
       />
 
       {accountDeleted ? (
@@ -56,7 +57,7 @@ export default async function DataDeletionPage(props: DataDeletionPageProps) {
           <p className="eyebrow">Compte supprimé</p>
           <h2>La suppression a été effectuée</h2>
           <p className="muted">
-            Le profil FitAI Pro connecté et les données associées ont été supprimés. Tu es maintenant déconnecté.
+            Le profil {BRAND.name} connecté et les données associées ont été supprimés. Tu es maintenant déconnecté.
           </p>
         </GlassCard>
       ) : null}

@@ -319,7 +319,7 @@ function getProfileDisplayName(name: string | null | undefined, email: string) {
   if (sessionName) return sessionName;
 
   const emailName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim();
-  return emailName || "Utilisateur FitAI";
+  return emailName || "Utilisateur Traknio";
 }
 
 export async function getOrCreateDemoProfile() {
