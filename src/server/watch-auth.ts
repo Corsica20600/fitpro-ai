@@ -37,6 +37,7 @@ export async function requireWatchAccess(request: Request): Promise<WatchAccessR
       where: { tokenHash: hashWatchDeviceToken(deviceToken) },
       select: {
         id: true,
+        lastSeenAt: true,
         revokedAt: true,
         userProfileId: true,
         userProfile: { select: { email: true } },
@@ -44,10 +45,14 @@ export async function requireWatchAccess(request: Request): Promise<WatchAccessR
     });
 
     if (device && !device.revokedAt) {
-      await prisma.watchDevice.update({
-        where: { id: device.id },
-        data: { lastSeenAt: new Date() },
-      });
+      const now = Date.now();
+      const lastSeenAtMs = device.lastSeenAt?.getTime() ?? 0;
+      if (now - lastSeenAtMs > 60_000) {
+        await prisma.watchDevice.update({
+          where: { id: device.id },
+          data: { lastSeenAt: new Date(now) },
+        });
+      }
 
       return {
         ok: true,

@@ -58,7 +58,7 @@ class WatchViewModel(
         pollingJob = viewModelScope.launch {
             fetchState(silent = false)
             while (true) {
-                delay(2_000)
+                delay(8_000)
                 fetchState(silent = true)
             }
         }

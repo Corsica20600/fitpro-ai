@@ -229,6 +229,8 @@ model Exercise {
 
   @@index([category, difficulty])
   @@index([isActive])
+  @@index([isActive, name])
+  @@index([isActive, category, name])
   @@index([movementType])
 }
 
@@ -309,6 +311,7 @@ model ProgramExercise {
 
   @@unique([programDayId, orderIndex])
   @@index([exerciseId])
+  @@index([programDayId, exerciseId])
 }
 
 model WorkoutSession {
@@ -330,6 +333,8 @@ model WorkoutSession {
   watchSession    WatchSession?
 
   @@index([userProfileId, status, createdAt])
+  @@index([userProfileId, status, endedAt, createdAt])
+  @@index([userProfileId, programDayId, status])
 }
 
 model WatchSession {
@@ -367,7 +372,10 @@ model WorkoutSet {
   programExercise   ProgramExercise? @relation(fields: [programExerciseId], references: [id], onDelete: SetNull)
 
   @@index([workoutSessionId, setIndex])
+  @@index([workoutSessionId, exerciseId, setIndex, createdAt])
+  @@index([workoutSessionId, exerciseId, completedAt, createdAt])
   @@index([exerciseId])
+  @@index([exerciseId, completedAt, createdAt])
 }
 
 model ProgressMetric {
