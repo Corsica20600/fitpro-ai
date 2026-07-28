@@ -12,11 +12,8 @@ import { ProgramSummary } from "@/src/components/programs/program-summary";
 import {
   addExerciseToProgramDayAction,
   createSimpleProgramAction,
-  deleteProgramExerciseAction,
-  replaceProgramExerciseAction,
+  deleteProgramAction,
   renameProgramDayAction,
-  setProgramStatusAction,
-  updateProgramExerciseAction,
 } from "@/src/server/fitness-actions";
 import { getExerciseOptionsForPrograms, getProgramsForDemoUser } from "@/src/server/fitness-queries";
 import { levelToFr } from "@/src/lib/exercise-i18n";
@@ -141,25 +138,24 @@ export default async function ProgramsPage() {
               muscles={uniqueProgramMuscles(program)}
               equipment={uniqueProgramEquipment(program)}
               actions={
-                <div className="grid-2">
-                  <form action={setProgramStatusAction}>
+                <div className="program-card-actions-compact">
+                  <a className="ghost-btn chip" href={`#program-edit-${program.id}`}>
+                    Modifier
+                  </a>
+                  <form action={deleteProgramAction}>
                     <input type="hidden" name="programId" value={program.id} />
-                    <input type="hidden" name="status" value={program.status === "ACTIVE" ? "DRAFT" : "ACTIVE"} />
-                    <PrimaryButton type="submit">
-                      {program.status === "ACTIVE" ? "Passer en brouillon" : "Activer le programme"}
-                    </PrimaryButton>
-                  </form>
-                  <form action={setProgramStatusAction}>
-                    <input type="hidden" name="programId" value={program.id} />
-                    <input type="hidden" name="status" value="ARCHIVED" />
-                    <button className="ghost-btn chip danger" type="submit">Archiver</button>
+                    <button className="ghost-btn chip danger" type="submit">Supprimer</button>
                   </form>
                 </div>
               }
             >
               <div className="stack" style={{ marginTop: 16 }}>
-                {program.days.map((day) => (
-                  <details key={day.id} className="program-day-panel">
+                {program.days.map((day, dayIndex) => (
+                  <details
+                    key={day.id}
+                    id={dayIndex === 0 ? `program-edit-${program.id}` : undefined}
+                    className="program-day-panel"
+                  >
                     <summary className="day-summary">
                       <span>{day.title || program.name}</span>
                       <span className="chip orange">{day.exercises.length} exos</span>
@@ -180,6 +176,9 @@ export default async function ProgramsPage() {
                       <p className="muted">Aucun exercice pour ce jour.</p>
                     ) : (
                       <ProgramDayExercisesEditor
+                        key={day.exercises.map((ex) => (
+                          `${ex.id}:${ex.exerciseId}:${ex.sets}:${ex.repsMin}:${ex.restSeconds}:${ex.repsText ?? ""}`
+                        )).join("|")}
                         programId={program.id}
                         initialExercises={day.exercises.map((ex) => ({
                           id: ex.id,
@@ -210,9 +209,6 @@ export default async function ProgramsPage() {
                           primaryMuscles: opt.primaryMuscles,
                           primaryMusclesFr: opt.primaryMusclesFr,
                         }))}
-                        updateAction={updateProgramExerciseAction}
-                        deleteAction={deleteProgramExerciseAction}
-                        replaceAction={replaceProgramExerciseAction}
                       />
                     )}
                   </details>

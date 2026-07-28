@@ -361,6 +361,30 @@ export async function setProgramStatusAction(formData: FormData) {
   revalidatePath("/programs");
 }
 
+export async function deleteProgramAction(formData: FormData) {
+  const profile = await getOrCreateDemoProfile();
+  const programId = String(formData.get("programId") ?? "").trim();
+  if (!programId) return;
+
+  const program = await prisma.program.findFirst({
+    where: { id: programId, userProfileId: profile.id },
+    select: {
+      id: true,
+      days: { select: { id: true } },
+    },
+  });
+  if (!program) return;
+
+  const dayIds = program.days.map((day) => day.id);
+  await prisma.$transaction([
+    prisma.programExercise.deleteMany({ where: { programDayId: { in: dayIds } } }),
+    prisma.programDay.deleteMany({ where: { programId } }),
+    prisma.program.delete({ where: { id: programId } }),
+  ]);
+
+  revalidatePath("/programs");
+}
+
 export async function updateProgramExerciseAction(formData: FormData) {
   const profile = await getOrCreateDemoProfile();
   const programId = String(formData.get("programId") ?? "").trim();

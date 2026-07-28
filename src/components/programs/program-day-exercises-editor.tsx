@@ -18,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { useRouter } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 
@@ -56,21 +57,22 @@ function SortableExerciseCard({
   ex,
   idx,
   total,
-  programId,
   exerciseOptions,
-  updateAction,
-  deleteAction,
-  replaceAction,
+  onUpdate,
+  onDelete,
   onReplace,
 }: {
   ex: DayExercise;
   idx: number;
   total: number;
-  programId: string;
   exerciseOptions: ExerciseOption[];
-  updateAction: (formData: FormData) => void | Promise<void>;
-  deleteAction: (formData: FormData) => void | Promise<void>;
-  replaceAction: (formData: FormData) => void | Promise<void>;
+  onUpdate: (programExerciseId: string, values: {
+    sets: number;
+    repetitions: number;
+    restSeconds: number;
+    targetWeightKg: number;
+  }) => Promise<void>;
+  onDelete: (programExerciseId: string) => Promise<void>;
   onReplace: (programExerciseId: string, exerciseId: string) => Promise<void>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: ex.id });
@@ -81,7 +83,36 @@ function SortableExerciseCard({
   };
 
   const [replaceExerciseId, setReplaceExerciseId] = useState(ex.exerciseId);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [replacing, setReplacing] = useState(false);
+
+  async function handleUpdateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (updating || deleting) return;
+    const formData = new FormData(event.currentTarget);
+    setUpdating(true);
+    try {
+      await onUpdate(ex.id, {
+        sets: Number(formData.get("sets") ?? ex.sets),
+        repetitions: Number(formData.get("repetitions") ?? ex.repsMin ?? 10),
+        restSeconds: Number(formData.get("restSeconds") ?? ex.restSeconds),
+        targetWeightKg: Number(formData.get("targetWeightKg") ?? 0),
+      });
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  async function handleDeleteClick() {
+    if (updating || deleting) return;
+    setDeleting(true);
+    try {
+      await onDelete(ex.id);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function handleReplaceSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -130,9 +161,7 @@ function SortableExerciseCard({
         <p className="muted">
           {ex.sets} séries · {ex.repsMin ?? "?"} reps · {ex.restSeconds ?? "?"} sec · {ex.repsText || "Poids libre"}
         </p>
-        <form action={updateAction} className="form-grid" style={{ marginTop: 8 }}>
-          <input type="hidden" name="programId" value={programId} />
-          <input type="hidden" name="programExerciseId" value={ex.id} />
+        <form onSubmit={(event) => { void handleUpdateSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>
           <div className="grid-2">
             <div>
               <label className="field-label">Séries</label>
@@ -154,13 +183,20 @@ function SortableExerciseCard({
             </div>
           </div>
           <div className="grid-2">
-            <PrimaryButton type="submit">Modifier</PrimaryButton>
-            <button className="ghost-btn chip danger" type="submit" formAction={deleteAction} formNoValidate>Retirer</button>
+            <PrimaryButton type="submit" disabled={updating || deleting}>
+              {updating ? "Modification..." : "Modifier"}
+            </PrimaryButton>
+            <button
+              className="ghost-btn chip danger"
+              type="button"
+              disabled={updating || deleting}
+              onClick={() => { void handleDeleteClick(); }}
+            >
+              {deleting ? "Suppression..." : "Retirer"}
+            </button>
           </div>
         </form>
-        <form action={replaceAction} onSubmit={(event) => { void handleReplaceSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>
-          <input type="hidden" name="programId" value={programId} />
-          <input type="hidden" name="programExerciseId" value={ex.id} />
+        <form onSubmit={(event) => { void handleReplaceSubmit(event); }} className="form-grid" style={{ marginTop: 8 }}>
           <label className="field-label">Remplacer par</label>
           <select
             name="exerciseId"
@@ -190,17 +226,12 @@ export function ProgramDayExercisesEditor({
   programId,
   initialExercises,
   exerciseOptions,
-  updateAction,
-  deleteAction,
-  replaceAction,
 }: {
   programId: string;
   initialExercises: DayExercise[];
   exerciseOptions: ExerciseOption[];
-  updateAction: (formData: FormData) => void | Promise<void>;
-  deleteAction: (formData: FormData) => void | Promise<void>;
-  replaceAction: (formData: FormData) => void | Promise<void>;
 }) {
+  const router = useRouter();
   const [exercises, setExercises] = useState(initialExercises);
   const [replaceFeedback, setReplaceFeedback] = useState<{
     type: "success" | "error";
@@ -286,6 +317,79 @@ export function ProgramDayExercisesEditor({
       )),
     );
     setReplaceFeedback({ type: "success", message: "Exercice remplacé." });
+    router.refresh();
+    window.setTimeout(() => setReplaceFeedback(null), 1800);
+  }
+
+  async function onUpdate(programExerciseId: string, values: {
+    sets: number;
+    repetitions: number;
+    restSeconds: number;
+    targetWeightKg: number;
+  }) {
+    setReplaceFeedback(null);
+    const response = await fetch(
+      `/api/programs/${encodeURIComponent(programId)}/exercises/${encodeURIComponent(programExerciseId)}`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(values),
+      },
+    );
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      setReplaceFeedback({
+        type: "error",
+        message: payload.error || "Impossible de modifier cet exercice.",
+      });
+      return;
+    }
+
+    const payload = await response.json() as {
+      exercise: Pick<DayExercise, "id" | "sets" | "repsMin" | "repsText" | "restSeconds">;
+    };
+
+    setExercises((prev) =>
+      prev.map((item) => (
+        item.id === payload.exercise.id
+          ? {
+              ...item,
+              sets: payload.exercise.sets,
+              repsMin: payload.exercise.repsMin,
+              repsText: payload.exercise.repsText,
+              restSeconds: payload.exercise.restSeconds,
+            }
+          : item
+      )),
+    );
+    setReplaceFeedback({ type: "success", message: "Exercice modifié." });
+    router.refresh();
+    window.setTimeout(() => setReplaceFeedback(null), 1800);
+  }
+
+  async function onDelete(programExerciseId: string) {
+    setReplaceFeedback(null);
+    const previous = exercises;
+    setExercises((prev) => prev.filter((item) => item.id !== programExerciseId));
+
+    const response = await fetch(
+      `/api/programs/${encodeURIComponent(programId)}/exercises/${encodeURIComponent(programExerciseId)}`,
+      { method: "DELETE" },
+    );
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      setExercises(previous);
+      setReplaceFeedback({
+        type: "error",
+        message: payload.error || "Impossible de retirer cet exercice.",
+      });
+      return;
+    }
+
+    setReplaceFeedback({ type: "success", message: "Exercice retiré." });
+    router.refresh();
     window.setTimeout(() => setReplaceFeedback(null), 1800);
   }
 
@@ -313,11 +417,9 @@ export function ProgramDayExercisesEditor({
               ex={ex}
               idx={idx}
               total={exercises.length}
-              programId={programId}
               exerciseOptions={exerciseOptions}
-              updateAction={updateAction}
-              deleteAction={deleteAction}
-              replaceAction={replaceAction}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
               onReplace={onReplace}
             />
           ))}
