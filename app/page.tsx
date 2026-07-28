@@ -51,7 +51,7 @@ export default async function HomePage() {
           src="/brand/traknio-logo-site.png"
           alt={`${BRAND.name} - ${BRAND.tagline}`}
           width={769}
-          height={395}
+          height={168}
           className="landing-brand-reference"
           priority
         />

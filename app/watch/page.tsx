@@ -252,7 +252,7 @@ export default function WatchPage() {
     <main className={`watch-page-v2 ${isResting ? "is-resting" : ""}`} data-watch-route="true">
       <section className="watch-round-shell" style={ringStyle} aria-live="polite">
         <div className="watch-time-text">
-          <Image src="/brand/traknio-watch-mark-exact.png" alt="" width={96} height={55} priority />
+          <Image src="/brand/traknio-watch-mark-exact.png" alt="" width={91} height={52} priority />
         </div>
         <span className={`watch-sync-dot watch-sync-dot--${syncState}`}>{syncLabel}</span>
 

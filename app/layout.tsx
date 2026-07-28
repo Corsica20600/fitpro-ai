@@ -95,8 +95,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <Image
                   src="/brand/traknio-logo-mark-exact.png"
                   alt=""
-                  width={128}
-                  height={74}
+                  width={167}
+                  height={94}
                   priority
                 />
               </span>
@@ -104,7 +104,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 src="/brand/traknio-wordmark-exact.png"
                 alt={BRAND.name}
                 width={520}
-                height={71}
+                height={50}
                 className="app-brand-wordmark"
                 priority
               />
