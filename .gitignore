@@ -48,3 +48,4 @@ next-env.d.ts
 
 .vercel
 wear-os/app/src/main/java/com/fitai/wear/FitAiConfig.kt
+android-private/fitai-android/.idea/caches/
