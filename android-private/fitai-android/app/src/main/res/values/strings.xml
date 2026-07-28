@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FitAI Pro</string>
+    <string name="app_name">Traknio</string>
     <string name="title_sync">Health Connect Sync (Prive)</string>
-    <string name="tab_fitai_pro">FitAI Pro</string>
+    <string name="tab_fitai_pro">Traknio</string>
     <string name="tab_sync_health">Sync Health</string>
     <string name="button_sync">Synchroniser maintenant</string>
-    <string name="button_back_to_fitai">Retour a FitAI Pro</string>
-    <string name="button_open_settings">Ouvrir les parametres FitAI</string>
+    <string name="button_back_to_fitai">Retour a Traknio</string>
+    <string name="button_open_settings">Ouvrir les parametres Traknio</string>
     <string name="status_idle">Pret</string>
     <string name="permission_unknown">Permissions: verification en attente</string>
-    <string name="help_text">Cette version synchronise Health Connect en priorite, puis Samsung Health en secours si necessaire.</string>
+    <string name="help_text">Traknio synchronise Health Connect en priorite, puis Samsung Health en secours si necessaire.</string>
 </resources>

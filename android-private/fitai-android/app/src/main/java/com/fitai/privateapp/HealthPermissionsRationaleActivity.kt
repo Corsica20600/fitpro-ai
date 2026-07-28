@@ -10,7 +10,7 @@ class HealthPermissionsRationaleActivity : AppCompatActivity() {
         supportActionBar?.title = "Health Connect"
         setContentView(
             TextView(this).apply {
-                text = "FitAI Pro lit uniquement les donnees que vous autorisez dans Health Connect afin de synchroniser vos statistiques d'entrainement."
+                text = "Traknio lit uniquement les donnees que vous autorisez dans Health Connect afin de synchroniser vos statistiques d'entrainement."
                 textSize = 18f
                 setPadding(48, 48, 48, 48)
             },

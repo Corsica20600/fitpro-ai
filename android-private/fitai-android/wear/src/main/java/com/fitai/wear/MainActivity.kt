@@ -49,13 +49,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FitAiWearApp()
+            TraknioWearApp()
         }
     }
 }
 
 @Composable
-private fun FitAiWearApp(viewModel: WatchViewModel = viewModel()) {
+private fun TraknioWearApp(viewModel: WatchViewModel = viewModel()) {
     val state by viewModel.state.collectAsState()
     val keepScreenOn = (state as? WatchScreenState.Ready)
         ?.payload
@@ -99,9 +99,9 @@ private fun WatchChrome(content: @Composable () -> Unit) {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color(0xFF173C7A),
-                            Color(0xFF07142C),
-                            Color(0xFF020713),
+                            Color(0xFF182F5A),
+                            Color(0xFF0A1328),
+                            Color(0xFF020611),
                         ),
                     ),
                 )
@@ -116,7 +116,7 @@ private fun WatchChrome(content: @Composable () -> Unit) {
 @Composable
 private fun LoadingScreen() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("FitAI", fontSize = 24.sp, fontWeight = FontWeight.Black)
+        Text("Traknio", fontSize = 20.sp, fontWeight = FontWeight.Black)
         Text("Connexion...", color = Color(0xFFB7C9EA), fontSize = 13.sp)
     }
 }
