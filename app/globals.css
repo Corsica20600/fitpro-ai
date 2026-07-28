@@ -4145,16 +4145,45 @@ body::before {
 }
 
 .app-brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(7px, 1.55vw, 14px);
   color: #f8fbff;
-  font-size: clamp(1.42rem, 4.8vw, 2rem);
-  font-weight: 950;
+  font-size: clamp(1.5rem, 5.1vw, 2.08rem);
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: .18em;
+  letter-spacing: .03em;
   text-transform: uppercase;
   text-shadow:
     0 1px 0 rgba(255, 255, 255, .18),
     0 10px 18px rgba(0, 0, 0, .32);
   white-space: nowrap;
+}
+
+.app-brand-wordmark span {
+  display: inline-block;
+  transform: skewX(-8deg) scaleX(1.18);
+}
+
+.app-brand-wordmark__a {
+  position: relative;
+  color: #336dff;
+  text-shadow:
+    0 0 12px rgba(51, 109, 255, .36),
+    0 10px 18px rgba(0, 0, 0, .32);
+}
+
+.app-brand-wordmark__a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: .28em;
+  width: .18em;
+  height: .18em;
+  border-radius: 999px;
+  background: #6e44ff;
+  transform: translateX(-50%) skewX(8deg);
+  box-shadow: 0 0 8px rgba(110, 68, 255, .52);
 }
 
 .screen,

@@ -100,7 +100,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   priority
                 />
               </span>
-              <span className="app-brand-wordmark" aria-hidden="true">TRAKNIO</span>
+              <span className="app-brand-wordmark" aria-hidden="true">
+                <span>T</span>
+                <span>R</span>
+                <span className="app-brand-wordmark__a">A</span>
+                <span>K</span>
+                <span>N</span>
+                <span>I</span>
+                <span>O</span>
+              </span>
             </div>
             {isConnected ? (
               <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">
