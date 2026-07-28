@@ -100,14 +100,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   priority
                 />
               </span>
-              <Image
-                src="/brand/traknio-wordmark-exact.png"
-                alt={BRAND.name}
-                width={520}
-                height={50}
-                className="app-brand-wordmark"
-                priority
-              />
+              <span className="app-brand-wordmark" aria-hidden="true">TRAKNIO</span>
             </div>
             {isConnected ? (
               <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">
