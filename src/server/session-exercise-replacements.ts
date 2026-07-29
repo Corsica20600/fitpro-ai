@@ -6,9 +6,18 @@ export type SessionExerciseReplacement = {
   replacedAt: string;
 };
 
+export type SessionLiveTarget = {
+  exerciseId: string;
+  setIndex: number;
+  targetReps?: number | null;
+  targetWeightKg?: number | null;
+  updatedAt: string;
+};
+
 type SessionNotesMeta = {
   text?: string | null;
   exerciseReplacements?: Record<string, SessionExerciseReplacement>;
+  liveTargets?: Record<string, SessionLiveTarget>;
 };
 
 export function parseSessionNotesMeta(notes?: string | null): SessionNotesMeta {
@@ -26,11 +35,18 @@ export function getSessionExerciseReplacements(notes?: string | null) {
   return parseSessionNotesMeta(notes).exerciseReplacements ?? {};
 }
 
+export function getSessionLiveTargets(notes?: string | null) {
+  return parseSessionNotesMeta(notes).liveTargets ?? {};
+}
+
 export function serializeSessionNotesMeta(meta: SessionNotesMeta) {
   const normalized: SessionNotesMeta = {};
   if (meta.text?.trim()) normalized.text = meta.text.trim();
   if (meta.exerciseReplacements && Object.keys(meta.exerciseReplacements).length > 0) {
     normalized.exerciseReplacements = meta.exerciseReplacements;
+  }
+  if (meta.liveTargets && Object.keys(meta.liveTargets).length > 0) {
+    normalized.liveTargets = meta.liveTargets;
   }
   return Object.keys(normalized).length > 0 ? JSON.stringify(normalized) : null;
 }
@@ -47,4 +63,3 @@ export async function resolveReplacementExercises(notes?: string | null) {
 
   return new Map(exercises.map((exercise) => [exercise.id, exercise]));
 }
-

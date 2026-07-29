@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
 import { categoryToFr } from "@/src/lib/exercise-i18n";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
+import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
 import { parseSessionNotesMeta, serializeSessionNotesMeta } from "@/src/server/session-exercise-replacements";
 
@@ -32,7 +32,7 @@ type ExerciseOption = {
 };
 
 function toExerciseOption(exercise: Omit<ExerciseOption, "categoryFr">): ExerciseOption {
-  const displayName = getExerciseOverride(exercise.slug)?.displayNameFr || exercise.nameFr || exercise.name;
+  const displayName = getExerciseDisplayName(exercise);
 
   return {
     ...exercise,

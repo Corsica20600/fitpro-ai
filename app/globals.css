@@ -2192,19 +2192,48 @@ h4,
   font-weight: 850;
   text-align: center;
 }
-.history-summary-card { display: grid; gap: 12px; }
+.history-summary-card {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.history-summary-note {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .history-summary-grid b { color: #f7fbff; font-size: 1rem; }
-.history-detail-exercise { display: grid; gap: 12px; padding: 13px; }
+.history-detail-exercise {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  overflow: hidden;
+}
 .history-detail-exercise__head {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
+  min-width: 0;
 }
-.history-set-list { display: grid; gap: 8px; }
-.history-set-card {
+.history-detail-exercise__head > div {
+  min-width: 0;
+}
+.history-detail-exercise__head h2 {
+  overflow-wrap: anywhere;
+}
+.history-set-list {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 1fr repeat(3, auto);
+  gap: 8px;
+}
+.history-set-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(78px, 1fr) repeat(3, minmax(0, auto));
   gap: 8px;
   align-items: center;
   padding: 10px;
@@ -2215,6 +2244,11 @@ h4,
 }
 .history-set-card strong { color: #f7fbff; }
 .history-set-card span { color: #c7d9f6; }
+.history-set-card strong,
+.history-set-card span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 @media (min-width: 560px) {
   .workout-input-grid,
   .history-session-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }

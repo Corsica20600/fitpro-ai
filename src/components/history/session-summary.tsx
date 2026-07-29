@@ -1,3 +1,5 @@
+import { parseSessionNotesMeta } from "@/src/server/session-exercise-replacements";
+
 type SessionSummaryProps = {
   statusLabel: string;
   durationLabel: string;
@@ -15,6 +17,8 @@ export function SessionSummary({
   setsCount,
   notes,
 }: SessionSummaryProps) {
+  const displayNotes = parseSessionNotesMeta(notes).text?.trim() ?? null;
+
   return (
     <section className="fit-glass-card history-summary-card">
       <p className="fit-section-title__eyebrow">Résumé général</p>
@@ -25,7 +29,7 @@ export function SessionSummary({
         <span><b>{exerciseCount}</b> exercices</span>
         <span><b>{setsCount}</b> séries</span>
       </div>
-      {notes ? <p className="muted">Notes: {notes}</p> : null}
+      {displayNotes ? <p className="muted history-summary-note">Notes: {displayNotes}</p> : null}
     </section>
   );
 }

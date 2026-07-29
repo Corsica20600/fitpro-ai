@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/src/lib/prisma";
+import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
 import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 export async function POST(request: Request) {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
                   restSeconds: true,
                   sets: true,
                   orderIndex: true,
-                  exercise: { select: { name: true, nameFr: true } },
+                  exercise: { select: { slug: true, name: true, nameFr: true } },
                 },
                 orderBy: { orderIndex: "asc" },
               },
@@ -42,6 +43,27 @@ export async function POST(request: Request) {
   });
   if (!session) {
     return NextResponse.json({ error: "session_not_found" }, { status: 404 });
+  }
+
+  if (session.status === "COMPLETED") {
+    await prisma.watchSession.updateMany({
+      where: { workoutSessionId: sessionId },
+      data: { status: "COMPLETED", lastSyncAt: new Date() },
+    });
+
+    const completedSets = await prisma.workoutSet.findMany({
+      where: { workoutSessionId: sessionId },
+      select: { exerciseId: true, actualReps: true, actualWeightKg: true },
+    });
+    return NextResponse.json({
+      ok: true,
+      summary: {
+        durationSeconds: session.durationSeconds,
+        exercisesCount: new Set(completedSets.map((set) => set.exerciseId)).size,
+        setsCount: completedSets.length,
+        volumeTotal: completedSets.reduce((acc, set) => acc + ((set.actualReps ?? 0) * (set.actualWeightKg ?? 0)), 0),
+      },
+    });
   }
 
   const day = session.program
@@ -69,7 +91,7 @@ export async function POST(request: Request) {
           return {
             exerciseId: effectiveExerciseId,
             programExerciseId: exercise.id,
-            exerciseName: effectiveExercise.nameFr || effectiveExercise.name,
+            exerciseName: getExerciseDisplayName(effectiveExercise),
             plannedSets: planned,
             doneSets: done,
             missingSets: planned - done,

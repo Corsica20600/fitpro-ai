@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
+import { getExerciseDisplayName, getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { levelToFr } from "@/src/lib/exercise-i18n";
 
 type ExerciseCardProps = {
@@ -32,7 +32,7 @@ function hasMotionMedia(exercise: ExerciseCardProps["exercise"]) {
 
 export function ExerciseCard({ exercise }: ExerciseCardProps) {
   const override = getExerciseOverride(exercise.slug);
-  const title = override?.displayNameFr || exercise.nameFr || exercise.name;
+  const title = getExerciseDisplayName(exercise);
   const primaryMuscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
   const equipment = exercise.equipmentFr[0] || exercise.equipment[0] || "Poids du corps";
   const hasAnimation = hasMotionMedia(exercise) || Boolean(override?.frameAnimationUrls?.length);

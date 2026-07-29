@@ -1,6 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
+import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
-import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
+import { getSessionExerciseReplacements, getSessionLiveTargets, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 const DEFAULT_REPS = [12, 10, 10];
 
@@ -19,6 +20,7 @@ type WatchPayload = {
 
 type OrderedExercise = {
   exerciseId: string;
+  programExerciseId: string | null;
   exerciseName: string;
   totalSets: number;
   targetReps: number;
@@ -41,7 +43,7 @@ async function resolveSession(sessionId?: string, userProfileId?: string) {
       include: {
         watchSession: true,
         sets: {
-          include: { exercise: { select: { id: true, name: true, nameFr: true } } },
+          include: { exercise: { select: { id: true, slug: true, name: true, nameFr: true } } },
           orderBy: [{ createdAt: "asc" }, { setIndex: "asc" }],
         },
       },
@@ -54,7 +56,7 @@ async function resolveSession(sessionId?: string, userProfileId?: string) {
     include: {
       watchSession: true,
       sets: {
-        include: { exercise: { select: { id: true, name: true, nameFr: true } } },
+        include: { exercise: { select: { id: true, slug: true, name: true, nameFr: true } } },
         orderBy: [{ createdAt: "asc" }, { setIndex: "asc" }],
       },
     },
@@ -68,7 +70,7 @@ async function getOrderedExercisesForSession(session: {
   programId: string | null;
   programDayId: string | null;
   notes: string | null;
-  sets: Array<{ exerciseId: string; exercise: { id: string; name: string; nameFr: string | null } }>;
+  sets: Array<{ exerciseId: string; exercise: { id: string; slug: string; name: string; nameFr: string | null } }>;
 }) {
   const latestWeightsRows = await prisma.workoutSet.findMany({
     where: {
@@ -97,7 +99,7 @@ async function getOrderedExercisesForSession(session: {
               orderBy: { orderIndex: "asc" },
               include: {
                 exercise: {
-                  select: { id: true, name: true, nameFr: true },
+                  select: { id: true, slug: true, name: true, nameFr: true },
                 },
               },
             },
@@ -114,14 +116,19 @@ async function getOrderedExercisesForSession(session: {
       if (dayForToday) {
         const replacements = getSessionExerciseReplacements(session.notes);
         const replacementExercises = await resolveReplacementExercises(session.notes);
-        const fromProgramDay = dayForToday.exercises.map((item) => ({
-          exerciseId: replacements[item.id]?.exerciseId ?? item.exerciseId,
-          exerciseName: (replacementExercises.get(replacements[item.id]?.exerciseId ?? "") ?? item.exercise).nameFr || (replacementExercises.get(replacements[item.id]?.exerciseId ?? "") ?? item.exercise).name,
-          totalSets: Math.max(1, item.sets ?? 3),
-          targetReps: item.repsMin ?? item.repsMax ?? DEFAULT_REPS[0],
-          restSeconds: item.restSeconds ?? 90,
-          plannedWeightKg: parseWeightKgFromText(item.repsText) ?? latestWeightByExercise.get(replacements[item.id]?.exerciseId ?? item.exerciseId) ?? null,
-        }));
+        const fromProgramDay = dayForToday.exercises.map((item) => {
+          const effectiveExerciseId = replacements[item.id]?.exerciseId ?? item.exerciseId;
+          const effectiveExercise = replacementExercises.get(effectiveExerciseId) ?? item.exercise;
+          return {
+            exerciseId: effectiveExerciseId,
+            programExerciseId: item.id,
+            exerciseName: getExerciseDisplayName(effectiveExercise),
+            totalSets: Math.max(1, item.sets ?? 3),
+            targetReps: item.repsMin ?? item.repsMax ?? DEFAULT_REPS[0],
+            restSeconds: item.restSeconds ?? 90,
+            plannedWeightKg: parseWeightKgFromText(item.repsText) ?? latestWeightByExercise.get(effectiveExerciseId) ?? null,
+          };
+        });
         if (fromProgramDay.length > 0) return fromProgramDay;
       }
     }
@@ -132,7 +139,8 @@ async function getOrderedExercisesForSession(session: {
     if (!distinctFromSets.has(set.exerciseId)) {
       distinctFromSets.set(set.exerciseId, {
         exerciseId: set.exerciseId,
-        exerciseName: set.exercise.nameFr || set.exercise.name,
+        programExerciseId: null,
+        exerciseName: getExerciseDisplayName(set.exercise),
         totalSets: 3,
         targetReps: DEFAULT_REPS[0],
         restSeconds: 90,
@@ -144,13 +152,14 @@ async function getOrderedExercisesForSession(session: {
 
   const fallback = await prisma.exercise.findMany({
     where: { isActive: true },
-    select: { id: true, name: true, nameFr: true },
+    select: { id: true, slug: true, name: true, nameFr: true },
     orderBy: [{ category: "asc" }, { name: "asc" }],
     take: 6,
   });
   return fallback.map((item) => ({
     exerciseId: item.id,
-    exerciseName: item.nameFr || item.name,
+    programExerciseId: null,
+    exerciseName: getExerciseDisplayName(item),
     totalSets: 3,
     targetReps: DEFAULT_REPS[0],
     restSeconds: 90,
@@ -169,7 +178,11 @@ export async function getWatchPayload(sessionId?: string, userProfileId?: string
   const currentExercise = ordered[exerciseIndex] ?? ordered[0];
   const setIndex = Math.max(1, session.watchSession?.currentSetIndex ?? 1);
   const totalSets = Math.max(1, currentExercise?.totalSets ?? 3);
-  const targetReps = currentExercise?.targetReps ?? (DEFAULT_REPS[Math.min(totalSets - 1, setIndex - 1)] ?? DEFAULT_REPS[0]);
+  const liveTargets = getSessionLiveTargets(session.notes);
+  const liveTarget = liveTargets[currentExercise.programExerciseId ?? `exercise:${currentExercise.exerciseId}`];
+  const targetReps = liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex && liveTarget.targetReps
+    ? liveTarget.targetReps
+    : (currentExercise?.targetReps ?? (DEFAULT_REPS[Math.min(totalSets - 1, setIndex - 1)] ?? DEFAULT_REPS[0]));
 
   const latestSetForCurrent = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: session.id, exerciseId: currentExercise.exerciseId, setIndex },
@@ -194,7 +207,7 @@ export async function getWatchPayload(sessionId?: string, userProfileId?: string
     setIndex: Math.min(setIndex, totalSets),
     totalSets,
     targetReps,
-    weight: latestSetForCurrent?.actualWeightKg ?? currentExercise.plannedWeightKg ?? null,
+    weight: latestSetForCurrent?.actualWeightKg ?? (liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex ? liveTarget.targetWeightKg : null) ?? currentExercise.plannedWeightKg ?? null,
     restRemaining,
     status: session.status,
   };
@@ -214,6 +227,13 @@ export async function validateWatchSet(input: {
   if (!currentExercise) return null;
   const setIndex = Math.max(1, session.watchSession?.currentSetIndex ?? 1);
   const totalSetsForExercise = Math.max(1, currentExercise.totalSets ?? 1);
+  const liveTarget = getSessionLiveTargets(session.notes)[currentExercise.programExerciseId ?? `exercise:${currentExercise.exerciseId}`];
+  const syncedTargetReps = liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex && liveTarget.targetReps
+    ? liveTarget.targetReps
+    : currentExercise.targetReps;
+  const syncedTargetWeight = liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex
+    ? liveTarget.targetWeightKg
+    : null;
 
   const existing = await prisma.workoutSet.findFirst({
     where: { workoutSessionId: session.id, exerciseId: currentExercise.exerciseId, setIndex },
@@ -238,7 +258,7 @@ export async function validateWatchSet(input: {
     select: { actualWeightKg: true },
   });
   const resolvedWeight = (() => {
-    const incoming = input.weight == null ? null : Math.max(0, input.weight);
+    const incoming = input.weight == null ? (syncedTargetWeight == null ? null : Math.max(0, syncedTargetWeight)) : Math.max(0, input.weight);
     if (incoming != null && incoming > 0) return incoming;
     if ((existing?.actualWeightKg ?? 0) > 0) return existing!.actualWeightKg!;
     if ((latestPositiveWeightInSession?.actualWeightKg ?? 0) > 0) return latestPositiveWeightInSession!.actualWeightKg!;
@@ -247,9 +267,9 @@ export async function validateWatchSet(input: {
   })();
 
   const payload = {
-    targetRepsMin: currentExercise.targetReps,
-    targetRepsMax: currentExercise.targetReps,
-    actualReps: input.actualReps == null ? null : Math.max(1, Math.floor(input.actualReps)),
+    targetRepsMin: syncedTargetReps,
+    targetRepsMax: syncedTargetReps,
+    actualReps: input.actualReps == null ? Math.max(1, Math.floor(syncedTargetReps)) : Math.max(1, Math.floor(input.actualReps)),
     actualWeightKg: resolvedWeight == null ? null : Math.max(0, resolvedWeight),
     restSeconds: currentExercise.restSeconds,
     isCompleted: true,

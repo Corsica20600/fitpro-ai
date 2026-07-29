@@ -10,5 +10,8 @@ export async function GET(request: Request) {
   const sessionId = String(searchParams.get("sessionId") ?? "").trim();
   const payload = await getWatchPayload(sessionId || undefined, access.userProfileId);
   if (!payload) return NextResponse.json({ error: "session_not_found" }, { status: 404 });
-  return NextResponse.json({ payload });
+  return NextResponse.json(
+    { payload },
+    { headers: { "Cache-Control": "no-store, max-age=0" } },
+  );
 }

@@ -5,7 +5,7 @@ import { ExerciseDetailSheet } from "@/src/components/exercise/exercise-detail-s
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { buildExerciseDetailContent } from "@/src/lib/exercise-detail-content";
 import { categoryToFr, levelToFr, translateSimple } from "@/src/lib/exercise-i18n";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
+import { getExerciseDisplayName, getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { addExerciseToProgramDayAction } from "@/src/server/fitness-actions";
 import { getExerciseBySlug, getProgramsForDemoUser } from "@/src/server/fitness-queries";
@@ -55,7 +55,7 @@ export default async function ExerciseDetailPage(props: PageProps<"/exercises/[s
   if (!exercise) notFound();
 
   const override = getExerciseOverride(exercise.slug);
-  const displayName = override?.displayNameFr || exercise.nameFr || exercise.name;
+  const displayName = getExerciseDisplayName(exercise);
   const primaryMuscles = uniqueText(
     exercise.primaryMusclesFr.length
       ? exercise.primaryMusclesFr

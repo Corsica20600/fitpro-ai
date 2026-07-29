@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
+import { getExerciseDisplayName, getExerciseOverride } from "@/src/lib/exercise-overrides";
 
 type CurrentExerciseCardProps = {
   exercise: {
@@ -43,7 +43,7 @@ export function CurrentExerciseCard({
   children,
 }: CurrentExerciseCardProps) {
   const override = getExerciseOverride(exercise.slug);
-  const title = override?.displayNameFr || exercise.nameFr || exercise.name;
+  const title = getExerciseDisplayName(exercise);
   const muscle = override?.primaryMuscleFr || exercise.primaryMusclesFr[0] || "Corps complet";
   const equipment = exercise.equipmentFr[0] || "Poids du corps";
   const cueFr = override?.cueFr || cue;

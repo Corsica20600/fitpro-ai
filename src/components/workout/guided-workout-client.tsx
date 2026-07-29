@@ -164,6 +164,7 @@ export function GuidedWorkoutClient({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
+  const liveTargetTimerRef = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const prevRestRemainingRef = useRef<number>(0);
@@ -216,6 +217,35 @@ export function GuidedWorkoutClient({
         restRemaining: Math.max(0, nextRest),
       }),
     });
+  }, [sessionId]);
+
+  const pushLiveTarget = useCallback((input: {
+    exerciseId: string;
+    programExerciseId: string | null;
+    setIndex: number;
+    targetReps: number;
+    targetWeightKg: number;
+    currentExerciseIndex: number;
+  }) => {
+    if (liveTargetTimerRef.current != null) {
+      window.clearTimeout(liveTargetTimerRef.current);
+    }
+    liveTargetTimerRef.current = window.setTimeout(() => {
+      void fetch("/api/workout/live-target", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          exerciseId: input.exerciseId,
+          programExerciseId: input.programExerciseId,
+          setIndex: input.setIndex,
+          targetReps: input.targetReps,
+          targetWeightKg: input.targetWeightKg,
+          currentExerciseIndex: input.currentExerciseIndex,
+          currentSetIndex: input.setIndex,
+        }),
+      });
+    }, 450);
   }, [sessionId]);
 
   const exercise = exercises[exerciseIndex];
@@ -343,6 +373,7 @@ export function GuidedWorkoutClient({
   }, []);
 
   useEffect(() => {
+    if (summary) return;
     let alive = true;
 
     async function pullWatchState() {
@@ -362,7 +393,34 @@ export function GuidedWorkoutClient({
         };
         const state = data.payload;
 
-        if (!alive || state?.status !== "IN_PROGRESS") return;
+        if (!alive || !state) return;
+        if (state.status === "COMPLETED") {
+          clearRestTimer();
+          setEnding(true);
+          try {
+            const completeResponse = await fetch("/api/workout/complete", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ sessionId, forceComplete: true }),
+            });
+            if (completeResponse.ok) {
+              const completeData = await completeResponse.json() as { summary?: WorkoutSummary };
+              if (alive && completeData.summary) {
+                setSummary(completeData.summary);
+                setEnding(false);
+                return;
+              }
+            }
+          } catch {
+            // A manual refresh below is enough if the summary endpoint is temporarily unavailable.
+          }
+          if (alive) {
+            setEnding(false);
+            router.refresh();
+          }
+          return;
+        }
+        if (state.status !== "IN_PROGRESS") return;
         const exerciseIndexFromWatch = Math.max(1, Number(state.exerciseIndex ?? 1)) - 1;
         const setIndexFromWatch = Math.max(1, Number(state.setIndex ?? 1));
         const restFromWatch = Math.max(0, Number(state.restRemaining ?? 0));
@@ -433,11 +491,19 @@ export function GuidedWorkoutClient({
       alive = false;
       window.clearInterval(interval);
     };
-  }, [sessionId, exercises, getPlannedRestForIndex]);
+  }, [sessionId, exercises, getPlannedRestForIndex, clearRestTimer, router, summary]);
 
   useEffect(() => {
     surfaceTapReadyAtRef.current = Date.now() + 1200;
   }, [exerciseIndex, isActiveWorkoutSurface]);
+
+  useEffect(() => {
+    return () => {
+      if (liveTargetTimerRef.current != null) {
+        window.clearTimeout(liveTargetTimerRef.current);
+      }
+    };
+  }, []);
 
   async function onValidateSet(setIndex: number, plannedReps: number) {
     unlockRestAudio();
@@ -780,6 +846,33 @@ export function GuidedWorkoutClient({
   const elapsedLabel = elapsedSeconds > 0 ? `Depuis ${formatDuration(elapsedSeconds)}` : null;
   const restTotal = Math.max(restChoice, restRemaining);
 
+  function updateLiveTarget(nextReps: number, nextWeight: number) {
+    if (!activeSet) return;
+    pushLiveTarget({
+      exerciseId: exercise.id,
+      programExerciseId: exercise.programExerciseId,
+      setIndex: activeSet.setIndex,
+      targetReps: nextReps,
+      targetWeightKg: nextWeight,
+      currentExerciseIndex: exerciseIndex,
+    });
+    lastSyncedWatchPositionRef.current = `${exerciseIndex}:${activeSet.setIndex}:${Math.max(0, restRemaining)}`;
+  }
+
+  function updateActiveReps(nextReps: number) {
+    if (!activeSet) return;
+    const normalized = Math.max(1, Math.floor(nextReps));
+    setRepsByKey((prev) => ({ ...prev, [activeKey]: normalized }));
+    updateLiveTarget(normalized, activeWeight);
+  }
+
+  function updateActiveWeight(nextWeight: number) {
+    if (!activeSet) return;
+    const normalized = Math.max(0, nextWeight);
+    setWeightByKey((prev) => ({ ...prev, [activeKey]: normalized }));
+    updateLiveTarget(activeReps, normalized);
+  }
+
   function canTapToValidate() {
     return Boolean(activeSet) && !ending && restRemaining <= 0 && !isWorkoutDone;
   }
@@ -900,7 +993,7 @@ export function GuidedWorkoutClient({
               <button
                 type="button"
                 className="ghost-btn"
-                onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: Math.max(1, activeReps - 1) }))}
+                onClick={() => updateActiveReps(activeReps - 1)}
               >
                 -
               </button>
@@ -911,13 +1004,13 @@ export function GuidedWorkoutClient({
                 type="number"
                 min={1}
                 value={activeReps}
-                onChange={(event) => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: Math.max(1, Number(event.target.value) || 1) }))}
+                onChange={(event) => updateActiveReps(Number(event.target.value) || 1)}
                 aria-label="Répétitions réalisées"
               />
               <button
                 type="button"
                 className="ghost-btn"
-                onClick={() => activeSet && setRepsByKey((prev) => ({ ...prev, [activeKey]: activeReps + 1 }))}
+                onClick={() => updateActiveReps(activeReps + 1)}
               >
                 +
               </button>
@@ -929,7 +1022,7 @@ export function GuidedWorkoutClient({
               <button
                 type="button"
                 className="ghost-btn"
-                onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, activeWeight - 1) }))}
+                onClick={() => updateActiveWeight(activeWeight - 1)}
               >
                 -
               </button>
@@ -941,13 +1034,13 @@ export function GuidedWorkoutClient({
                 min={0}
                 step={0.5}
                 value={activeWeight}
-                onChange={(event) => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: Math.max(0, Number(event.target.value) || 0) }))}
+                onChange={(event) => updateActiveWeight(Number(event.target.value) || 0)}
                 aria-label="Charge utilisée en kilogrammes"
               />
               <button
                 type="button"
                 className="ghost-btn"
-                onClick={() => activeSet && setWeightByKey((prev) => ({ ...prev, [activeKey]: activeWeight + 1 }))}
+                onClick={() => updateActiveWeight(activeWeight + 1)}
               >
                 +
               </button>

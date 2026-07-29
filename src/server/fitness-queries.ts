@@ -1,5 +1,6 @@
 import { auth, LEGACY_DEMO_EMAIL, PRIMARY_USER_EMAIL } from "@/auth";
 import { prisma } from "@/src/lib/prisma";
+import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
 import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 function normalizeEmail(email?: string | null) {
@@ -94,6 +95,7 @@ function isMissingColumnError(error: unknown) {
 }
 
 function toFrCompat<T extends {
+  slug?: string | null;
   primaryMuscles: string[];
   secondaryMuscles: string[];
   equipment: string[];
@@ -109,7 +111,7 @@ function toFrCompat<T extends {
 } {
   return {
     ...exercise,
-    nameFr: null,
+    nameFr: getExerciseDisplayName(exercise),
     primaryMusclesFr: [],
     equipmentFr: [],
     instructionsFr: null,
@@ -738,6 +740,7 @@ export async function getWorkoutHistoryForDemoUser() {
           exercise: {
             select: {
               id: true,
+              slug: true,
               name: true,
               nameFr: true,
               primaryMuscles: true,
@@ -865,7 +868,7 @@ export async function getWorkoutSessionDetailForDemoUser(sessionId: string) {
     if (!groupsMap.has(key)) {
       groupsMap.set(key, {
         exerciseId: set.exerciseId,
-        exerciseName: set.exercise.nameFr || set.exercise.name,
+        exerciseName: getExerciseDisplayName(set.exercise),
         primaryMuscle: set.exercise.primaryMusclesFr[0] || set.exercise.primaryMuscles[0] || "Full body",
         sets: [],
         totalVolume: 0,

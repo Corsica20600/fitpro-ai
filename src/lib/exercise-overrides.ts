@@ -33,8 +33,71 @@ const overrides: Record<string, ExerciseOverride> = {
     primaryMuscleFr: "Dos",
     cardImage: "/media/exercises/wide-grip-lat-pulldown/0.jpg",
   },
+  "incline-dumbbell-press": {
+    displayNameFr: "Développé incliné avec haltères",
+    primaryMuscleFr: "Pectoraux",
+  },
+  "dumbbell-fly": {
+    displayNameFr: "Écarté couché avec haltères",
+    primaryMuscleFr: "Pectoraux",
+  },
+  "dumbbell-flyes": {
+    displayNameFr: "Écarté couché avec haltères",
+    primaryMuscleFr: "Pectoraux",
+  },
+  "stiff-legged-dumbbell-deadlift": {
+    displayNameFr: "Soulevé de terre jambes tendues avec haltères",
+    primaryMuscleFr: "Ischio-jambiers",
+  },
+  "single-arm-dumbbell-row": {
+    displayNameFr: "Rowing haltère à un bras",
+    primaryMuscleFr: "Dos",
+  },
+  "one-arm-dumbbell-row": {
+    displayNameFr: "Rowing haltère à un bras",
+    primaryMuscleFr: "Dos",
+  },
+  "elevated-cable-row": {
+    displayNameFr: "Rowing à la poulie en hauteur",
+    primaryMuscleFr: "Dos",
+  },
+  "elevated-cable-rows": {
+    displayNameFr: "Rowing à la poulie en hauteur",
+    primaryMuscleFr: "Dos",
+  },
+  "standing-calf-raise": {
+    displayNameFr: "Élévations mollets debout",
+    primaryMuscleFr: "Mollets",
+  },
 };
+
+const displayNameByEnglishName: Record<string, string> = {
+  "incline dumbbell press": "Développé incliné avec haltères",
+  "dumbbell fly": "Écarté couché avec haltères",
+  "dumbbell flyes": "Écarté couché avec haltères",
+  "stiff-legged dumbbell deadlift": "Soulevé de terre jambes tendues avec haltères",
+  "stiff legged dumbbell deadlift": "Soulevé de terre jambes tendues avec haltères",
+  "single arm dumbbell row": "Rowing haltère à un bras",
+  "one-arm dumbbell row": "Rowing haltère à un bras",
+  "one arm dumbbell row": "Rowing haltère à un bras",
+  "elevated cable row": "Rowing à la poulie en hauteur",
+  "elevated cable rows": "Rowing à la poulie en hauteur",
+  "standing calf raise": "Élévations mollets debout",
+};
+
+function normalizeName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
 
 export function getExerciseOverride(slug: string): ExerciseOverride | null {
   return overrides[slug] ?? null;
+}
+
+export function getExerciseDisplayName(exercise: { slug?: string | null; name: string; nameFr?: string | null }) {
+  if (exercise.slug) {
+    const override = getExerciseOverride(exercise.slug);
+    if (override?.displayNameFr) return override.displayNameFr;
+  }
+  if (exercise.nameFr?.trim()) return exercise.nameFr.trim();
+  return displayNameByEnglishName[normalizeName(exercise.name)] ?? exercise.name;
 }

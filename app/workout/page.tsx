@@ -8,7 +8,7 @@ import { BrandSelect } from "@/src/components/ui/brand-select";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { SpotifyOpenLink } from "@/src/components/integrations/spotify-open-link";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
-import { getExerciseOverride } from "@/src/lib/exercise-overrides";
+import { getExerciseDisplayName, getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 
 export const metadata = privatePageMetadata(
@@ -110,7 +110,7 @@ export default async function WorkoutPage() {
             startedAt={(currentSession.startedAt ?? currentSession.createdAt).toISOString()}
             exercises={sessionExercises.map((item) => {
               const override = getExerciseOverride(item.slug);
-              const displayName = override?.displayNameFr || item.nameFr || item.name;
+              const displayName = getExerciseDisplayName(item);
               const primaryMusclesFr = override?.primaryMuscleFr
                 ? [override.primaryMuscleFr, ...item.primaryMusclesFr.filter((muscle) => muscle !== override.primaryMuscleFr)]
                 : item.primaryMusclesFr;
