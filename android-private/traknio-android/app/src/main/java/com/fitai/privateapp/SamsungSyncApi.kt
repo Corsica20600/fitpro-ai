@@ -60,9 +60,8 @@ object SamsungSyncApi {
         healthDeviceToken: String,
         records: List<SamsungMetricRecord>,
         source: HealthSyncSource = HealthSyncSource.SAMSUNG_HEALTH,
-        legacySyncToken: String = "",
     ): SyncResult {
-        if (healthDeviceToken.isBlank() && legacySyncToken.isBlank()) {
+        if (healthDeviceToken.isBlank()) {
             return SyncResult(false, "Token Health personnel manquant")
         }
         if (records.isEmpty()) return SyncResult(false, "Aucune mesure a envoyer")
@@ -87,11 +86,7 @@ object SamsungSyncApi {
             readTimeout = 15000
             doOutput = true
             setRequestProperty("content-type", "application/json")
-            if (healthDeviceToken.isNotBlank()) {
-                setRequestProperty("x-health-device-token", healthDeviceToken)
-            } else {
-                setRequestProperty("x-sync-token", legacySyncToken)
-            }
+            setRequestProperty("x-health-device-token", healthDeviceToken)
         }
 
         return try {

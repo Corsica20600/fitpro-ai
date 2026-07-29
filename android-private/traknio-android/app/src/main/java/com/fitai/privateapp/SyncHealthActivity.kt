@@ -108,7 +108,6 @@ class SyncHealthActivity : AppCompatActivity() {
                     healthDeviceToken = auth.healthDeviceToken,
                     records = readResult.records,
                     source = HealthSyncSource.SAMSUNG_HEALTH,
-                    legacySyncToken = auth.legacySyncToken,
                 )
             }
 
@@ -121,12 +120,12 @@ class SyncHealthActivity : AppCompatActivity() {
         }
     }
 
-    private data class HealthAuth(val healthDeviceToken: String, val legacySyncToken: String)
+    private data class HealthAuth(val healthDeviceToken: String)
 
     private suspend fun resolveHealthAuth(): HealthAuth? {
         val savedToken = prefs.getString("health_device_token", null)?.takeIf { it.isNotBlank() }
         if (savedToken != null) {
-            return HealthAuth(savedToken, BuildConfig.FITAI_SYNC_TOKEN)
+            return HealthAuth(savedToken)
         }
 
         val cookieHeader = CookieManager.getInstance().getCookie(BuildConfig.FITAI_SYNC_BASE_URL)
@@ -139,14 +138,10 @@ class SyncHealthActivity : AppCompatActivity() {
 
         if (tokenResult.ok && !tokenResult.token.isNullOrBlank()) {
             prefs.edit().putString("health_device_token", tokenResult.token).apply()
-            return HealthAuth(tokenResult.token, BuildConfig.FITAI_SYNC_TOKEN)
+            return HealthAuth(tokenResult.token)
         }
 
-        return if (BuildConfig.FITAI_SYNC_TOKEN.isNotBlank()) {
-            HealthAuth("", BuildConfig.FITAI_SYNC_TOKEN)
-        } else {
-            null
-        }
+        return null
     }
 
     private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true, auth: HealthAuth? = null) {
@@ -192,7 +187,6 @@ class SyncHealthActivity : AppCompatActivity() {
                 healthDeviceToken = resolvedAuth.healthDeviceToken,
                 records = readResult.records,
                 source = HealthSyncSource.HEALTH_CONNECT,
-                legacySyncToken = resolvedAuth.legacySyncToken,
             )
         }
 

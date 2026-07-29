@@ -39,16 +39,12 @@ android {
 
         val syncBaseUrl = propertyValue("FITAI_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
-        val syncToken = propertyValue("FITAI_SYNC_TOKEN")
-            ?: propertyValue("SAMSUNG_SYNC_TOKEN")
-            ?: ""
         val googlePlayProductId = propertyValue("GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID")
             ?: "traknio_premium"
         val googlePlayPackageName = propertyValue("GOOGLE_PLAY_PACKAGE_NAME")
             ?: "com.fitai.proapp"
         fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
-        buildConfigField("String", "FITAI_SYNC_TOKEN", buildConfigString(syncToken))
         buildConfigField("String", "GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID", buildConfigString(googlePlayProductId))
         buildConfigField("String", "GOOGLE_PLAY_PACKAGE_NAME", buildConfigString(googlePlayPackageName))
     }

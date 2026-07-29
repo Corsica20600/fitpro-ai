@@ -154,7 +154,6 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
   const spotify = accountData.integrations.find((item) => item.provider === "SPOTIFY");
   const healthConnect = accountData.integrations.find((item) => item.provider === "HEALTH_CONNECT");
-  const samsungHealth = accountData.integrations.find((item) => item.provider === "SAMSUNG_HEALTH");
   const spotifyConnected = spotify?.status === "CONNECTED";
   const healthPrepared = healthConnect?.status === "PENDING" || healthConnect?.status === "CONNECTED";
   const latestSessionDate = accountData.latestSession?.endedAt
@@ -371,26 +370,6 @@ export default async function SettingsPage(props: SettingsPageProps) {
               <button type="submit" className="ghost-btn full-line">Préparer Health Connect</button>
             </form>
           )}
-        </GlassCard>
-
-        <GlassCard className="settings-service-card">
-          <div>
-            <p className="eyebrow">Samsung</p>
-            <h2>Samsung Health</h2>
-            <p className="muted">
-              Passerelle privée déjà disponible pour tes essais Samsung. Pour le Play Store, Health Connect restera la
-              voie la plus universelle.
-            </p>
-            {samsungHealth?.lastSyncAt ? (
-              <p className="settings-footnote">
-                <span>Dernière synchro</span>
-                <strong>{formatDate(samsungHealth.lastSyncAt)}</strong>
-              </p>
-            ) : null}
-          </div>
-          <span className={`chip ${process.env.SAMSUNG_SYNC_TOKEN?.trim() ? "success" : "warning"}`}>
-            {process.env.SAMSUNG_SYNC_TOKEN?.trim() ? "Token serveur" : "Non configuré"}
-          </span>
         </GlassCard>
       </section>
 
