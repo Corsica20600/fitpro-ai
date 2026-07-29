@@ -5,6 +5,7 @@ import { StatBadge } from "@/src/components/ui/stat-badge";
 type DailyReadinessCardProps = {
   readiness: {
     connected: boolean;
+    prepared: boolean;
     providerLabel: string;
     score: number | null;
     tone: "accent" | "success" | "orange" | "danger";
@@ -28,7 +29,7 @@ function toneLabel(tone: DailyReadinessCardProps["readiness"]["tone"]) {
 }
 
 export function DailyReadinessCard({ readiness }: DailyReadinessCardProps) {
-  if (!readiness.connected) {
+  if (!readiness.prepared) {
     return (
       <GlassCard className="daily-readiness-card daily-readiness-card--empty">
         <div>
@@ -39,6 +40,39 @@ export function DailyReadinessCard({ readiness }: DailyReadinessCardProps) {
           </p>
         </div>
         <Link href="/settings" prefetch={false} className="outline-link">Connecter</Link>
+      </GlassCard>
+    );
+  }
+
+  if (!readiness.connected) {
+    return (
+      <GlassCard className="daily-readiness-card daily-readiness-card--accent">
+        <div className="daily-readiness-card__head">
+          <div>
+            <p className="eyebrow">État du jour</p>
+            <h2>{readiness.providerLabel}</h2>
+          </div>
+          <div className="daily-readiness-card__score daily-readiness-card__score--pending">
+            <strong>-</strong>
+            <span>%</span>
+          </div>
+        </div>
+
+        <div className="daily-readiness-card__bar" aria-hidden="true">
+          <i style={{ width: "12%" }} />
+        </div>
+
+        <div className="daily-readiness-card__metrics">
+          <span><b>{readiness.sleepLabel ?? "-"}</b>Sommeil</span>
+          <span><b>{readiness.restingHeartRate ? `${readiness.restingHeartRate} bpm` : "-"}</b>FC repos</span>
+          <span><b>{formatNumber(readiness.stepsToday)}</b>Pas</span>
+          <span><b>{readiness.caloriesToday ? `${formatNumber(readiness.caloriesToday)} kcal` : "-"}</b>Calories</span>
+        </div>
+
+        <div className="daily-readiness-card__footer">
+          <StatBadge tone="accent">Prêt</StatBadge>
+          <p>{readiness.recommendation}</p>
+        </div>
       </GlassCard>
     );
   }

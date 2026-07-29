@@ -1197,9 +1197,10 @@ export async function getDashboardDataForDemoUser() {
       where: {
         userProfileId: profile.id,
         provider: { in: ["HEALTH_CONNECT", "SAMSUNG_HEALTH"] },
-        status: "CONNECTED",
+        status: { in: ["PENDING", "CONNECTED"] },
       },
-      select: { provider: true, displayName: true, lastSyncAt: true },
+      select: { provider: true, status: true, displayName: true, lastSyncAt: true },
+      orderBy: [{ status: "asc" }, { lastSyncAt: "desc" }, { updatedAt: "desc" }],
     }),
   ]);
 
@@ -1340,8 +1341,16 @@ export async function getDashboardDataForDemoUser() {
   const availableMax = (sleepPoints == null ? 0 : 40) + (heartPoints == null ? 0 : 30) + (activityPoints == null ? 0 : 20) + 10;
   const rawPoints = (sleepPoints ?? 0) + (heartPoints ?? 0) + (activityPoints ?? 0) + sessionPoints;
   const recoveryScore = availableMax > 0 ? clampPercent((rawPoints / availableMax) * 100) : null;
-  const healthConnected = healthIntegrations.length > 0 || healthMetrics.length > 0;
-  const healthProvider = healthIntegrations[0] ?? null;
+  const healthProvider = healthIntegrations.find((integration) => integration.status === "CONNECTED") ?? healthIntegrations[0] ?? null;
+  const healthConnected = healthProvider?.status === "CONNECTED" || healthMetrics.length > 0;
+  const healthPrepared = Boolean(healthProvider);
+  const healthProviderLabel =
+    healthProvider?.displayName ??
+    (healthProvider?.provider === "HEALTH_CONNECT"
+      ? "Health Connect"
+      : healthProvider?.provider === "SAMSUNG_HEALTH"
+        ? "Samsung Health"
+        : "Health Connect");
 
   return {
     user: {
@@ -1407,7 +1416,8 @@ export async function getDashboardDataForDemoUser() {
     coachInsight,
     readiness: {
       connected: healthConnected,
-      providerLabel: healthProvider?.displayName ?? (healthProvider?.provider === "HEALTH_CONNECT" ? "Health Connect" : "Samsung Health"),
+      prepared: healthPrepared,
+      providerLabel: healthProviderLabel,
       score: recoveryScore,
       tone: recoveryScore == null ? "accent" : getRecoveryTone(recoveryScore),
       sleepLabel: formatSleep(sleepMinutes),
@@ -1415,7 +1425,9 @@ export async function getDashboardDataForDemoUser() {
       stepsToday,
       caloriesToday,
       recommendation: recoveryScore == null
-        ? "Connecte tes données santé pour afficher ta récupération quotidienne."
+        ? healthPrepared
+          ? `${healthProviderLabel} est prêt. Lance une synchronisation pour afficher ta récupération quotidienne.`
+          : "Connecte tes données santé pour afficher ta récupération quotidienne."
         : getRecoveryRecommendation(recoveryScore, targetMuscles),
       updatedAt: healthMetrics[0]?.measuredAt ?? healthProvider?.lastSyncAt ?? null,
     },
