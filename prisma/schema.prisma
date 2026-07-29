@@ -145,6 +145,7 @@ model UserProfile {
   createdAt                     DateTime                @default(now())
   updatedAt                     DateTime                @updatedAt
   programs                      Program[]
+  healthDevices                 HealthDevice[]
   integrationConnections        IntegrationConnection[]
   watchDevices                  WatchDevice[]
   workoutSessions               WorkoutSession[]
@@ -193,6 +194,21 @@ model IntegrationConnection {
 }
 
 model WatchDevice {
+  id            String      @id @default(cuid())
+  userProfileId String
+  label         String
+  tokenHash     String      @unique
+  lastSeenAt    DateTime?
+  revokedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId, revokedAt])
+  @@index([lastSeenAt])
+}
+
+model HealthDevice {
   id            String      @id @default(cuid())
   userProfileId String
   label         String

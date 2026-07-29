@@ -1,27 +1,15 @@
 import { NextResponse } from "next/server";
-import { ingestSamsungHealthMetrics, type SamsungMetricInput } from "@/src/server/samsung-health-sync";
+import { ingestHealthMetrics, type SamsungMetricInput } from "@/src/server/samsung-health-sync";
+import { requireHealthSyncAccess } from "@/src/server/health-device-auth";
 
 type SyncBody = {
   records?: SamsungMetricInput[];
 };
 
-function isAuthorized(request: Request) {
-  const expected = process.env.SAMSUNG_SYNC_TOKEN?.trim();
-  if (!expected) return false;
-  const token = request.headers.get("x-sync-token")?.trim() || "";
-  return token.length > 0 && token === expected;
-}
-
 export async function POST(request: Request) {
-  if (!process.env.SAMSUNG_SYNC_TOKEN?.trim()) {
-    return NextResponse.json(
-      { ok: false, error: "server_missing_samsung_sync_token" },
-      { status: 500 },
-    );
-  }
-
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+  const access = await requireHealthSyncAccess(request, "samsung_health");
+  if (!access.ok) {
+    return access.response;
   }
 
   let body: SyncBody;
@@ -36,11 +24,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "no_records" }, { status: 400 });
   }
 
-  const result = await ingestSamsungHealthMetrics(records);
+  const result = await ingestHealthMetrics(records, "samsung_health", access.userProfileId);
   return NextResponse.json({
     ok: true,
     provider: "samsung_health",
+    authMode: access.mode,
     ...result,
   });
 }
-

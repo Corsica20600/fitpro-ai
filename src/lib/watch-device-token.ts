@@ -1,5 +1,5 @@
-import { createHash } from "crypto";
+import { hashDeviceToken } from "@/src/lib/device-token";
 
 export function hashWatchDeviceToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
+  return hashDeviceToken(token);
 }

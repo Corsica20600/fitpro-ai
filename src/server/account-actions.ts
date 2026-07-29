@@ -79,6 +79,7 @@ export async function deleteAccountAction(formData: FormData) {
     }
 
     await tx.watchDevice.deleteMany({ where: { userProfileId: profile.id } });
+    await tx.healthDevice.deleteMany({ where: { userProfileId: profile.id } });
     await tx.integrationConnection.deleteMany({ where: { userProfileId: profile.id } });
     await tx.progressMetric.deleteMany({ where: { userProfileId: profile.id } });
     await tx.userProfile.delete({ where: { id: profile.id } });

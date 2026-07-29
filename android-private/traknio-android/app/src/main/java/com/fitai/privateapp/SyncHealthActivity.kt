@@ -2,6 +2,7 @@ package com.fitai.privateapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.webkit.CookieManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
@@ -17,6 +18,7 @@ class SyncHealthActivity : AppCompatActivity() {
     private lateinit var healthConnectProvider: HealthConnectProvider
     private lateinit var healthConnectPermissionLauncher: ActivityResultLauncher<Set<String>>
     private var syncPendingAfterHealthConnectPermission = false
+    private val prefs by lazy { getSharedPreferences("traknio_health_sync", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,16 +72,19 @@ class SyncHealthActivity : AppCompatActivity() {
     }
 
     private fun syncNow() {
-        if (BuildConfig.FITAI_SYNC_TOKEN.isBlank()) {
-            binding.textStatus.text = "Erreur: FITAI_SYNC_TOKEN manquant"
-            return
-        }
         binding.buttonSync.isEnabled = false
         binding.textStatus.text = "Sync en cours..."
 
         lifecycleScope.launch {
+            val auth = resolveHealthAuth()
+            if (auth == null) {
+                binding.buttonSync.isEnabled = true
+                binding.textStatus.text = "Connecte-toi a Google dans Traknio avant la sync Health."
+                return@launch
+            }
+
             if (healthConnectProvider.isAvailable()) {
-                syncHealthConnect()
+                syncHealthConnect(auth = auth)
                 return@launch
             }
 
@@ -100,9 +105,10 @@ class SyncHealthActivity : AppCompatActivity() {
             val result = withContext(Dispatchers.IO) {
                 SamsungSyncApi.push(
                     baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                    token = BuildConfig.FITAI_SYNC_TOKEN,
+                    healthDeviceToken = auth.healthDeviceToken,
                     records = readResult.records,
                     source = HealthSyncSource.SAMSUNG_HEALTH,
+                    legacySyncToken = auth.legacySyncToken,
                 )
             }
 
@@ -115,10 +121,39 @@ class SyncHealthActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true) {
-        if (BuildConfig.FITAI_SYNC_TOKEN.isBlank()) {
+    private data class HealthAuth(val healthDeviceToken: String, val legacySyncToken: String)
+
+    private suspend fun resolveHealthAuth(): HealthAuth? {
+        val savedToken = prefs.getString("health_device_token", null)?.takeIf { it.isNotBlank() }
+        if (savedToken != null) {
+            return HealthAuth(savedToken, BuildConfig.FITAI_SYNC_TOKEN)
+        }
+
+        val cookieHeader = CookieManager.getInstance().getCookie(BuildConfig.FITAI_SYNC_BASE_URL)
+        val tokenResult = withContext(Dispatchers.IO) {
+            SamsungSyncApi.issueHealthDeviceToken(
+                baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
+                cookieHeader = cookieHeader,
+            )
+        }
+
+        if (tokenResult.ok && !tokenResult.token.isNullOrBlank()) {
+            prefs.edit().putString("health_device_token", tokenResult.token).apply()
+            return HealthAuth(tokenResult.token, BuildConfig.FITAI_SYNC_TOKEN)
+        }
+
+        return if (BuildConfig.FITAI_SYNC_TOKEN.isNotBlank()) {
+            HealthAuth("", BuildConfig.FITAI_SYNC_TOKEN)
+        } else {
+            null
+        }
+    }
+
+    private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true, auth: HealthAuth? = null) {
+        val resolvedAuth = auth ?: resolveHealthAuth()
+        if (resolvedAuth == null) {
             binding.buttonSync.isEnabled = true
-            binding.textStatus.text = "Erreur: FITAI_SYNC_TOKEN manquant"
+            binding.textStatus.text = "Connecte-toi a Google dans Traknio avant la sync Health."
             return
         }
 
@@ -154,9 +189,10 @@ class SyncHealthActivity : AppCompatActivity() {
         val result = withContext(Dispatchers.IO) {
             SamsungSyncApi.push(
                 baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                token = BuildConfig.FITAI_SYNC_TOKEN,
+                healthDeviceToken = resolvedAuth.healthDeviceToken,
                 records = readResult.records,
                 source = HealthSyncSource.HEALTH_CONNECT,
+                legacySyncToken = resolvedAuth.legacySyncToken,
             )
         }
 
@@ -169,8 +205,6 @@ class SyncHealthActivity : AppCompatActivity() {
     }
 
     private fun requestPermissionsIfNeeded() {
-        val prefs = getSharedPreferences("fitai_sync", MODE_PRIVATE)
-
         lifecycleScope.launch {
             if (healthConnectProvider.isAvailable()) {
                 val missing = healthConnectProvider.missingPermissions()

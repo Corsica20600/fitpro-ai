@@ -49,8 +49,12 @@ function parseMeasuredAt(value: string) {
   return date;
 }
 
-export async function ingestHealthMetrics(records: SamsungMetricInput[], provider: HealthSyncProvider) {
-  const profile = await getOrCreateDemoProfile();
+export async function ingestHealthMetrics(
+  records: SamsungMetricInput[],
+  provider: HealthSyncProvider,
+  userProfileId?: string,
+) {
+  const profile = userProfileId ? { id: userProfileId } : await getOrCreateDemoProfile();
   const config = providerConfig[provider];
   const valid = records.filter((item) => {
     if (!item || typeof item !== "object") return false;
