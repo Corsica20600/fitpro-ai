@@ -16,12 +16,31 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?)
-            ?: System.getenv("FITAI_SYNC_BASE_URL")
-            ?: "https://fitai-pro-zeta.vercel.app"
-        val syncToken = (project.findProperty("FITAI_SYNC_TOKEN") as String?)
-            ?: System.getenv("FITAI_SYNC_TOKEN")
-            ?: System.getenv("SAMSUNG_SYNC_TOKEN")
+        fun readLocalProperty(name: String): String? {
+            val localProperties = rootProject.file("local.properties")
+            if (!localProperties.exists()) return null
+
+            return localProperties.readLines()
+                .asSequence()
+                .map { it.trim() }
+                .filter { it.isNotBlank() && !it.startsWith("#") }
+                .firstOrNull { it.startsWith("$name=") }
+                ?.substringAfter("=")
+                ?.trim()
+                ?.trim('"', '\'')
+                ?.takeIf { it.isNotBlank() }
+        }
+
+        fun propertyValue(name: String): String? {
+            return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
+                ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
+                ?: readLocalProperty(name)
+        }
+
+        val syncBaseUrl = propertyValue("FITAI_SYNC_BASE_URL")
+            ?: "https://www.traknio.com"
+        val syncToken = propertyValue("FITAI_SYNC_TOKEN")
+            ?: propertyValue("SAMSUNG_SYNC_TOKEN")
             ?: ""
         fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))

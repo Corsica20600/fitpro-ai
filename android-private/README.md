@@ -82,17 +82,19 @@ Le projet Android est dans:
 
 ### 5.2 Configurer les secrets (local)
 
-Dans Android Studio:
-
-`File > Settings > Build, Execution, Deployment > Gradle` (ou `gradle.properties` utilisateur),
-ajouter:
+`gradle.properties` reste versionne et ne doit pas contenir de secret.
+Pour ta machine, ajoute les valeurs dans `android-private/traknio-android/local.properties`, qui est ignore par Git:
 
 ```properties
-FITAI_SYNC_BASE_URL=https://ton-domaine-traknio
-FITAI_SYNC_TOKEN=ton_token_samsung_sync
+FITAI_SYNC_BASE_URL=https://www.traknio.com
+FITAI_SYNC_TOKEN=ton_token_health_connect
+FITAI_WATCH_TOKEN=ton_token_montre_global
+FITAI_WATCH_DEVICE_TOKEN=ton_token_montre_appairee
 ```
 
 En local emulator Android: utiliser `http://10.0.2.2:3000` pour parler au serveur local.
+
+Alternative: definir ces valeurs dans les variables d'environnement avant le build.
 
 ### 5.3 Build APK
 

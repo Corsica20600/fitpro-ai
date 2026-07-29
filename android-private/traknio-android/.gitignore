@@ -4,6 +4,7 @@
 /wear/build
 /local.properties
 *.iml
+/.idea/
 
 # Android Studio local/session state. Keep project structure files tracked, but not per-device UI state.
 /.idea/appInsightsSettings.xml

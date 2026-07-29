@@ -14,6 +14,21 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
+        fun readLocalProperty(name: String): String? {
+            val localProperties = rootProject.file("local.properties")
+            if (!localProperties.exists()) return null
+
+            return localProperties.readLines()
+                .asSequence()
+                .map { it.trim() }
+                .filter { it.isNotBlank() && !it.startsWith("#") }
+                .firstOrNull { it.startsWith("$name=") }
+                ?.substringAfter("=")
+                ?.trim()
+                ?.trim('"', '\'')
+                ?.takeIf { it.isNotBlank() }
+        }
+
         fun readRootEnv(name: String): String? {
             val rootEnv = rootProject.projectDir.parentFile?.parentFile?.resolve(".env")
                 ?: return null
@@ -30,21 +45,24 @@ android {
                 ?.takeIf { it.isNotBlank() }
         }
 
-        val syncBaseUrl = (project.findProperty("FITAI_SYNC_BASE_URL") as String?)
-            ?: System.getenv("FITAI_SYNC_BASE_URL")
-            ?: readRootEnv("FITAI_SYNC_BASE_URL")
-            ?: "https://fitai-pro-zeta.vercel.app"
-        val watchToken = (project.findProperty("FITAI_WATCH_TOKEN") as String?)
-            ?: System.getenv("FITAI_WATCH_TOKEN")
-            ?: readRootEnv("FITAI_WATCH_TOKEN")
+        fun propertyValue(name: String): String? {
+            return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
+                ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
+                ?: readLocalProperty(name)
+                ?: readRootEnv(name)
+        }
+
+        fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+        val syncBaseUrl = propertyValue("FITAI_SYNC_BASE_URL")
+            ?: "https://www.traknio.com"
+        val watchToken = propertyValue("FITAI_WATCH_TOKEN")
             ?: ""
-        val watchDeviceToken = (project.findProperty("FITAI_WATCH_DEVICE_TOKEN") as String?)
-            ?: System.getenv("FITAI_WATCH_DEVICE_TOKEN")
-            ?: readRootEnv("FITAI_WATCH_DEVICE_TOKEN")
+        val watchDeviceToken = propertyValue("FITAI_WATCH_DEVICE_TOKEN")
             ?: ""
-        buildConfigField("String", "FITAI_SYNC_BASE_URL", "\"$syncBaseUrl\"")
-        buildConfigField("String", "FITAI_WATCH_TOKEN", "\"$watchToken\"")
-        buildConfigField("String", "FITAI_WATCH_DEVICE_TOKEN", "\"$watchDeviceToken\"")
+        buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
+        buildConfigField("String", "FITAI_WATCH_TOKEN", buildConfigString(watchToken))
+        buildConfigField("String", "FITAI_WATCH_DEVICE_TOKEN", buildConfigString(watchDeviceToken))
     }
 
     buildTypes {

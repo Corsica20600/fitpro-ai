@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.idea/
 
 # local external dataset clone (was previously a git submodule)
 data/external/free-exercise-db/
