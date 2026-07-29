@@ -12,6 +12,8 @@ import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class HealthConnectProvider(private val context: Context) {
@@ -51,41 +53,44 @@ class HealthConnectProvider(private val context: Context) {
         }
 
         val end = Instant.now()
-        val start = end.minus(24, ChronoUnit.HOURS)
-        val timeRange = TimeRangeFilter.between(start, end)
+        val zone = ZoneId.systemDefault()
+        val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        val dailyRange = TimeRangeFilter.between(todayStart, end)
+        val sleepRange = TimeRangeFilter.between(end.minus(36, ChronoUnit.HOURS), end)
+        val heartRateRange = TimeRangeFilter.between(end.minus(12, ChronoUnit.HOURS), end)
         val measuredAt = end.toString()
         val records = mutableListOf<SamsungMetricRecord>()
         val errors = mutableListOf<String>()
 
-        runCatching { readSteps(timeRange) }
+        runCatching { readSteps(dailyRange) }
             .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("steps", value, measuredAt, "Health Connect") }
             .onFailure { throwable ->
                 Log.e(TAG, "Steps read failed", throwable)
                 errors += "steps"
             }
 
-        runCatching { readAverageHeartRate(timeRange) }
+        runCatching { readAverageHeartRate(heartRateRange) }
             .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("heart_rate", value, measuredAt, "Health Connect") }
             .onFailure { throwable ->
                 Log.e(TAG, "Heart rate read failed", throwable)
                 errors += "heart_rate"
             }
 
-        runCatching { readSleepMinutes(timeRange) }
+        runCatching { readSleepMinutes(sleepRange) }
             .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("sleep_minutes", value, measuredAt, "Health Connect") }
             .onFailure { throwable ->
                 Log.e(TAG, "Sleep read failed", throwable)
                 errors += "sleep_minutes"
             }
 
-        runCatching { readCalories(timeRange) }
+        runCatching { readCalories(dailyRange) }
             .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("calories", value, measuredAt, "Health Connect") }
             .onFailure { throwable ->
                 Log.e(TAG, "Calories read failed", throwable)
                 errors += "calories"
             }
 
-        runCatching { readDistance(timeRange) }
+        runCatching { readDistance(dailyRange) }
             .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("distance_m", value, measuredAt, "Health Connect") }
             .onFailure { throwable ->
                 Log.e(TAG, "Distance read failed", throwable)
@@ -100,7 +105,7 @@ class HealthConnectProvider(private val context: Context) {
             } else if (errors.isNotEmpty()) {
                 "Health Connect lu, mais sans donnees exploitables (${errors.joinToString(", ")})."
             } else {
-                "Aucune donnee Health Connect sur les dernieres 24 h."
+                "Aucune donnee Health Connect exploitable aujourd'hui."
             },
         )
     }
