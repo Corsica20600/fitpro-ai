@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.fitai.privateapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.fitai.proapp"
@@ -42,9 +42,15 @@ android {
         val syncToken = propertyValue("FITAI_SYNC_TOKEN")
             ?: propertyValue("SAMSUNG_SYNC_TOKEN")
             ?: ""
+        val googlePlayProductId = propertyValue("GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID")
+            ?: "traknio_premium"
+        val googlePlayPackageName = propertyValue("GOOGLE_PLAY_PACKAGE_NAME")
+            ?: "com.fitai.proapp"
         fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
         buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
         buildConfigField("String", "FITAI_SYNC_TOKEN", buildConfigString(syncToken))
+        buildConfigField("String", "GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID", buildConfigString(googlePlayProductId))
+        buildConfigField("String", "GOOGLE_PLAY_PACKAGE_NAME", buildConfigString(googlePlayPackageName))
     }
 
     buildTypes {
@@ -77,4 +83,5 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.health.connect:connect-client:1.1.0-alpha08")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("com.android.billingclient:billing:9.1.0")
 }

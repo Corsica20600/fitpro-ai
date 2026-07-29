@@ -170,6 +170,11 @@ class MainActivity : AppCompatActivity() {
             return true
         }
 
+        if (scheme == "traknio" && host == "billing" && uri.path == "/google-play") {
+            startActivity(Intent(this, BillingActivity::class.java))
+            return true
+        }
+
         if ((scheme == "http" || scheme == "https") && allowedHosts.any { host == it || host.endsWith(".$it") }) {
             return false
         }

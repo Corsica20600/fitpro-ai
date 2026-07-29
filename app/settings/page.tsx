@@ -145,7 +145,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const connected = Boolean(session?.user?.email);
   const stripeConfigured = isStripeConfigured();
   const subscriptionStatus = accountData.profile.subscriptionStatus;
-  const subscriptionActive = subscriptionStatus === "ACTIVE" || subscriptionStatus === "TRIALING";
+  const subscriptionHasKnownEnd = Boolean(accountData.profile.subscriptionCurrentPeriodEnd);
+  const subscriptionActive =
+    subscriptionStatus === "ACTIVE"
+    || subscriptionStatus === "TRIALING"
+    || (subscriptionStatus === "PAST_DUE" && subscriptionHasKnownEnd)
+    || (subscriptionStatus === "CANCELED" && subscriptionHasKnownEnd);
   const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
   const spotify = accountData.integrations.find((item) => item.provider === "SPOTIFY");
   const healthConnect = accountData.integrations.find((item) => item.provider === "HEALTH_CONNECT");
@@ -200,7 +205,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
           <p className="eyebrow">Abonnement</p>
           <h2>{BRAND.name}</h2>
           <p className="muted">
-            Paiement sécurisé par Stripe. Ton abonnement est rattaché au même compte Google que ton historique.
+            Sur Android, l&apos;abonnement passe par Google Play. Sur le web, Stripe reste disponible pour les tests hors Play Store.
           </p>
         </div>
         <span className={`chip ${subscriptionActive ? "success" : "warning"}`}>
@@ -234,11 +239,16 @@ export default async function SettingsPage(props: SettingsPageProps) {
         {connected ? (
           <div className="settings-billing-actions">
             {!subscriptionActive ? (
-              <form action={createBillingCheckoutAction}>
-                <button type="submit" className="primary-button full-line" disabled={!stripeConfigured}>
-                  Activer l&apos;abonnement
-                </button>
-              </form>
+              <>
+                <a className="primary-button full-line" href="traknio://billing/google-play">
+                  Activer avec Google Play
+                </a>
+                <form action={createBillingCheckoutAction}>
+                  <button type="submit" className="ghost-btn full-line" disabled={!stripeConfigured}>
+                    Tester via Stripe web
+                  </button>
+                </form>
+              </>
             ) : null}
             {canOpenPortal ? (
               <form action={openBillingPortalAction}>

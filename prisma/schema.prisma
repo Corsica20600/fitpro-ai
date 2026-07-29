@@ -138,6 +138,11 @@ model UserProfile {
   sessionsPerWeek               Int?
   stripeCustomerId              String?                 @unique
   stripeSubscriptionId          String?                 @unique
+  googlePlayPurchaseTokenHash   String?                 @unique
+  googlePlayOrderId             String?
+  googlePlayProductId           String?
+  googlePlayBasePlanId          String?
+  googlePlayPackageName         String?
   subscriptionStatus            SubscriptionStatus      @default(FREE)
   subscriptionPriceId           String?
   subscriptionCurrentPeriodEnd  DateTime?
