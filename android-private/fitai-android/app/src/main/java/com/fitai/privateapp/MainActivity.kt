@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setBackgroundDrawableResource(R.color.fitai_system_bar)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         binding.webViewFitAi.settings.domStorageEnabled = true
         binding.webViewFitAi.settings.databaseEnabled = true
         binding.webViewFitAi.settings.loadsImagesAutomatically = true
+        binding.webViewFitAi.setBackgroundColor(Color.rgb(10, 19, 40))
         binding.webViewFitAi.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
