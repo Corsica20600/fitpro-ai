@@ -83,11 +83,19 @@ class MainActivity : AppCompatActivity() {
                 super.onPageStarted(view, url, favicon)
                 binding.webErrorPanel.visibility = View.GONE
                 binding.webLoading.visibility = View.VISIBLE
+                binding.launchOverlay.visibility = View.VISIBLE
+                binding.launchOverlay.alpha = 1f
+            }
+
+            override fun onPageCommitVisible(view: WebView?, url: String?) {
+                super.onPageCommitVisible(view, url)
+                hideLaunchOverlay()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 binding.webLoading.visibility = View.GONE
+                hideLaunchOverlay()
             }
 
             override fun onReceivedError(
@@ -129,7 +137,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun showWebError() {
         binding.webLoading.visibility = View.GONE
+        binding.launchOverlay.visibility = View.GONE
         binding.webErrorPanel.visibility = View.VISIBLE
+    }
+
+    private fun hideLaunchOverlay() {
+        if (binding.launchOverlay.visibility != View.VISIBLE) return
+        binding.launchOverlay.animate()
+            .alpha(0f)
+            .setDuration(180L)
+            .withEndAction {
+                binding.launchOverlay.visibility = View.GONE
+                binding.launchOverlay.alpha = 1f
+            }
+            .start()
     }
 
     private fun buildInitialUrl(): String {

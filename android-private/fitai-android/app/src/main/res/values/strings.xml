@@ -10,6 +10,7 @@
     <string name="web_error_title">Connexion indisponible</string>
     <string name="web_error_message">Verifie ta 5G ou repasse en Wi-Fi, puis relance le chargement.</string>
     <string name="web_error_retry">Reessayer</string>
+    <string name="launch_art_description">Lancement Traknio</string>
     <string name="status_idle">Pret</string>
     <string name="permission_unknown">Permissions: verification en attente</string>
     <string name="help_text">Traknio synchronise Health Connect en priorite, puis Samsung Health en secours si necessaire.</string>

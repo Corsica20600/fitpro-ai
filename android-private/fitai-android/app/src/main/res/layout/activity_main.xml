@@ -18,6 +18,24 @@
         android:indeterminate="true"
         android:visibility="gone" />
 
+    <FrameLayout
+        android:id="@+id/launchOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/fitai_system_bar"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/launchArtwork"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/launch_art_description"
+            android:scaleType="centerCrop"
+            android:src="@drawable/traknio_launch_art" />
+
+    </FrameLayout>
+
     <LinearLayout
         android:id="@+id/webErrorPanel"
         android:layout_width="match_parent"
