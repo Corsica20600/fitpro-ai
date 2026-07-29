@@ -9,16 +9,16 @@ import { BRAND } from "@/src/lib/brand";
 
 const highlights = [
   {
-    label: "Téléphone",
-    value: "Séance guidée en temps réel",
+    label: "Séance",
+    value: "Guidage téléphone et montre",
   },
   {
-    label: "Montre",
-    value: "Wear OS synchronisée",
+    label: "Récupération",
+    value: "Sommeil, pas, FC repos",
   },
   {
-    label: "Progression",
-    value: "Historique et records",
+    label: "Premium",
+    value: "Programmes IA maîtrisés",
   },
 ] as const;
 
@@ -31,16 +31,18 @@ const pillars = [
 
 const showcase = [
   {
-    title: "Application mobile",
-    copy: "Une séance lisible, rapide à valider, avec les changements de poids, reps et exercices conservés dans l'historique.",
+    eyebrow: "Application mobile",
+    title: "Ta séance reste fluide.",
+    copy: "Repos, séries, charges, remplacements et historique restent alignés pendant l'entraînement.",
     image: "/brand/traknio-login-reference.png",
     alt: "Aperçu mobile Traknio",
     width: 228,
     height: 436,
   },
   {
-    title: "Montre connectée",
-    copy: "La montre garde le rythme pendant l'effort : validation des séries, repos et synchronisation sans friction.",
+    eyebrow: "Wear OS",
+    title: "La montre garde le tempo.",
+    copy: "Validation des séries, fin de séance et synchronisation suivent l'effort sans casser le rythme.",
     image: "/brand/traknio-watch-reference.png",
     alt: "Aperçu montre Traknio",
     width: 260,
@@ -68,15 +70,17 @@ export default async function HomePage() {
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-hero__content">
           <Image
-            src="/brand/traknio-logo-mark-exact.png"
-            alt=""
-            width={167}
-            height={94}
-            className="landing-hero__mark"
+            src="/brand/traknio-logo-site.png"
+            alt={`${BRAND.name} - ${BRAND.tagline}`}
+            width={769}
+            height={168}
+            className="landing-hero__brand"
             priority
           />
-          <h1 id="landing-title">{BRAND.name}</h1>
-          <p>{BRAND.tagline}</p>
+          <h1 id="landing-title" className="sr-only">{BRAND.name}</h1>
+          <p className="landing-hero__lead">
+            Programmes, séance guidée, montre Wear OS, récupération et progression dans une seule expérience.
+          </p>
           <div className="landing-actions">
             <Link className="primary-button full-line" href="/login">
               Se connecter
@@ -86,14 +90,6 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-        <Image
-          src="/brand/traknio-launch-reference.png"
-          alt="Aperçu de lancement Traknio"
-          width={414}
-          height={626}
-          className="landing-hero__visual"
-          priority
-        />
       </section>
 
       <section className="landing-stats" aria-label="Points forts">
@@ -109,17 +105,19 @@ export default async function HomePage() {
         {showcase.map((item) => (
           <article key={item.title} className="landing-showcase-item">
             <div className="landing-showcase-copy">
-              <p className="eyebrow">{item.title}</p>
+              <p className="eyebrow">{item.eyebrow}</p>
               <h2>{item.title}</h2>
               <p>{item.copy}</p>
             </div>
-            <Image
-              src={item.image}
-              alt={item.alt}
-              width={item.width}
-              height={item.height}
-              className="landing-showcase-image"
-            />
+            <div className="landing-showcase-media">
+              <Image
+                src={item.image}
+                alt={item.alt}
+                width={item.width}
+                height={item.height}
+                className="landing-showcase-image"
+              />
+            </div>
           </article>
         ))}
       </section>
