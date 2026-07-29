@@ -5407,23 +5407,141 @@ summary:focus-visible {
   opacity: .55;
 }
 
-/* Traknio reference screens */
-.landing-page .landing-hero {
-  place-items: center;
-  gap: 18px;
-  padding: clamp(20px, 5vw, 34px) clamp(14px, 4vw, 28px);
-  border-color: rgba(37, 57, 87, .9);
-  border-radius: 8px;
-  background:
-    radial-gradient(420px 220px at 50% 24%, rgba(24, 47, 90, .44), transparent 66%),
-    linear-gradient(180deg, #080f21 0%, #020611 100%);
+/* Traknio public presentation */
+.landing-page {
+  gap: clamp(16px, 4vw, 24px);
 }
 
-.landing-brand-reference {
-  width: min(100%, 520px);
+.landing-page .landing-hero {
+  min-height: min(660px, calc(100svh - 150px));
+  place-items: center;
+  gap: clamp(18px, 5vw, 34px);
+  padding: clamp(24px, 6vw, 52px) clamp(18px, 5vw, 40px) clamp(18px, 4vw, 34px);
+  border-color: rgba(0, 224, 255, .28);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(10, 19, 40, .24), rgba(2, 6, 17, .96)),
+    url("/brand/traknio-launch-reference.png") center bottom / cover no-repeat,
+    #020611;
+}
+
+.landing-hero__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.landing-hero__mark {
+  width: clamp(86px, 28vw, 148px);
   height: auto;
-  display: block;
-  filter: drop-shadow(0 18px 32px rgba(0, 0, 0, .38));
+  filter: drop-shadow(0 14px 30px rgba(0, 224, 255, .2));
+}
+
+.landing-page .landing-hero h1 {
+  margin: 0;
+  color: #f8fbff;
+  font-family: var(--font-orbitron), var(--font-exo-2), sans-serif;
+  font-size: clamp(2.8rem, 14vw, 6.8rem);
+  font-weight: 900;
+  line-height: .95;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 18px 40px rgba(0, 0, 0, .62);
+}
+
+.landing-page .landing-hero p {
+  margin: 0;
+  color: #b7c8ef;
+  font-family: var(--font-orbitron), var(--font-exo-2), sans-serif;
+  font-size: clamp(.76rem, 2.6vw, .98rem);
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.landing-page .landing-actions {
+  width: min(100%, 360px);
+  margin-top: 8px;
+}
+
+.landing-hero__visual {
+  position: absolute;
+  inset: auto 50% 0 auto;
+  width: min(100%, 414px);
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.landing-showcase {
+  display: grid;
+  gap: 12px;
+}
+
+.landing-showcase-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid rgba(0, 224, 255, .26);
+  border-radius: 8px;
+  background:
+    radial-gradient(460px 260px at 92% 8%, rgba(21, 91, 255, .18), transparent 58%),
+    linear-gradient(180deg, rgba(17, 35, 67, .96), rgba(4, 9, 19, .98));
+}
+
+.landing-showcase-copy {
+  display: grid;
+  gap: 8px;
+  align-content: center;
+}
+
+.landing-showcase-copy h2 {
+  margin: 0;
+  color: #f8fbff;
+  font-size: clamp(1.65rem, 7vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.landing-showcase-copy p:not(.eyebrow) {
+  margin: 0;
+  color: #b7c8ef;
+  font-size: .98rem;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.landing-showcase-image {
+  width: min(100%, 300px);
+  height: auto;
+  justify-self: center;
+  border-radius: 8px;
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, .42));
+}
+
+@media (min-width: 720px) {
+  .landing-page .landing-hero {
+    min-height: 620px;
+  }
+
+  .landing-showcase-item {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+    align-items: center;
+    padding: 28px;
+  }
+
+  .landing-showcase-item:nth-child(even) .landing-showcase-copy {
+    order: 2;
+  }
+
+  .landing-showcase-item:nth-child(even) .landing-showcase-image {
+    order: 1;
+  }
 }
 
 .login-page--reference {
