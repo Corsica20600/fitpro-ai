@@ -7,6 +7,7 @@ import { PrimaryAction } from "@/src/components/ui/primary-action";
 import { BrandSelect } from "@/src/components/ui/brand-select";
 import { WorkoutCard } from "@/src/components/ui/workout-card";
 import { SpotifyOpenLink } from "@/src/components/integrations/spotify-open-link";
+import { SpotifyNowPlaying } from "@/src/components/integrations/spotify-now-playing";
 import { GuidedWorkoutClient } from "@/src/components/workout/guided-workout-client";
 import { getExerciseDisplayName, getExerciseOverride } from "@/src/lib/exercise-overrides";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
@@ -89,19 +90,7 @@ export default async function WorkoutPage() {
         </WorkoutCard>
       ) : (
         <>
-          <WorkoutCard light>
-            <p className="eyebrow">Focus musique</p>
-            <span className="chip orange">Mode focus actif</span>
-            <span className={`chip ${spotifyConnected ? "success" : "warning"}`}>
-              {spotifyConnected ? "Spotify connecté" : "Spotify non connecté"}
-            </span>
-            <p className="muted">
-              {spotifyConnected
-                ? `Compte Spotify connecté${spotifyConnection?.displayName ? ` : ${spotifyConnection.displayName}` : ""}.`
-                : "Connecte Spotify depuis Paramètres pour garder la musique liée au compte."}
-            </p>
-            <SpotifyOpenLink connected={spotifyConnected} className="ghost-btn" />
-          </WorkoutCard>
+          {spotifyConnected ? <SpotifyNowPlaying displayName={spotifyConnection?.displayName} /> : null}
           <GuidedWorkoutClient
             key={currentSession.id}
             sessionId={currentSession.id}
