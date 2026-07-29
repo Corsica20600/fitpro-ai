@@ -1338,7 +1338,10 @@ export async function getDashboardDataForDemoUser() {
   const heartPoints = scoreRestingHeartRate(restingHeartRate);
   const activityPoints = scoreActivity(stepsToday, caloriesToday);
   const sessionPoints = scoreLastSession(sessionsWithStats[0]?.date ?? null);
-  const availableMax = (sleepPoints == null ? 0 : 40) + (heartPoints == null ? 0 : 30) + (activityPoints == null ? 0 : 20) + 10;
+  const hasHealthReadinessData = sleepPoints != null || heartPoints != null || activityPoints != null;
+  const availableMax = hasHealthReadinessData
+    ? (sleepPoints == null ? 0 : 40) + (heartPoints == null ? 0 : 30) + (activityPoints == null ? 0 : 20) + 10
+    : 0;
   const rawPoints = (sleepPoints ?? 0) + (heartPoints ?? 0) + (activityPoints ?? 0) + sessionPoints;
   const recoveryScore = availableMax > 0 ? clampPercent((rawPoints / availableMax) * 100) : null;
   const healthProvider = healthIntegrations.find((integration) => integration.status === "CONNECTED") ?? healthIntegrations[0] ?? null;
