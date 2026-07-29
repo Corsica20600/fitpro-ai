@@ -56,6 +56,7 @@ export async function ingestHealthMetrics(records: SamsungMetricInput[], provide
     if (!item || typeof item !== "object") return false;
     if (!isFiniteNumber(item.value)) return false;
     if (!parseMeasuredAt(item.measuredAt)) return false;
+    if (item.metric === "sleep_minutes" && (item.value < 60 || item.value > 12 * 60)) return false;
     return true;
   });
 

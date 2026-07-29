@@ -1322,6 +1322,7 @@ export async function getDashboardDataForDemoUser() {
   for (const metric of healthMetrics) {
     const metricName = parseProgressMetricName(metric.notes);
     if (!metricName) continue;
+    if (metricName === "sleep_minutes" && (metric.value < 60 || metric.value > 12 * 60)) continue;
     if (!healthByMetric.has(metricName)) {
       healthByMetric.set(metricName, { value: metric.value, measuredAt: metric.measuredAt, unit: metric.unit });
     }
