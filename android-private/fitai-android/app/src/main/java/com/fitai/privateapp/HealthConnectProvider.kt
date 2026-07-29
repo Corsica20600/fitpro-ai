@@ -9,6 +9,7 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
@@ -113,13 +114,13 @@ class HealthConnectProvider(private val context: Context) {
     private fun client() = HealthConnectClient.getOrCreate(context)
 
     private suspend fun readSteps(timeRange: TimeRangeFilter): Double {
-        val response = client().readRecords(
-            ReadRecordsRequest(
-                recordType = StepsRecord::class,
+        val response = client().aggregate(
+            AggregateRequest(
+                metrics = setOf(StepsRecord.COUNT_TOTAL),
                 timeRangeFilter = timeRange,
             ),
         )
-        return response.records.sumOf { it.count.toDouble() }
+        return response[StepsRecord.COUNT_TOTAL]?.toDouble() ?: 0.0
     }
 
     private suspend fun readAverageHeartRate(timeRange: TimeRangeFilter): Double {
@@ -135,13 +136,13 @@ class HealthConnectProvider(private val context: Context) {
     }
 
     private suspend fun readCalories(timeRange: TimeRangeFilter): Double {
-        val response = client().readRecords(
-            ReadRecordsRequest(
-                recordType = TotalCaloriesBurnedRecord::class,
+        val response = client().aggregate(
+            AggregateRequest(
+                metrics = setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
                 timeRangeFilter = timeRange,
             ),
         )
-        return response.records.sumOf { it.energy.inKilocalories }
+        return response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
     }
 
     private suspend fun readSleepMinutes(timeRange: TimeRangeFilter): Double {
@@ -157,12 +158,12 @@ class HealthConnectProvider(private val context: Context) {
     }
 
     private suspend fun readDistance(timeRange: TimeRangeFilter): Double {
-        val response = client().readRecords(
-            ReadRecordsRequest(
-                recordType = DistanceRecord::class,
+        val response = client().aggregate(
+            AggregateRequest(
+                metrics = setOf(DistanceRecord.DISTANCE_TOTAL),
                 timeRangeFilter = timeRange,
             ),
         )
-        return response.records.sumOf { it.distance.inMeters }
+        return response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0
     }
 }
