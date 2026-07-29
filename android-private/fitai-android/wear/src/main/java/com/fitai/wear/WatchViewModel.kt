@@ -58,10 +58,15 @@ class WatchViewModel(
         pollingJob = viewModelScope.launch {
             fetchState(silent = false)
             while (true) {
-                delay(8_000)
+                delay(nextPollingDelayMs())
                 fetchState(silent = true)
             }
         }
+    }
+
+    private fun nextPollingDelayMs(): Long {
+        val ready = _state.value as? WatchScreenState.Ready ?: return 8_000
+        return if (ready.payload.status == "IN_PROGRESS") 1_000 else 8_000
     }
 
     private fun startDisplayTicker() {

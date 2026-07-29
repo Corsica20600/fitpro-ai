@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     workoutSessionId,
     currentExerciseIndex: body.currentExerciseIndex == null ? undefined : Number(body.currentExerciseIndex),
     currentSetIndex: body.currentSetIndex == null ? undefined : Number(body.currentSetIndex),
+    restRemaining: body.restRemaining == null ? undefined : Number(body.restRemaining),
     status: body.status,
     lastSyncAt: body.lastSyncAt,
     userProfileId: access.userProfileId,

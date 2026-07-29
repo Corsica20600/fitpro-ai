@@ -347,10 +347,15 @@ export default async function SettingsPage(props: SettingsPageProps) {
             {healthPrepared ? "Préparé" : "À préparer"}
           </span>
           {healthPrepared ? (
-            <form action={disconnectIntegrationAction}>
-              <input type="hidden" name="provider" value="HEALTH_CONNECT" />
-              <button type="submit" className="ghost-btn full-line">Désactiver Health Connect</button>
-            </form>
+            <>
+              <a className="primary-button full-line" href="traknio://health-sync">
+                Synchroniser maintenant
+              </a>
+              <form action={disconnectIntegrationAction}>
+                <input type="hidden" name="provider" value="HEALTH_CONNECT" />
+                <button type="submit" className="ghost-btn full-line">Désactiver Health Connect</button>
+              </form>
+            </>
           ) : (
             <form action={enableHealthConnectPreparationAction}>
               <button type="submit" className="ghost-btn full-line">Préparer Health Connect</button>

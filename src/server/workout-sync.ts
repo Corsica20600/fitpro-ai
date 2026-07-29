@@ -229,6 +229,7 @@ export async function syncWorkoutState(input: {
   workoutSessionId: string;
   currentExerciseIndex?: number;
   currentSetIndex?: number;
+  restRemaining?: number;
   status?: "ACTIVE" | "PAUSED" | "COMPLETED";
   lastSyncAt?: string;
   userProfileId?: string;
@@ -261,6 +262,23 @@ export async function syncWorkoutState(input: {
       lastSyncAt: Number.isNaN(syncDate.getTime()) ? new Date() : syncDate,
     },
   });
+
+  if (Number.isFinite(input.restRemaining)) {
+    const latestCompletedSet = await prisma.workoutSet.findFirst({
+      where: { workoutSessionId: input.workoutSessionId, isCompleted: true, completedAt: { not: null } },
+      orderBy: [{ completedAt: "desc" }, { createdAt: "desc" }],
+      select: { id: true, completedAt: true },
+    });
+
+    if (latestCompletedSet?.completedAt) {
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - latestCompletedSet.completedAt.getTime()) / 1000));
+      const nextRemaining = Math.max(0, Math.min(600, Math.floor(input.restRemaining as number)));
+      await prisma.workoutSet.update({
+        where: { id: latestCompletedSet.id },
+        data: { restSeconds: Math.min(600, elapsedSeconds + nextRemaining) },
+      });
+    }
+  }
 
   return getCurrentWorkoutStateForProfile(input.workoutSessionId, input.userProfileId);
 }

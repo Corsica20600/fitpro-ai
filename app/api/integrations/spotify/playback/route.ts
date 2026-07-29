@@ -60,15 +60,15 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({})) as { action?: string };
   const action = String(body.action ?? "").trim();
-  const paths: Record<string, string> = {
-    previous: "/me/player/previous",
-    play: "/me/player/play",
-    next: "/me/player/next",
+  const actions: Record<string, { path: string; method: "POST" | "PUT" }> = {
+    previous: { path: "/me/player/previous", method: "POST" },
+    play: { path: "/me/player/play", method: "PUT" },
+    next: { path: "/me/player/next", method: "POST" },
   };
-  const path = paths[action];
-  if (!path) return NextResponse.json({ error: "invalid_action" }, { status: 400 });
+  const target = actions[action];
+  if (!target) return NextResponse.json({ error: "invalid_action" }, { status: 400 });
 
-  const response = await spotifyFetch(path, accessToken, { method: "PUT" });
+  const response = await spotifyFetch(target.path, accessToken, { method: target.method });
   if (!response.ok && response.status !== 204) {
     return NextResponse.json({ ok: false, error: "spotify_action_failed" }, { status: 200 });
   }

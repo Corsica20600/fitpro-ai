@@ -116,6 +116,12 @@ class SyncHealthActivity : AppCompatActivity() {
     }
 
     private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true) {
+        if (BuildConfig.FITAI_SYNC_TOKEN.isBlank()) {
+            binding.buttonSync.isEnabled = true
+            binding.textStatus.text = "Erreur: FITAI_SYNC_TOKEN manquant"
+            return
+        }
+
         val missing = healthConnectProvider.missingPermissions()
         if (missing.isNotEmpty() && requestMissingPermissions) {
             binding.textPermissionState.text = "Autorisation Health Connect requise."
@@ -177,6 +183,9 @@ class SyncHealthActivity : AppCompatActivity() {
                     "Permissions Health Connect a accorder."
                 }
                 prefs.edit().putBoolean("health_perm_requested", true).apply()
+                binding.buttonSync.isEnabled = false
+                binding.textStatus.text = if (missing.isEmpty()) "Sync Health Connect automatique..." else "Preparation Health Connect..."
+                syncHealthConnect(requestMissingPermissions = true)
                 return@launch
             }
 

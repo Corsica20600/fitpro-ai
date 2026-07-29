@@ -165,6 +165,11 @@ class MainActivity : AppCompatActivity() {
         val scheme = uri.scheme?.lowercase().orEmpty()
         val host = uri.host?.lowercase().orEmpty()
 
+        if (scheme == "traknio" && host == "health-sync") {
+            startActivity(Intent(this, SyncHealthActivity::class.java))
+            return true
+        }
+
         if ((scheme == "http" || scheme == "https") && allowedHosts.any { host == it || host.endsWith(".$it") }) {
             return false
         }

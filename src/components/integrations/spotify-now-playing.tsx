@@ -47,7 +47,8 @@ export function SpotifyNowPlaying({ displayName }: SpotifyNowPlayingProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      window.setTimeout(() => void refresh(), 450);
+      window.setTimeout(() => void refresh(), 300);
+      window.setTimeout(() => void refresh(), 1200);
     } finally {
       setBusyAction(null);
     }

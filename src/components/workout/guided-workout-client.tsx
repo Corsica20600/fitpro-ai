@@ -661,6 +661,7 @@ export function GuidedWorkoutClient({
       clearRestTimer();
       skipRestRequestedRef.current = true;
     }
+    pushSyncState(exerciseIndex, Math.max(1, nextSetIndex), optimisticRemaining);
     lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:${optimisticRemaining}`;
 
     try {
