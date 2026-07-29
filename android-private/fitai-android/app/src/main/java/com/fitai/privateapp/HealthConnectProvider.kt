@@ -151,9 +151,9 @@ class HealthConnectProvider(private val context: Context) {
                 timeRangeFilter = timeRange,
             ),
         )
-        return response.records.sumOf { record ->
+        return response.records.maxOfOrNull { record ->
             java.time.Duration.between(record.startTime, record.endTime).toMinutes().toDouble()
-        }
+        }?.coerceAtMost(12 * 60.0) ?: 0.0
     }
 
     private suspend fun readDistance(timeRange: TimeRangeFilter): Double {

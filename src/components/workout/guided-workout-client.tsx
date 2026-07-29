@@ -204,7 +204,7 @@ export function GuidedWorkoutClient({
     }
   }, []);
 
-  const pushSyncState = useCallback((nextExerciseIndex: number, nextSetIndex: number, nextRest: number) => {
+  const pushSyncState = useCallback((nextExerciseIndex: number, nextSetIndex: number, nextRest: number, status: "ACTIVE" | "PAUSED" | "COMPLETED" = "ACTIVE") => {
     void fetch("/api/watch/syncWorkoutState", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -212,7 +212,7 @@ export function GuidedWorkoutClient({
         workoutSessionId: sessionId,
         currentExerciseIndex: Math.max(0, nextExerciseIndex),
         currentSetIndex: Math.max(1, nextSetIndex),
-        status: "ACTIVE",
+        status,
         lastSyncAt: new Date().toISOString(),
         restRemaining: Math.max(0, nextRest),
       }),
@@ -550,7 +550,12 @@ export function GuidedWorkoutClient({
       setExerciseIndex(optimisticExerciseIndex);
       setRestChoice(getPlannedRestForIndex(optimisticExerciseIndex));
     }
-    pushSyncState(optimisticExerciseIndex, optimisticSetIndex, restChoice);
+    pushSyncState(
+      optimisticExerciseIndex,
+      optimisticSetIndex,
+      restChoice,
+      isLastSetForExercise && exerciseIndex >= exercises.length - 1 ? "PAUSED" : "ACTIVE",
+    );
     try {
       const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
       if (strictStateRes.ok) {
@@ -941,7 +946,7 @@ export function GuidedWorkoutClient({
 
   if (isWorkoutDone) {
     return (
-      <section className="card workout-active-screen">
+      <section className="card workout-active-screen workout-complete-screen">
         <p className="eyebrow">Séance complète</p>
         <span className="chip success">Objectif atteint</span>
         <h1 className="workout-active-title">Terminer la séance</h1>

@@ -157,11 +157,29 @@ private fun ReadyScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel
     val payload = state.payload
     val isResting = state.displayRestRemaining > 0
     val isCompleted = payload.status == "COMPLETED"
+    val isReadyToComplete = payload.status == "READY_TO_COMPLETE"
 
     when {
         isCompleted -> CompletedScreen(state, viewModel::refresh)
+        isReadyToComplete -> ReadyToCompleteScreen(state, viewModel)
         isResting -> RestScreen(state, viewModel)
         else -> ActiveSetScreen(state, viewModel)
+    }
+}
+
+@Composable
+private fun ReadyToCompleteScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel) {
+    val enabled = state.busyAction == null
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("Séance", fontSize = 18.sp, color = Color(0xFFB7C9EA))
+        Text("complète", fontSize = 25.sp, fontWeight = FontWeight.Black)
+        Text(state.syncLabel, color = Color(0xFF56F0C2), fontSize = 12.sp)
+        Spacer(Modifier.height(10.dp))
+        BigActionButton(if (state.busyAction == "finish") "..." else "Terminer", enabled, viewModel::completeSession)
     }
 }
 

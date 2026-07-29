@@ -209,7 +209,7 @@ export async function getWatchPayload(sessionId?: string, userProfileId?: string
     targetReps,
     weight: latestSetForCurrent?.actualWeightKg ?? (liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex ? liveTarget.targetWeightKg : null) ?? currentExercise.plannedWeightKg ?? null,
     restRemaining,
-    status: session.status,
+    status: session.status === "IN_PROGRESS" && session.watchSession?.status === "PAUSED" ? "READY_TO_COMPLETE" : session.status,
   };
 }
 

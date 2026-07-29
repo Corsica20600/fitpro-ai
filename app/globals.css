@@ -3172,6 +3172,15 @@ body {
   gap: 10px;
 }
 
+.workout-complete-screen {
+  min-height: min(54vh, 430px);
+  align-content: center;
+}
+
+.workout-complete-screen .workout-active-title {
+  font-size: clamp(1.45rem, 6vw, 2rem);
+}
+
 .workout-active-body {
   display: grid;
   gap: 10px;
