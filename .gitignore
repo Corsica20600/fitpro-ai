@@ -48,7 +48,7 @@ next-env.d.ts
 
 .vercel
 wear-os/app/src/main/java/com/fitai/wear/FitAiConfig.kt
-android-private/fitai-android/.idea/caches/
+android-private/traknio-android/.idea/caches/
 
 # Source visual kept locally only; public/brand contains the optimized tracked copy.
 documents/images/ChatGPT Image 28 juil. 2026, 08_33_533.png

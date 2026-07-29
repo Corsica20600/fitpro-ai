@@ -1,13 +1,13 @@
-# FitAI Android Private (Samsung Health Sync)
+# Traknio Android Private
 
-Ce dossier documente le setup APK privee (non publiee) pour synchroniser Samsung Health vers FitAI.
+Ce dossier documente le setup Android prive (non publie) pour synchroniser Health Connect et Samsung Health vers Traknio.
 
-Version actuelle APK:
-- Ouverture directe de `https://fitai-pro-zeta.vercel.app` en WebView au demarrage.
-- Onglet `FitAI Pro` (site complet).
-- Onglet `Sync Health` (ecran sync Samsung Health).
+Version actuelle :
+- Ouverture directe de l'URL configuree dans `FITAI_SYNC_BASE_URL`.
+- WebView Traknio complete.
+- Ecran natif de synchronisation Health Connect / Samsung Health.
 
-## 1) Ce qui est deja pret cote backend FitAI
+## 1) Ce qui est deja pret cote backend Traknio
 
 - Endpoint sync: `POST /api/health/samsung/sync`
 - Endpoint status: `GET /api/health/samsung/status`
@@ -72,12 +72,12 @@ Invoke-RestMethod `
 
 Le projet Android est dans:
 
-- `android-private/fitai-android/`
+- `android-private/traknio-android/`
 
 ### 5.1 Ouvrir le projet
 
 1. Ouvrir Android Studio.
-2. `Open` -> `android-private/fitai-android`.
+2. `Open` -> `android-private/traknio-android`.
 3. Laisser Android Studio synchroniser Gradle.
 
 ### 5.2 Configurer les secrets (local)
@@ -88,7 +88,7 @@ Dans Android Studio:
 ajouter:
 
 ```properties
-FITAI_SYNC_BASE_URL=https://ton-domaine-fitai
+FITAI_SYNC_BASE_URL=https://ton-domaine-traknio
 FITAI_SYNC_TOKEN=ton_token_samsung_sync
 ```
 
@@ -123,7 +123,7 @@ Sortie attendue:
 3. Reinstaller avec `adb install -r app-release.apk`.
 4. Verifier:
    - `GET /api/health/samsung/status`
-   - puis la page `Progress` dans FitAI.
+   - puis la page `Progres` dans Traknio.
 
 ## 7) Notes importantes
 
@@ -154,11 +154,11 @@ Flux attendu:
 
 Si le SDK Samsung Health n'est pas resolu depuis Maven, place l'AAR officielle ici:
 
-- `android-private/fitai-android/app/libs/`
+- `android-private/traknio-android/app/libs/`
 
 Exemple de fichier:
 
-- `android-private/fitai-android/app/libs/samsung-health-data-sdk.aar`
+- `android-private/traknio-android/app/libs/samsung-health-data-sdk.aar`
 
 Le projet est deja configure pour charger automatiquement tous les `.aar` de `app/libs` via:
 
@@ -167,7 +167,7 @@ Le projet est deja configure pour charger automatiquement tous les `.aar` de `ap
 Ensuite rebuild:
 
 ```bash
-cd android-private/fitai-android
+cd android-private/traknio-android
 ./gradlew clean :app:assembleDebug
 ```
 

@@ -17,6 +17,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FitAiPrivate"
+rootProject.name = "TraknioAndroid"
 include(":app")
 include(":wear")

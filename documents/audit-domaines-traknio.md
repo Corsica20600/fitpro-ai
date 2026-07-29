@@ -12,14 +12,15 @@ Recommandation actuelle : `traknio.com` en canonique, `traknio.fr` en redirectio
 
 ## 2. Dossier local et nommage projet
 
-A faire après une sauvegarde/commit propre :
+Fait localement :
 
-- Renommer le dossier local `C:\dev\fitpro\fitai-pro` vers un nom neutre comme `C:\dev\traknio\traknio-app`.
-- Renommer `android-private\fitai-android` uniquement si Android Studio est fermé.
-- Mettre à jour les docs internes qui parlent encore de FitAI :
-  - `android-private\README.md`
-  - `scripts\reset-history-progress.ts`
-  - noms de fichiers Android `fitai_*` si on veut une cohérence totale.
+- Dossier local renommé : `C:\dev\traknio\traknio-app`.
+- Projet Android renommé : `android-private\traknio-android`.
+
+Encore à décider avant publication :
+
+- Renommer ou non les identifiants Android `com.fitai.*` vers `com.traknio.*`.
+- Mettre à jour les noms de fichiers Android `fitai_*` si on veut une cohérence totale.
 - Ne pas renommer mécaniquement la base ou les variables sans étape contrôlée : certains noms `FITAI_*` sont techniques et utilisés dans Android.
 
 ## 3. Vercel et DNS OVH
@@ -93,7 +94,7 @@ Avant publication Play Store :
 
 - Décider si l'identifiant `applicationId = "com.fitai.proapp"` reste privé ou devient `com.traknio.app`.
 - Attention : l'identifiant Android ne se change plus librement après publication Play Store.
-- Mettre `FITAI_SYNC_BASE_URL=https://traknio.com` dans `android-private\fitai-android\gradle.properties`.
+- Mettre `FITAI_SYNC_BASE_URL=https://traknio.com` dans `android-private\traknio-android\gradle.properties`.
 - Rebuilder l'APK/AAB téléphone après changement de domaine.
 - Tester :
   - ouverture WebView ;
