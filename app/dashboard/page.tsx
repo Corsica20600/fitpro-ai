@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { CoachInsightCard } from "@/src/components/dashboard/coach-insight-card";
+import { DailyReadinessCard } from "@/src/components/dashboard/daily-readiness-card";
 import { DashboardGreeting } from "@/src/components/dashboard/dashboard-greeting";
 import { LevelProgress } from "@/src/components/dashboard/level-progress";
 import { WeeklySummary } from "@/src/components/dashboard/weekly-summary";
@@ -34,6 +34,7 @@ export default async function DashboardPage() {
         weeklySessions={data.weeklyStats.sessions}
         streakWeeks={data.streak.weeks}
         weeklyGoal={data.user.sessionsPerWeek}
+        motivation={data.motivation}
       />
 
       <WorkoutHero workout={data.nextWorkout} />
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
 
       <LevelProgress level={data.level} streakWeeks={data.streak.weeks} />
 
-      <CoachInsightCard insight={data.coachInsight} />
+      <DailyReadinessCard readiness={data.readiness} />
 
       <section className="grid gap-3" aria-labelledby="dashboard-shortcuts-title">
         <div>

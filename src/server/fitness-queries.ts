@@ -128,6 +128,12 @@ function getParisWeekStart(input = new Date()) {
   return date;
 }
 
+function getParisDayStart(input = new Date()) {
+  const date = new Date(input);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 function getPreviousWeekStart(input = new Date()) {
   const date = getParisWeekStart(input);
   date.setDate(date.getDate() - 7);
@@ -314,6 +320,76 @@ async function getOrCreateProfileForEmail(activeEmail: string, displayName: stri
       weightKg: 78,
     },
   });
+}
+
+function parseProgressMetricName(notes: string | null) {
+  if (!notes) return null;
+  try {
+    const parsed = JSON.parse(notes) as { metric?: string };
+    return typeof parsed.metric === "string" ? parsed.metric : null;
+  } catch {
+    return null;
+  }
+}
+
+function clampPercent(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function scoreSleep(minutes: number | null) {
+  if (minutes == null) return null;
+  if (minutes >= 420 && minutes <= 540) return 40;
+  if (minutes >= 390 && minutes < 420) return 34;
+  if (minutes > 540 && minutes <= 600) return 34;
+  if (minutes >= 330 && minutes < 390) return 25;
+  if (minutes > 600) return 24;
+  return 14;
+}
+
+function scoreRestingHeartRate(bpm: number | null) {
+  if (bpm == null) return null;
+  if (bpm <= 60) return 30;
+  if (bpm <= 68) return 24;
+  if (bpm <= 76) return 17;
+  return 9;
+}
+
+function scoreActivity(steps: number | null, calories: number | null) {
+  if (steps == null && calories == null) return null;
+  const stepScore = steps == null ? 0 : Math.min(12, (steps / 8000) * 12);
+  const calorieScore = calories == null ? 0 : Math.min(8, (calories / 600) * 8);
+  return clampPercent(stepScore + calorieScore);
+}
+
+function scoreLastSession(latestCompletedAt: Date | null) {
+  if (!latestCompletedAt) return 6;
+  const hoursSince = (Date.now() - latestCompletedAt.getTime()) / 36e5;
+  if (hoursSince >= 36 && hoursSince <= 96) return 10;
+  if (hoursSince >= 18) return 7;
+  if (hoursSince > 96) return 8;
+  return 4;
+}
+
+function getRecoveryTone(score: number): "success" | "accent" | "orange" | "danger" {
+  if (score >= 80) return "success";
+  if (score >= 60) return "accent";
+  if (score >= 40) return "orange";
+  return "danger";
+}
+
+function getRecoveryRecommendation(score: number, targetMuscles: string[]) {
+  const preferred = targetMuscles.slice(0, 2).join(" ou ");
+  if (score >= 80) return preferred ? `Tu es en forme. Une séance ${preferred.toLowerCase()} est idéale aujourd'hui.` : "Tu es en forme pour une séance intensive.";
+  if (score >= 60) return "Séance correcte aujourd'hui : garde une marge propre et surveille les temps de repos.";
+  if (score >= 40) return "Récupération moyenne : privilégie une séance technique, plus courte ou moins chargée.";
+  return "Repos conseillé aujourd'hui : mobilité, marche légère ou récupération active.";
+}
+
+function formatSleep(minutes: number | null) {
+  if (minutes == null) return null;
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
+  return `${hours} h ${String(mins).padStart(2, "0")}`;
 }
 
 function getProfileDisplayName(name: string | null | undefined, email: string) {
@@ -1029,8 +1105,10 @@ export async function getDashboardDataForDemoUser() {
   const now = new Date();
   const startOfWeek = getParisWeekStart(now);
   const previousWeekStart = getPreviousWeekStart(now);
+  const startOfDay = getParisDayStart(now);
+  const recentHealthStart = new Date(now.getTime() - 36 * 60 * 60 * 1000);
 
-  const [programs, currentSession, completedSessions, favoriteProgramDayGroups] = await Promise.all([
+  const [programs, currentSession, completedSessions, favoriteProgramDayGroups, healthMetrics, healthIntegrations] = await Promise.all([
     prisma.program.findMany({
       where: { userProfileId: profile.id, status: { in: ["ACTIVE", "DRAFT"] } },
       include: {
@@ -1105,6 +1183,24 @@ export async function getDashboardDataForDemoUser() {
       _count: { programDayId: true },
       _max: { endedAt: true, createdAt: true },
     }),
+    prisma.progressMetric.findMany({
+      where: {
+        userProfileId: profile.id,
+        metricType: "PERFORMANCE",
+        measuredAt: { gte: recentHealthStart },
+      },
+      orderBy: { measuredAt: "desc" },
+      take: 80,
+      select: { value: true, unit: true, measuredAt: true, notes: true },
+    }),
+    prisma.integrationConnection.findMany({
+      where: {
+        userProfileId: profile.id,
+        provider: { in: ["HEALTH_CONNECT", "SAMSUNG_HEALTH"] },
+        status: "CONNECTED",
+      },
+      select: { provider: true, displayName: true, lastSyncAt: true },
+    }),
   ]);
 
   const favoriteProgramDayId = favoriteProgramDayGroups
@@ -1117,6 +1213,9 @@ export async function getDashboardDataForDemoUser() {
       if (bLatest !== aLatest) return bLatest - aLatest;
       return a.programDayId.localeCompare(b.programDayId);
     })[0]?.programDayId ?? null;
+  const favoriteProgramDayCount = favoriteProgramDayId
+    ? (favoriteProgramDayGroups.find((group) => group.programDayId === favoriteProgramDayId)?._count.programDayId ?? 0)
+    : 0;
   const favoriteProgramDay = favoriteProgramDayId
     ? await prisma.programDay.findFirst({
         where: { id: favoriteProgramDayId, program: { userProfileId: profile.id } },
@@ -1217,6 +1316,32 @@ export async function getDashboardDataForDemoUser() {
     lastSessionAt: sessionsWithStats[0]?.date ?? null,
     mostFrequentExerciseName: mostFrequentExercise?.name ?? null,
   });
+  const healthByMetric = new Map<string, { value: number; measuredAt: Date; unit: string }>();
+  const todayHealthByMetric = new Map<string, { value: number; measuredAt: Date; unit: string }>();
+  for (const metric of healthMetrics) {
+    const metricName = parseProgressMetricName(metric.notes);
+    if (!metricName) continue;
+    if (!healthByMetric.has(metricName)) {
+      healthByMetric.set(metricName, { value: metric.value, measuredAt: metric.measuredAt, unit: metric.unit });
+    }
+    if (metric.measuredAt >= startOfDay && !todayHealthByMetric.has(metricName)) {
+      todayHealthByMetric.set(metricName, { value: metric.value, measuredAt: metric.measuredAt, unit: metric.unit });
+    }
+  }
+
+  const sleepMinutes = healthByMetric.get("sleep_minutes")?.value != null ? Math.round(healthByMetric.get("sleep_minutes")!.value) : null;
+  const restingHeartRate = healthByMetric.get("heart_rate")?.value != null ? Math.round(healthByMetric.get("heart_rate")!.value) : null;
+  const stepsToday = todayHealthByMetric.get("steps")?.value != null ? Math.round(todayHealthByMetric.get("steps")!.value) : null;
+  const caloriesToday = todayHealthByMetric.get("calories")?.value != null ? Math.round(todayHealthByMetric.get("calories")!.value) : null;
+  const sleepPoints = scoreSleep(sleepMinutes);
+  const heartPoints = scoreRestingHeartRate(restingHeartRate);
+  const activityPoints = scoreActivity(stepsToday, caloriesToday);
+  const sessionPoints = scoreLastSession(sessionsWithStats[0]?.date ?? null);
+  const availableMax = (sleepPoints == null ? 0 : 40) + (heartPoints == null ? 0 : 30) + (activityPoints == null ? 0 : 20) + 10;
+  const rawPoints = (sleepPoints ?? 0) + (heartPoints ?? 0) + (activityPoints ?? 0) + sessionPoints;
+  const recoveryScore = availableMax > 0 ? clampPercent((rawPoints / availableMax) * 100) : null;
+  const healthConnected = healthIntegrations.length > 0 || healthMetrics.length > 0;
+  const healthProvider = healthIntegrations[0] ?? null;
 
   return {
     user: {
@@ -1250,6 +1375,11 @@ export async function getDashboardDataForDemoUser() {
           estimatedMinutes,
           difficulty,
           isInProgress: currentSession?.programDayId === selectedWorkout.day.id,
+          achievementLabel: selectedWorkout.source === "mostFrequent" && favoriteProgramDayCount > 0
+            ? `${favoriteProgramDayCount} fois réalisée`
+            : weeklySessions.length > 0
+              ? `${weeklySessions.length}/${profile.sessionsPerWeek} cette semaine`
+              : null,
         }
       : null,
     weeklyStats: {
@@ -1275,6 +1405,25 @@ export async function getDashboardDataForDemoUser() {
     },
     level,
     coachInsight,
+    readiness: {
+      connected: healthConnected,
+      providerLabel: healthProvider?.displayName ?? (healthProvider?.provider === "HEALTH_CONNECT" ? "Health Connect" : "Samsung Health"),
+      score: recoveryScore,
+      tone: recoveryScore == null ? "accent" : getRecoveryTone(recoveryScore),
+      sleepLabel: formatSleep(sleepMinutes),
+      restingHeartRate,
+      stepsToday,
+      caloriesToday,
+      recommendation: recoveryScore == null
+        ? "Connecte tes données santé pour afficher ta récupération quotidienne."
+        : getRecoveryRecommendation(recoveryScore, targetMuscles),
+      updatedAt: healthMetrics[0]?.measuredAt ?? healthProvider?.lastSyncAt ?? null,
+    },
+    motivation: {
+      streakLabel: streakWeeks > 0 ? `Série de ${streakWeeks} semaine${streakWeeks > 1 ? "s" : ""}` : null,
+      weeklyGoalLabel: `${weeklySessions.length}/${profile.sessionsPerWeek} séances cette semaine`,
+      xpToday: weeklySessions.some((session) => session.date >= startOfDay) ? 25 : 0,
+    },
   };
 }
 

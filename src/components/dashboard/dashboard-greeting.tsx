@@ -8,6 +8,11 @@ type DashboardGreetingProps = {
   weeklySessions: number;
   streakWeeks: number;
   weeklyGoal: number | null;
+  motivation?: {
+    streakLabel: string | null;
+    weeklyGoalLabel: string;
+    xpToday: number;
+  };
 };
 
 type DayMoment = "morning" | "afternoon" | "evening";
@@ -37,18 +42,19 @@ function getGreetingCopy(moment: DayMoment) {
   };
 }
 
-export function DashboardGreeting({ firstName, weeklySessions, streakWeeks, weeklyGoal }: DashboardGreetingProps) {
+export function DashboardGreeting({ firstName, weeklySessions, streakWeeks, weeklyGoal, motivation }: DashboardGreetingProps) {
   const [moment, setMoment] = useState<DayMoment>("afternoon");
   const displayName = firstName?.trim() || "Utilisateur Traknio";
   const copy = getGreetingCopy(moment);
   const activityLabel =
-    weeklySessions > 0
+    motivation?.streakLabel ||
+    (weeklySessions > 0
       ? `${weeklySessions} séance${weeklySessions > 1 ? "s" : ""} cette semaine`
       : streakWeeks > 0
         ? `Série de ${streakWeeks} semaine${streakWeeks > 1 ? "s" : ""}`
         : weeklyGoal
           ? `Objectif: ${weeklyGoal} séance${weeklyGoal > 1 ? "s" : ""}/semaine`
-          : null;
+          : null);
 
   useEffect(() => {
     const id = window.setTimeout(() => {
@@ -74,9 +80,10 @@ export function DashboardGreeting({ firstName, weeklySessions, streakWeeks, week
             {copy.helper}
           </p>
         </div>
-        {activityLabel ? (
-          <span className="rounded-full border border-[rgba(55,215,255,.32)] bg-[rgba(55,215,255,.08)] px-3 py-2 text-left text-[0.72rem] font-black leading-tight text-[var(--fit-text-soft)] min-[390px]:shrink-0 min-[390px]:text-right">
-            {activityLabel}
+        {activityLabel || motivation ? (
+          <span className="dashboard-motivation-pill">
+            {activityLabel ? <b>{activityLabel}</b> : null}
+            {motivation ? <small>{motivation.weeklyGoalLabel}{motivation.xpToday > 0 ? ` · +${motivation.xpToday} XP aujourd'hui` : ""}</small> : null}
           </span>
         ) : null}
       </div>

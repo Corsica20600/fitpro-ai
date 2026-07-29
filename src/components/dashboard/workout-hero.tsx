@@ -20,6 +20,7 @@ type WorkoutHeroProps = {
     estimatedMinutes: number | null;
     difficulty: string | null;
     isInProgress: boolean;
+    achievementLabel?: string | null;
   } | null;
 };
 
@@ -79,6 +80,7 @@ export function WorkoutHero({ workout }: WorkoutHeroProps) {
           {workout.exerciseCount > 0 ? <StatBadge tone="accent">{workout.exerciseCount} exos</StatBadge> : null}
           {workout.estimatedMinutes ? <StatBadge tone="warning">{workout.estimatedMinutes} min</StatBadge> : null}
           {difficulty ? <StatBadge tone="violet">{difficulty}</StatBadge> : null}
+          {workout.achievementLabel ? <StatBadge tone="orange">{workout.achievementLabel}</StatBadge> : null}
           {workout.targetMuscles.map((muscle) => (
             <StatBadge key={muscle} tone="neutral">{muscle}</StatBadge>
           ))}

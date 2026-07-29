@@ -6,6 +6,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -20,6 +21,7 @@ class HealthConnectProvider(private val context: Context) {
         val permissions = setOf(
             HealthPermission.getReadPermission(StepsRecord::class),
             HealthPermission.getReadPermission(HeartRateRecord::class),
+            HealthPermission.getReadPermission(SleepSessionRecord::class),
             HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
             HealthPermission.getReadPermission(DistanceRecord::class),
         )
@@ -67,6 +69,13 @@ class HealthConnectProvider(private val context: Context) {
             .onFailure { throwable ->
                 Log.e(TAG, "Heart rate read failed", throwable)
                 errors += "heart_rate"
+            }
+
+        runCatching { readSleepMinutes(timeRange) }
+            .onSuccess { value -> if (value > 0) records += SamsungMetricRecord("sleep_minutes", value, measuredAt, "Health Connect") }
+            .onFailure { throwable ->
+                Log.e(TAG, "Sleep read failed", throwable)
+                errors += "sleep_minutes"
             }
 
         runCatching { readCalories(timeRange) }
@@ -128,6 +137,18 @@ class HealthConnectProvider(private val context: Context) {
             ),
         )
         return response.records.sumOf { it.energy.inKilocalories }
+    }
+
+    private suspend fun readSleepMinutes(timeRange: TimeRangeFilter): Double {
+        val response = client().readRecords(
+            ReadRecordsRequest(
+                recordType = SleepSessionRecord::class,
+                timeRangeFilter = timeRange,
+            ),
+        )
+        return response.records.sumOf { record ->
+            java.time.Duration.between(record.startTime, record.endTime).toMinutes().toDouble()
+        }
     }
 
     private suspend fun readDistance(timeRange: TimeRangeFilter): Double {

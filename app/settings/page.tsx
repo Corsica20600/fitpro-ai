@@ -339,7 +339,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
             <p className="eyebrow">Santé Android</p>
             <h2>Health Connect</h2>
             <p className="muted">
-              Prépare la connexion officielle Android pour lire les séances, pas, fréquence cardiaque et calories après
+              Prépare la connexion officielle Android pour lire sommeil, pas, fréquence cardiaque, calories et distance après
               consentement explicite dans l&apos;app mobile.
             </p>
           </div>
