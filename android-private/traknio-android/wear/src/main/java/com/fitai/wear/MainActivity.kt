@@ -18,7 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -158,6 +162,15 @@ private fun ReadyScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel
     val isResting = state.displayRestRemaining > 0
     val isCompleted = payload.status == "COMPLETED"
     val isReadyToComplete = payload.status == "READY_TO_COMPLETE"
+    val haptics = LocalHapticFeedback.current
+    var wasResting by remember { mutableStateOf(isResting) }
+
+    LaunchedEffect(isResting) {
+        if (isResting && !wasResting) {
+            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+        wasResting = isResting
+    }
 
     when {
         isCompleted -> CompletedScreen(state, viewModel::refresh)
@@ -280,16 +293,56 @@ private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel)
 
 @Composable
 private fun CompletedScreen(state: WatchScreenState.Ready, onRefresh: () -> Unit) {
+    val activity = LocalContext.current as? Activity
+    val summary = state.payload.summary
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Séance", fontSize = 18.sp, color = Color(0xFFB7C9EA))
-        Text("terminée", fontSize = 25.sp, fontWeight = FontWeight.Black)
+        Text("Séance terminée", fontSize = 14.sp, color = Color(0xFF56F0C2), fontWeight = FontWeight.Black)
+        Text("+${summary?.xpGained ?: 100} XP", fontSize = 28.sp, fontWeight = FontWeight.Black)
         Text(state.syncLabel, color = Color(0xFF56F0C2), fontSize = 12.sp)
-        Spacer(Modifier.height(10.dp))
-        ActionChip("Actualiser", onRefresh, enabled = state.busyAction == null)
+        Spacer(Modifier.height(8.dp))
+
+        if (summary != null) {
+            Column(
+                modifier = Modifier.fillMaxWidth(0.86f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                SummaryRow("Durée", formatDuration(summary.durationSeconds))
+                SummaryRow("Volume", "${summary.volumeKg} kg")
+                SummaryRow("Séries", "${summary.sets}")
+                if (summary.calories != null) {
+                    SummaryRow("Calories", "${summary.calories} kcal")
+                }
+                if (summary.levelReached) {
+                    SummaryRow("Niveau", "${summary.level}")
+                }
+            }
+        } else {
+            Text(
+                text = "Synthèse en cours...",
+                color = Color(0xFFB7C9EA),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+        ActionChip("Retour téléphone", onClick = { activity?.finish() ?: onRefresh() }, enabled = state.busyAction == null)
+    }
+}
+
+@Composable
+private fun SummaryRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Color(0xFFB7C9EA), fontSize = 10.sp, maxLines = 1)
+        Text(value, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black, maxLines = 1)
     }
 }
 
@@ -435,4 +488,12 @@ private fun String.cleanExerciseTitle(): String {
 private fun trimWeight(value: Double): String {
     val asInt = value.toInt()
     return if (value == asInt.toDouble()) asInt.toString() else "%.1f".format(value)
+}
+
+private fun formatDuration(seconds: Int?): String {
+    if (seconds == null || seconds <= 0) return "-"
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val remainingMinutes = minutes % 60
+    return if (hours > 0) "${hours} h ${remainingMinutes.toString().padStart(2, '0')}" else "${minutes} min"
 }

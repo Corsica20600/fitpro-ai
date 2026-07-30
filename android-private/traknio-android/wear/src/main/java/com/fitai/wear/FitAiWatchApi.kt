@@ -119,6 +119,20 @@ class FitAiWatchApi(
             weight = if (json.isNull("weight")) null else json.optDouble("weight"),
             restRemaining = json.optInt("restRemaining", 0),
             status = json.optString("status", "IN_PROGRESS"),
+            summary = parseSummary(json.optJSONObject("summary")),
+        )
+    }
+
+    private fun parseSummary(json: JSONObject?): WatchSessionSummary? {
+        if (json == null) return null
+        return WatchSessionSummary(
+            durationSeconds = if (json.isNull("durationSeconds")) null else json.optInt("durationSeconds"),
+            volumeKg = json.optInt("volumeKg", 0),
+            sets = json.optInt("sets", 0),
+            calories = if (json.isNull("calories")) null else json.optInt("calories"),
+            xpGained = json.optInt("xpGained", 100),
+            level = json.optInt("level", 1),
+            levelReached = json.optBoolean("levelReached", false),
         )
     }
 }

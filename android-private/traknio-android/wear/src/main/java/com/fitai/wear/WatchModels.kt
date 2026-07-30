@@ -11,6 +11,17 @@ data class WatchPayload(
     val weight: Double?,
     val restRemaining: Int,
     val status: String,
+    val summary: WatchSessionSummary? = null,
+)
+
+data class WatchSessionSummary(
+    val durationSeconds: Int?,
+    val volumeKg: Int,
+    val sets: Int,
+    val calories: Int?,
+    val xpGained: Int,
+    val level: Int,
+    val levelReached: Boolean,
 )
 
 data class RestDeadline(

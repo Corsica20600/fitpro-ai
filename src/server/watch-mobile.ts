@@ -16,6 +16,17 @@ type WatchPayload = {
   weight: number | null;
   restRemaining: number;
   status: string;
+  summary?: WatchSessionSummary;
+};
+
+type WatchSessionSummary = {
+  durationSeconds: number | null;
+  volumeKg: number;
+  sets: number;
+  calories: number | null;
+  xpGained: number;
+  level: number;
+  levelReached: boolean;
 };
 
 type OrderedExercise = {
@@ -34,6 +45,68 @@ function parseWeightKgFromText(text?: string | null) {
   if (!match?.[1]) return null;
   const value = Number(match[1].replace(",", "."));
   return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function getLevelFromXp(totalXp: number) {
+  let level = 1;
+  let xpSpent = 0;
+  let nextRequirement = 300;
+
+  while (totalXp >= xpSpent + nextRequirement) {
+    xpSpent += nextRequirement;
+    level += 1;
+    nextRequirement = 300 + (level - 1) * 120;
+  }
+
+  return level;
+}
+
+async function getLatestCalories(userProfileId: string) {
+  const metric = await prisma.progressMetric.findFirst({
+    where: {
+      userProfileId,
+      metricType: "PERFORMANCE",
+      unit: "kcal",
+      notes: { contains: "\"metric\":\"calories\"" },
+    },
+    orderBy: { measuredAt: "desc" },
+    select: { value: true },
+  });
+  return metric?.value == null ? null : Math.max(0, Math.round(metric.value));
+}
+
+async function getWatchSessionSummary(session: {
+  id: string;
+  userProfileId: string;
+  durationSeconds: number | null;
+  status: string;
+}): Promise<WatchSessionSummary | undefined> {
+  if (session.status !== "COMPLETED") return undefined;
+
+  const [sets, completedSessionsCount, calories] = await Promise.all([
+    prisma.workoutSet.findMany({
+      where: { workoutSessionId: session.id, isCompleted: true },
+      select: { actualReps: true, actualWeightKg: true },
+    }),
+    prisma.workoutSession.count({
+      where: { userProfileId: session.userProfileId, status: "COMPLETED" },
+    }),
+    getLatestCalories(session.userProfileId),
+  ]);
+
+  const volumeKg = sets.reduce((acc, set) => acc + (set.actualReps ?? 0) * (set.actualWeightKg ?? 0), 0);
+  const previousLevel = getLevelFromXp(Math.max(0, completedSessionsCount - 1) * 100);
+  const level = getLevelFromXp(completedSessionsCount * 100);
+
+  return {
+    durationSeconds: session.durationSeconds,
+    volumeKg: Math.round(volumeKg),
+    sets: sets.length,
+    calories,
+    xpGained: 100,
+    level,
+    levelReached: level > previousLevel,
+  };
 }
 
 async function resolveSession(sessionId?: string, userProfileId?: string) {
@@ -210,6 +283,7 @@ export async function getWatchPayload(sessionId?: string, userProfileId?: string
     weight: latestSetForCurrent?.actualWeightKg ?? (liveTarget?.exerciseId === currentExercise.exerciseId && liveTarget.setIndex === setIndex ? liveTarget.targetWeightKg : null) ?? currentExercise.plannedWeightKg ?? null,
     restRemaining,
     status: session.status === "IN_PROGRESS" && session.watchSession?.status === "PAUSED" ? "READY_TO_COMPLETE" : session.status,
+    summary: await getWatchSessionSummary(session),
   };
 }
 
