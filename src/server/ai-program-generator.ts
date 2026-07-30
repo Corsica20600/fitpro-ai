@@ -34,6 +34,60 @@ type ValidGeneratedProgram = {
   notes: string;
 };
 
+type OpenAiResponsePayload = {
+  output_text?: string;
+  output?: Array<{
+    content?: Array<{
+      text?: string;
+      type?: string;
+    }>;
+  }>;
+};
+
+const generatedProgramSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    programName: { type: "string" },
+    goal: { type: "string", enum: ["MUSCLE_GAIN", "FAT_LOSS", "STRENGTH", "RECOMPOSITION"] },
+    days: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          dayIndex: { type: "integer" },
+          title: { type: "string" },
+          notes: { type: "string" },
+          exercises: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                exerciseSlug: { type: "string" },
+                sets: { type: "integer" },
+                reps: { type: "string" },
+                restSeconds: { type: "integer" },
+                tempo: { type: ["string", "null"] },
+                notes: { type: ["string", "null"] },
+              },
+              required: ["exerciseSlug", "sets", "reps", "restSeconds", "tempo", "notes"],
+            },
+          },
+        },
+        required: ["dayIndex", "title", "notes", "exercises"],
+      },
+    },
+    exercises: {
+      type: "array",
+      items: { type: "string" },
+    },
+    notes: { type: "string" },
+  },
+  required: ["programName", "goal", "days", "exercises", "notes"],
+} as const;
+
 function toProgramGoal(goal: AiGoal): "HYPERTROPHY" | "FAT_LOSS" | "STRENGTH" | "GENERAL_FITNESS" {
   if (goal === "MUSCLE_GAIN") return "HYPERTROPHY";
   if (goal === "FAT_LOSS") return "FAT_LOSS";
@@ -54,6 +108,41 @@ function extractJsonBlock(raw: string): string {
   const last = raw.lastIndexOf("}");
   if (first < 0 || last < 0 || last <= first) return raw;
   return raw.slice(first, last + 1);
+}
+
+function getOpenAiResponseText(payload: OpenAiResponsePayload) {
+  const directText = payload.output_text?.trim();
+  if (directText) return directText;
+
+  return payload.output
+    ?.flatMap((item) => item.content ?? [])
+    .map((content) => content.text ?? "")
+    .join("\n")
+    .trim() ?? "";
+}
+
+async function requestOpenAiProgram(apiKey: string, prompt: string, structured: boolean) {
+  return fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4.1-mini",
+      input: prompt,
+      text: {
+        format: structured
+          ? {
+              type: "json_schema",
+              name: "traknio_generated_program",
+              strict: true,
+              schema: generatedProgramSchema,
+            }
+          : { type: "json_object" },
+      },
+    }),
+  });
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -192,25 +281,19 @@ export async function generateAiProgram(input: AiProgramInput) {
   ].join("\n");
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: prompt,
-      }),
-    });
+    let response = await requestOpenAiProgram(apiKey, prompt, true);
+    if (!response.ok && response.status === 400) {
+      console.warn("[AI_PROGRAM] Structured output refused, retrying JSON mode");
+      response = await requestOpenAiProgram(apiKey, prompt, false);
+    }
 
     if (!response.ok) {
       console.error("[AI_PROGRAM] OpenAI error", response.status);
       return { ok: false as const, error: "openai_error" };
     }
 
-    const payload = await response.json() as { output_text?: string };
-    const text = String(payload.output_text ?? "").trim();
+    const payload = await response.json() as OpenAiResponsePayload;
+    const text = getOpenAiResponseText(payload);
     const parsed = safeJsonParse(extractJsonBlock(text));
     const valid = validateGeneratedProgram(parsed);
     if (!valid.valid) {
