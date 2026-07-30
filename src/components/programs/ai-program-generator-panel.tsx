@@ -14,6 +14,7 @@ type GeneratedProgram = {
     notes: string;
     exercises: Array<{
       exerciseSlug: string;
+      displayName?: string;
       sets: number;
       reps: string;
       restSeconds: number;
@@ -155,7 +156,7 @@ export function AiProgramGeneratorPanel() {
               <div className="stack mt-10">
                 {day.exercises.map((ex, idx) => (
                   <p key={`${day.dayIndex}-${idx}`} className="muted">
-                    {idx + 1}. {ex.exerciseSlug} · {ex.sets}x{ex.reps} · repos {ex.restSeconds}s{ex.tempo ? ` · tempo ${ex.tempo}` : ""}
+                    {idx + 1}. {ex.displayName || ex.exerciseSlug} · {ex.sets}x{ex.reps} · repos {ex.restSeconds}s{ex.tempo ? ` · tempo ${ex.tempo}` : ""}
                   </p>
                 ))}
               </div>

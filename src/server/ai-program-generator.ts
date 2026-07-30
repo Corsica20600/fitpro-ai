@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
+import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
 import { getOrCreateDemoProfile } from "@/src/server/fitness-queries";
 
 type AiGoal = "MUSCLE_GAIN" | "FAT_LOSS" | "STRENGTH" | "RECOMPOSITION";
@@ -23,6 +24,7 @@ type ValidGeneratedProgram = {
     notes: string;
     exercises: Array<{
       exerciseSlug: string;
+      displayName?: string;
       sets: number;
       reps: string;
       restSeconds: number;
@@ -301,6 +303,7 @@ export async function generateAiProgram(input: AiProgramInput) {
       return { ok: false as const, error: "invalid_json", reason: valid.reason };
     }
 
+    const exerciseBySlug = new Map(catalog.map((item) => [item.slug, item]));
     const known = new Set(catalog.map((item) => item.slug));
     const unknownSlugs = valid.value.days
       .flatMap((d) => d.exercises.map((e) => e.exerciseSlug))
@@ -311,8 +314,26 @@ export async function generateAiProgram(input: AiProgramInput) {
       return { ok: false as const, error: "unknown_exercises", unknownSlugs };
     }
 
+    const localizedProgram: ValidGeneratedProgram = {
+      ...valid.value,
+      exercises: valid.value.exercises.map((slug) => {
+        const exercise = exerciseBySlug.get(slug);
+        return exercise ? getExerciseDisplayName(exercise) : slug;
+      }),
+      days: valid.value.days.map((day) => ({
+        ...day,
+        exercises: day.exercises.map((exercise) => {
+          const catalogExercise = exerciseBySlug.get(exercise.exerciseSlug);
+          return {
+            ...exercise,
+            displayName: catalogExercise ? getExerciseDisplayName(catalogExercise) : exercise.exerciseSlug,
+          };
+        }),
+      })),
+    };
+
     console.info("[AI_PROGRAM] Generation succes");
-    return { ok: true as const, program: valid.value };
+    return { ok: true as const, program: localizedProgram };
   } catch (error) {
     console.error("[AI_PROGRAM] OpenAI exception", error);
     return { ok: false as const, error: "openai_exception" };
