@@ -8,10 +8,22 @@ import { BRAND } from "@/src/lib/brand";
 import { PublicHeader } from "./public-header";
 
 const proofItems = [
-  "Programme IA personnalisé",
-  "Charges mémorisées automatiquement",
-  "Synchronisation montre instantanée",
-  "Données Health Connect",
+  {
+    title: "Programme IA personnalisé",
+    text: "Objectif, niveau, matériel, exercices et progression construits pour ton rythme.",
+  },
+  {
+    title: "Charges mémorisées",
+    text: "Chaque poids modifié pendant la séance devient ta nouvelle référence.",
+  },
+  {
+    title: "Galaxy Watch synchronisée",
+    text: "Validation, repos, poids et séries restent alignés entre téléphone et montre.",
+  },
+  {
+    title: "Health Connect + Spotify",
+    text: "Récupération quotidienne et contrôle musical intégrés à l'expérience.",
+  },
 ] as const;
 
 const programPoints = [
@@ -44,6 +56,33 @@ const pricingFeatures = [
   "Statistiques complètes",
   "Spotify",
   "Futures améliorations incluses",
+] as const;
+
+const advantageItems = [
+  {
+    title: "Poids synchronisés instantanément",
+    text: "Tu changes une charge sur le téléphone ou la montre, l'autre écran suit sans attendre.",
+  },
+  {
+    title: "Exercice remplaçable en séance",
+    text: "Machine occupée, douleur, matériel manquant : tu adaptes le programme sans repartir de zéro.",
+  },
+  {
+    title: "Dernières valeurs reprises",
+    text: "La séance suivante repart automatiquement sur les poids que tu as réellement utilisés.",
+  },
+  {
+    title: "Séance au poignet",
+    text: "Valide tes séries, ajuste le repos et garde le rythme sans manipuler le téléphone.",
+  },
+  {
+    title: "Récupération contextualisée",
+    text: "Sommeil, fréquence cardiaque, pas et calories donnent une lecture rapide de ton état du jour.",
+  },
+  {
+    title: "Progression gamifiée",
+    text: "Historique, volume, séries, XP et records rendent tes efforts lisibles au fil des semaines.",
+  },
 ] as const;
 
 const faqItems = [
@@ -222,10 +261,11 @@ export default async function HomePage() {
 
         <section className="trk-proof-band" aria-label="Preuves produit">
           {proofItems.map((item) => (
-            <div key={item}>
+            <article key={item.title}>
               <span aria-hidden="true" />
-              <strong>{item}</strong>
-            </div>
+              <strong>{item.title}</strong>
+              <p>{item.text}</p>
+            </article>
           ))}
         </section>
 
@@ -296,6 +336,30 @@ export default async function HomePage() {
               <strong>62,5 kg</strong>
               <small>automatiquement</small>
             </article>
+          </div>
+        </section>
+
+        <section className="trk-advantages trk-reveal">
+          <div className="trk-section-head">
+            <SectionLabel>Avantages Traknio</SectionLabel>
+            <h2>
+              Les détails qui changent vraiment <span>une séance réelle</span>
+            </h2>
+            <p>
+              Traknio ne se contente pas de générer un programme. L'application garde le fil pendant
+              l'effort, mémorise tes ajustements et synchronise tes actions entre téléphone et montre.
+            </p>
+          </div>
+          <div className="trk-advantages-grid">
+            {advantageItems.map((item) => (
+              <article className="trk-advantage-card" key={item.title}>
+                <span aria-hidden="true">✓</span>
+                <div>
+                  <strong>{item.title}</strong>
+                  <p>{item.text}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
