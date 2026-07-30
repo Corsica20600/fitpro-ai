@@ -51,7 +51,7 @@ export default async function LoginPage(props: LoginPageProps) {
         >
           <button type="submit" className="login-reference-button" aria-label={`Se connecter à ${BRAND.name} avec Google`}>
             <Image
-              src="/brand/traknio-login-reference.png"
+              src="/brand/traknio-phone-hero-v2.png"
               alt={`${BRAND.name} - ${BRAND.tagline}`}
               width={228}
               height={436}

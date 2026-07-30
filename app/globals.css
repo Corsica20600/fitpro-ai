@@ -6378,15 +6378,24 @@ summary:focus-visible {
 .trk-header__brand {
   display: inline-flex;
   align-items: center;
+  gap: 12px;
   min-width: 0;
 }
 
 .trk-header__brand img {
-  width: clamp(214px, 18vw, 292px);
   height: auto;
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 0 18px rgba(29, 141, 255, .22));
+}
+
+.trk-header__mark {
+  width: clamp(44px, 4.4vw, 64px);
+  flex: 0 0 auto;
+}
+
+.trk-header__wordmark {
+  width: clamp(180px, 16vw, 246px);
 }
 
 .trk-header__links {
@@ -7264,8 +7273,21 @@ summary:focus-visible {
 }
 
 .trk-footer img {
-  width: min(100%, 300px);
   height: auto;
+}
+
+.trk-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.trk-footer__brand img:first-child {
+  width: clamp(46px, 5vw, 70px);
+}
+
+.trk-footer__brand img:last-child {
+  width: min(72vw, 310px);
 }
 
 .trk-footer nav {
@@ -7486,8 +7508,12 @@ summary:focus-visible {
     background-size: 56px 56px;
   }
 
-  .trk-header__brand img {
-    width: clamp(176px, 52vw, 236px);
+  .trk-header__mark {
+    width: clamp(38px, 12vw, 52px);
+  }
+
+  .trk-header__wordmark {
+    width: clamp(142px, 46vw, 208px);
   }
 
   .trk-hero {

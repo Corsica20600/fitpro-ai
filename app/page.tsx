@@ -203,7 +203,7 @@ export default async function HomePage() {
             <div className="trk-orbit trk-orbit--blue" />
             <div className="trk-orbit trk-orbit--violet" />
             <PhoneShot
-              src="/brand/traknio-login-reference.png"
+              src="/brand/traknio-phone-hero-v2.png"
               alt="Aperçu smartphone de Traknio"
               className="trk-phone-shot--hero"
               priority
@@ -456,17 +456,25 @@ export default async function HomePage() {
               Télécharger Traknio
             </Link>
           </div>
-          <PhoneShot src="/brand/traknio-login-reference.png" alt="Aperçu final de Traknio" />
+          <PhoneShot src="/brand/traknio-phone-hero-v2.png" alt="Aperçu final de Traknio" />
         </section>
 
         <footer className="trk-footer">
           <div>
-            <Image
-              src="/brand/traknio-logo-site.png"
-              alt={`${BRAND.name} - ${BRAND.tagline}`}
-              width={780}
-              height={170}
-            />
+            <div className="trk-footer__brand">
+              <Image
+                src="/brand/traknio-logo-mark-exact.png"
+                alt=""
+                width={170}
+                height={90}
+              />
+              <Image
+                src="/brand/traknio-wordmark-tagline-v2.png"
+                alt={`${BRAND.name} - ${BRAND.tagline}`}
+                width={408}
+                height={98}
+              />
+            </div>
             <p>Application premium de musculation et de suivi sportif.</p>
           </div>
           <nav aria-label="Liens de pied de page">
