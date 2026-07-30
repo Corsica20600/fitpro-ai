@@ -6398,6 +6398,10 @@ summary:focus-visible {
   width: clamp(180px, 16vw, 246px);
 }
 
+.trk-header__site-logo {
+  width: clamp(218px, 20vw, 340px);
+}
+
 .trk-header__links {
   justify-self: center;
   display: flex;
@@ -7621,6 +7625,10 @@ summary:focus-visible {
 
   .trk-header__wordmark {
     width: clamp(142px, 46vw, 208px);
+  }
+
+  .trk-header__site-logo {
+    width: clamp(172px, 54vw, 248px);
   }
 
   .trk-hero {

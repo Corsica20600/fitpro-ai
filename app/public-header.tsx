@@ -28,19 +28,11 @@ export function PublicHeader() {
       <nav className="trk-header__inner" aria-label="Navigation principale">
         <Link className="trk-header__brand" href="/" onClick={() => setIsOpen(false)}>
           <Image
-            src="/brand/traknio-logo-mark-exact.png"
-            alt=""
-            width={170}
-            height={90}
-            className="trk-header__mark"
-            priority
-          />
-          <Image
-            src="/brand/traknio-wordmark-tagline-v2.png"
+            src="/brand/traknio-site-lockup-v2.png"
             alt="Traknio - Train smarter. Progress further."
-            width={408}
-            height={98}
-            className="trk-header__wordmark"
+            width={1614}
+            height={311}
+            className="trk-header__site-logo"
             priority
           />
         </Link>
