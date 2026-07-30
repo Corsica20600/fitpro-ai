@@ -462,7 +462,12 @@ export default async function HomePage() {
 
         <footer className="trk-footer">
           <div>
-            <Image src="/brand/traknio-logo-site.png" alt={`${BRAND.name} - ${BRAND.tagline}`} width={384} height={84} />
+            <Image
+              src="/brand/traknio-wordmark-tagline.png"
+              alt={`${BRAND.name} - ${BRAND.tagline}`}
+              width={408}
+              height={98}
+            />
             <p>Application premium de musculation et de suivi sportif.</p>
           </div>
           <nav aria-label="Liens de pied de page">
