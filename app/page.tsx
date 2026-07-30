@@ -40,13 +40,6 @@ const watchPoints = [
   "Minuterie de repos avec +15 s et -15 s",
 ] as const;
 
-const recoveryMetrics = [
-  { label: "Sommeil", value: "7 h 24" },
-  { label: "FC repos", value: "58 bpm" },
-  { label: "Pas", value: "8 420" },
-  { label: "Score", value: "82" },
-] as const;
-
 const pricingFeatures = [
   "Programme personnalisé par IA",
   "Séances illimitées",
@@ -404,19 +397,12 @@ export default async function HomePage() {
               indicateur sportif, pas un diagnostic médical.
             </p>
           </div>
-          <div className="trk-recovery-card trk-reveal">
-            <div className="trk-score-ring">
-              <span>82</span>
-            </div>
-            <strong>Bonne journée pour pousser fort.</strong>
-            <div className="trk-recovery-grid">
-              {recoveryMetrics.map((metric) => (
-                <div key={metric.label}>
-                  <span>{metric.label}</span>
-                  <b>{metric.value}</b>
-                </div>
-              ))}
-            </div>
+          <div className="trk-recovery-visual trk-reveal">
+            <PhoneShot
+              src="/brand/traknio-phone-hero-v2.png"
+              alt="Aperçu mobile Traknio mis à jour"
+              className="trk-phone-shot--transparent trk-phone-shot--recovery"
+            />
           </div>
         </section>
 
