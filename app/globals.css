@@ -6749,6 +6749,7 @@ summary:focus-visible {
 }
 
 .trk-dashboard-card,
+.trk-recovery-card,
 .trk-progress-main,
 .trk-mini-stat,
 .trk-advantage-card,
@@ -7094,6 +7095,56 @@ summary:focus-visible {
   width: min(100%, 286px);
 }
 
+.trk-recovery-card {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  min-height: 520px;
+  padding: clamp(28px, 4vw, 48px);
+  text-align: center;
+}
+
+.trk-score-ring {
+  width: 186px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(5, 11, 24, .98) 56%, transparent 57%),
+    conic-gradient(var(--trk-cyan) 0 82%, rgba(138, 174, 255, .15) 82%);
+  box-shadow: 0 0 44px rgba(0, 220, 255, .16);
+}
+
+.trk-score-ring span {
+  font-size: 3.4rem;
+  font-weight: 1000;
+}
+
+.trk-recovery-card > strong {
+  max-width: 420px;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.trk-recovery-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trk-recovery-grid div {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--trk-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+  text-align: left;
+}
+
+.trk-recovery-grid span,
 .trk-mini-stat span,
 .trk-price-card span {
   color: var(--trk-muted);
@@ -7103,14 +7154,8 @@ summary:focus-visible {
   text-transform: uppercase;
 }
 
-.trk-recovery-visual {
-  display: grid;
-  justify-items: center;
-}
-
-.trk-phone-shot--recovery {
-  width: min(100%, 430px);
-  justify-self: center;
+.trk-recovery-grid b {
+  font-size: 1.25rem;
 }
 
 .trk-progress-section {
@@ -7650,7 +7695,8 @@ summary:focus-visible {
   .trk-progress-grid,
   .trk-ecosystem-line,
   .trk-price-options,
-  .trk-check-list--price {
+  .trk-check-list--price,
+  .trk-recovery-grid {
     grid-template-columns: 1fr;
   }
 
@@ -7684,7 +7730,8 @@ summary:focus-visible {
     line-height: 1;
   }
 
-  .trk-dashboard-card {
+  .trk-dashboard-card,
+  .trk-recovery-card {
     min-height: 430px;
   }
 
@@ -7701,6 +7748,10 @@ summary:focus-visible {
     right: auto;
     bottom: auto;
     width: min(62vw, 244px);
+  }
+
+  .trk-score-ring {
+    width: 150px;
   }
 
   .trk-final-cta {
