@@ -3,60 +3,59 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { AppShell } from "@/src/components/ui/app-shell";
-import { GlassCard } from "@/src/components/ui/glass-card";
 import { BRAND } from "@/src/lib/brand";
 
-const highlights = [
+const features = [
   {
-    label: "Séance",
-    value: "Guidage téléphone et montre",
+    title: "Séances guidées",
+    copy: "Séries, repos, charges et remplacements restent lisibles pendant l'effort.",
   },
   {
-    label: "Récupération",
-    value: "Sommeil, pas, FC repos",
+    title: "Wear OS",
+    copy: "Valide depuis la montre, garde le rythme et retrouve la séance côté téléphone.",
   },
   {
-    label: "Premium",
-    value: "Programmes IA maîtrisés",
+    title: "État du jour",
+    copy: "Sommeil, pas, fréquence cardiaque et récupération donnent le ton avant l'entraînement.",
+  },
+  {
+    title: "Progression",
+    copy: "Volume, historique, records et XP donnent une lecture claire de ce qui avance.",
   },
 ] as const;
 
-const pillars = [
-  "Programmes de musculation personnalisés",
-  "Repos, séries et charge synchronisés téléphone/montre",
-  "État du jour avec récupération, sommeil et activité",
-  "Spotify, historique, volume et progression",
+const flow = [
+  "Connecte ton compte Google",
+  "Lance ou génère ton programme",
+  "Suis ta séance au téléphone ou à la montre",
+  "Analyse ton historique et ta récupération",
 ] as const;
 
-const showcase = [
-  {
-    eyebrow: "Application mobile",
-    title: "Ta séance reste fluide.",
-    copy: "Repos, séries, charges, remplacements et historique restent alignés pendant l'entraînement.",
-    image: "/brand/traknio-login-reference.png",
-    alt: "Aperçu mobile Traknio",
-    width: 228,
-    height: 436,
-  },
-  {
-    eyebrow: "Wear OS",
-    title: "La montre garde le tempo.",
-    copy: "Validation des séries, fin de séance et synchronisation suivent l'effort sans casser le rythme.",
-    image: "/brand/traknio-watch-reference.png",
-    alt: "Aperçu montre Traknio",
-    width: 260,
-    height: 274,
-  },
+const metrics = [
+  { value: "4", label: "générations IA / mois" },
+  { value: "Wear OS", label: "synchro montre" },
+  { value: "Health", label: "récupération quotidienne" },
 ] as const;
 
 export const metadata: Metadata = {
-  title: "Train smarter. Progress further.",
+  title: "Traknio - Train smarter. Progress further.",
   description: "Traknio accompagne tes entraînements avec programmes, suivi en séance, récupération et synchronisation Wear OS.",
   alternates: {
     canonical: "/",
   },
 };
+
+function StoreBadge({ store }: { store: "google" | "apple" }) {
+  return (
+    <span className="store-badge is-disabled" aria-disabled="true">
+      <span className={`store-badge__icon store-badge__icon--${store}`} aria-hidden="true" />
+      <span>
+        <small>{store === "google" ? "Bientôt sur" : "À venir sur"}</small>
+        <strong>{store === "google" ? "Google Play" : "App Store"}</strong>
+      </span>
+    </span>
+  );
+}
 
 export default async function HomePage() {
   const session = await auth().catch(() => null);
@@ -66,79 +65,128 @@ export default async function HomePage() {
   }
 
   return (
-    <AppShell className="landing-page">
-      <section className="landing-hero" aria-labelledby="landing-title">
-        <div className="landing-hero__content">
-          <Image
-            src="/brand/traknio-logo-site.png"
-            alt={`${BRAND.name} - ${BRAND.tagline}`}
-            width={769}
-            height={168}
-            className="landing-hero__brand"
-            priority
-          />
-          <h1 id="landing-title" className="sr-only">{BRAND.name}</h1>
-          <p className="landing-hero__lead">
-            Programmes, séance guidée, montre Wear OS, récupération et progression dans une seule expérience.
+    <main className="public-site">
+      <nav className="public-nav" aria-label="Navigation principale">
+        <Link className="public-nav__brand" href="/">
+          <Image src="/brand/traknio-logo-mark-exact.png" alt="" width={54} height={54} priority />
+          <Image src="/brand/traknio-wordmark-exact.png" alt={BRAND.name} width={214} height={28} priority />
+        </Link>
+        <div className="public-nav__links">
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#montre">Montre</a>
+          <Link href="/login">Connexion</Link>
+        </div>
+      </nav>
+
+      <section className="public-hero" aria-labelledby="public-hero-title">
+        <div className="public-hero__copy">
+          <p className="public-kicker">Train smarter. Progress further.</p>
+          <h1 id="public-hero-title">Ton entraînement, ton rythme, ta progression.</h1>
+          <p>
+            Traknio réunit programmes, séance guidée, montre Wear OS, Health Connect, Spotify et historique dans une expérience
+            pensée pour rester fluide pendant l'effort.
           </p>
-          <div className="landing-actions">
-            <Link className="primary-button full-line" href="/login">
-              Se connecter
-            </Link>
-            <Link className="ghost-btn full-line settings-export-link" href="/privacy">
-              Confidentialité
-            </Link>
+          <div className="public-actions" aria-label="Téléchargement application">
+            <StoreBadge store="google" />
+            <StoreBadge store="apple" />
+          </div>
+          <Link className="public-login-link" href="/login">
+            Accéder à la version privée
+          </Link>
+        </div>
+
+        <div className="public-hero__visual" aria-hidden="true">
+          <div className="public-phone-frame">
+            <Image
+              src="/brand/traknio-launch-reference.png"
+              alt=""
+              width={224}
+              height={397}
+              className="public-phone-frame__image"
+              priority
+            />
+          </div>
+          <div className="public-status-card public-status-card--top">
+            <span>Récupération</span>
+            <strong>84%</strong>
+          </div>
+          <div className="public-status-card public-status-card--bottom">
+            <span>Séance active</span>
+            <strong>Full Body</strong>
           </div>
         </div>
       </section>
 
-      <section className="landing-stats" aria-label="Points forts">
-        {highlights.map((item) => (
-          <GlassCard key={item.label} className="landing-stat-card">
-            <span>{item.label}</span>
-            <strong>{item.value}</strong>
-          </GlassCard>
+      <section className="public-metrics" aria-label="Résumé Traknio">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="public-metric">
+            <strong>{metric.value}</strong>
+            <span>{metric.label}</span>
+          </div>
         ))}
       </section>
 
-      <section className="landing-showcase" aria-label="Aperçus Traknio">
-        {showcase.map((item) => (
-          <article key={item.title} className="landing-showcase-item">
-            <div className="landing-showcase-copy">
-              <p className="eyebrow">{item.eyebrow}</p>
-              <h2>{item.title}</h2>
-              <p>{item.copy}</p>
-            </div>
-            <div className="landing-showcase-media">
-              <Image
-                src={item.image}
-                alt={item.alt}
-                width={item.width}
-                height={item.height}
-                className="landing-showcase-image"
-              />
-            </div>
-          </article>
-        ))}
-      </section>
-
-      <GlassCard className="landing-pillars-card">
-        <p className="eyebrow">Pré-lancement</p>
-        <h2>L&apos;identité est posée, les domaines arrivent.</h2>
-        <ul className="legal-list">
-          {pillars.map((item) => (
-            <li key={item}>{item}</li>
+      <section id="fonctionnalites" className="public-section public-feature-section">
+        <div className="public-section__head">
+          <p className="public-kicker">Application mobile</p>
+          <h2>Tout ce qui compte pendant une séance.</h2>
+        </div>
+        <div className="public-feature-grid">
+          {features.map((feature) => (
+            <article key={feature.title} className="public-feature-card">
+              <h3>{feature.title}</h3>
+              <p>{feature.copy}</p>
+            </article>
           ))}
-        </ul>
-      </GlassCard>
+        </div>
+      </section>
 
-      <div className="legal-link-row">
+      <section id="montre" className="public-section public-product-section">
+        <div className="public-product-copy">
+          <p className="public-kicker">Téléphone + montre</p>
+          <h2>La séance reste synchronisée, même quand tu ne touches pas au téléphone.</h2>
+          <p>
+            La montre valide les séries, ajuste les repos et garde le tempo. Le téléphone conserve le détail complet :
+            charges, remplacements, Spotify, résumé et historique.
+          </p>
+          <ol className="public-flow">
+            {flow.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        </div>
+        <div className="public-device-wall" aria-label="Aperçus de l'application Traknio">
+          <Image
+            src="/brand/traknio-login-reference.png"
+            alt="Aperçu de l'application mobile Traknio"
+            width={260}
+            height={520}
+            className="public-device-wall__phone"
+          />
+          <Image
+            src="/brand/traknio-watch-reference.png"
+            alt="Aperçu de la montre Traknio"
+            width={260}
+            height={274}
+            className="public-device-wall__watch"
+          />
+        </div>
+      </section>
+
+      <section className="public-final-cta">
+        <Image src="/brand/traknio-logo-site.png" alt={`${BRAND.name} - ${BRAND.tagline}`} width={769} height={168} />
+        <p>Publication Play Store en préparation. Les boutons de téléchargement seront activés dès que l'application sera disponible.</p>
+        <div className="public-actions public-actions--center">
+          <StoreBadge store="google" />
+          <StoreBadge store="apple" />
+        </div>
+      </section>
+
+      <footer className="public-footer">
+        <Link href="/privacy">Confidentialité</Link>
         <Link href="/terms">Conditions</Link>
-        <span aria-hidden="true">·</span>
         <Link href="/data-deletion">Suppression des données</Link>
-        <span aria-hidden="true">·</span>
-        <Link href="/login">Connexion Google</Link>
-      </div>
-    </AppShell>
+      </footer>
+    </main>
   );
 }
