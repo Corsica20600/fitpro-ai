@@ -28,10 +28,10 @@ export function PublicHeader() {
       <nav className="trk-header__inner" aria-label="Navigation principale">
         <Link className="trk-header__brand" href="/" onClick={() => setIsOpen(false)}>
           <Image
-            src="/brand/traknio-header-logo.png"
+            src="/brand/traknio-logo-site.png"
             alt="Traknio"
-            width={384}
-            height={132}
+            width={780}
+            height={170}
             priority
           />
         </Link>

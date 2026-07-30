@@ -6382,7 +6382,7 @@ summary:focus-visible {
 }
 
 .trk-header__brand img {
-  width: clamp(174px, 18vw, 244px);
+  width: clamp(214px, 18vw, 292px);
   height: auto;
   display: block;
   object-fit: contain;
@@ -6524,15 +6524,16 @@ summary:focus-visible {
 .trk-final-cta h2 {
   margin: 0;
   color: #fff;
-  font-weight: 1000;
-  line-height: .94;
+  font-family: var(--font-raleway), var(--font-exo-2), sans-serif;
+  font-weight: 900;
+  line-height: .98;
   letter-spacing: 0;
   text-wrap: balance;
 }
 
 .trk-hero h1 {
-  font-size: clamp(3rem, 4.6vw, 4.9rem);
-  max-width: 11ch;
+  font-size: clamp(3.4rem, 5vw, 6.2rem);
+  max-width: 12ch;
 }
 
 .trk-hero h1 .trk-gradient,
@@ -6611,7 +6612,8 @@ summary:focus-visible {
   position: relative;
   min-height: 560px;
   display: grid;
-  place-items: center;
+  align-items: center;
+  justify-items: center;
   perspective: 1200px;
 }
 
@@ -6622,6 +6624,8 @@ summary:focus-visible {
   z-index: 2;
   width: 100%;
   min-width: 0;
+  grid-template-columns: minmax(250px, .72fr) minmax(210px, .56fr);
+  gap: clamp(22px, 4vw, 54px);
   transform: none;
 }
 
@@ -6668,19 +6672,26 @@ summary:focus-visible {
 }
 
 .trk-phone-shot--hero {
-  width: min(68%, 330px);
-  transform: rotateY(-9deg) rotateX(2deg);
+  z-index: 2;
+  width: min(100%, 354px);
+  justify-self: end;
+  transform: rotateY(-7deg) rotateX(2deg);
   animation: trkFloat 5.5s ease-in-out infinite;
 }
 
 .trk-watch-shot {
-  position: absolute;
-  right: 0;
-  bottom: 16%;
-  width: min(42%, 230px);
+  position: relative;
+  z-index: 2;
+  width: min(100%, 238px);
   border-radius: 50%;
   filter: drop-shadow(0 30px 46px rgba(0, 0, 0, .56));
   animation: trkFloat 6s ease-in-out infinite reverse;
+}
+
+.trk-hero__visual .trk-watch-shot {
+  justify-self: start;
+  align-self: end;
+  margin-bottom: 24px;
 }
 
 .trk-watch-shot img {
@@ -6983,16 +6994,19 @@ summary:focus-visible {
 
 .trk-device-stage {
   min-height: 620px;
+  grid-template-columns: minmax(220px, .82fr) minmax(190px, .68fr);
+  gap: clamp(22px, 5vw, 64px);
+  justify-content: center;
 }
 
 .trk-device-stage .trk-phone-shot {
-  transform: translateX(-82px) rotateY(9deg);
+  justify-self: end;
+  transform: rotateY(7deg);
 }
 
 .trk-watch-shot--large {
-  right: 8%;
-  bottom: 23%;
-  width: min(48%, 286px);
+  justify-self: start;
+  width: min(100%, 286px);
 }
 
 .trk-recovery-card {
@@ -7479,7 +7493,7 @@ summary:focus-visible {
   }
 
   .trk-header__brand img {
-    width: clamp(150px, 43vw, 186px);
+    width: clamp(176px, 52vw, 236px);
   }
 
   .trk-hero {
@@ -7530,11 +7544,14 @@ summary:focus-visible {
   .trk-hero__visual,
   .trk-device-stage {
     min-height: 500px;
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .trk-phone-shot--hero,
   .trk-phone-shot {
     width: min(78vw, 292px);
+    justify-self: center;
   }
 
   .trk-float-card {
@@ -7553,8 +7570,11 @@ summary:focus-visible {
   }
 
   .trk-watch-shot {
-    right: -2%;
+    right: auto;
+    bottom: auto;
     width: min(44vw, 176px);
+    justify-self: center;
+    margin: 0;
   }
 
   .trk-proof-band,
@@ -7607,12 +7627,12 @@ summary:focus-visible {
   }
 
   .trk-device-stage .trk-phone-shot {
-    transform: translateX(-34px) rotateY(7deg);
+    transform: rotateY(5deg);
   }
 
   .trk-watch-shot--large {
-    right: 0;
-    bottom: 19%;
+    right: auto;
+    bottom: auto;
     width: min(47vw, 190px);
   }
 
