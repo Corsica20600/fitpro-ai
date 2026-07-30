@@ -6410,11 +6410,36 @@ summary:focus-visible {
 
 .trk-header__links a,
 .trk-mobile-menu a {
+  position: relative;
   outline-offset: 6px;
+  transition: color .2s ease, text-shadow .2s ease;
 }
 
-.trk-header__links a:hover {
+.trk-header__links a::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: -13px;
+  height: 3px;
+  border-radius: 999px;
+  background: #C13CFF;
+  box-shadow: 0 0 18px rgba(193, 60, 255, .72);
+  opacity: 0;
+  transition: left .2s ease, right .2s ease, opacity .2s ease;
+}
+
+.trk-header__links a:hover,
+.trk-header__links a:focus-visible {
   color: #fff;
+  text-shadow: 0 0 18px rgba(193, 60, 255, .82);
+}
+
+.trk-header__links a:hover::after,
+.trk-header__links a:focus-visible::after {
+  left: 0;
+  right: 0;
+  opacity: 1;
 }
 
 .trk-header__cta,
@@ -7535,8 +7560,11 @@ summary:focus-visible {
     font-weight: 900;
   }
 
-  .trk-mobile-menu a:hover {
-    background: rgba(255, 255, 255, .06);
+  .trk-mobile-menu a:hover,
+  .trk-mobile-menu a:focus-visible {
+    color: #fff;
+    background: rgba(193, 60, 255, .14);
+    box-shadow: inset 3px 0 0 #C13CFF;
   }
 
   .trk-hero,
