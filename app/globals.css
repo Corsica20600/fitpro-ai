@@ -7379,17 +7379,22 @@ summary:focus-visible {
 }
 
 .trk-footer {
-  min-height: 260px;
+  min-height: 280px;
   display: grid;
-  grid-template-columns: minmax(260px, .8fr) 1fr auto;
-  align-items: center;
-  gap: 34px;
-  padding: 42px 0 60px;
+  grid-template-columns: minmax(280px, .9fr) minmax(360px, 1fr) auto;
+  align-items: start;
+  gap: clamp(30px, 5vw, 72px);
+  padding: 54px 0 64px;
   border-top: 1px solid var(--trk-line);
 }
 
 .trk-footer img {
   height: auto;
+}
+
+.trk-footer__intro {
+  display: grid;
+  gap: 20px;
 }
 
 .trk-footer__brand {
@@ -7406,18 +7411,53 @@ summary:focus-visible {
   width: min(72vw, 310px);
 }
 
+.trk-footer__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: clamp(26px, 4vw, 52px);
+}
+
 .trk-footer nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px 24px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.trk-footer nav strong {
+  color: var(--trk-cyan);
+  font-family: var(--font-orbitron), var(--font-exo-2), sans-serif;
+  font-size: .76rem;
+  font-weight: 950;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.trk-footer nav a {
+  width: fit-content;
   color: #d7e4ff;
+  font-weight: 850;
+  transition: color .2s ease, text-shadow .2s ease;
+}
+
+.trk-footer nav a:hover,
+.trk-footer nav a:focus-visible {
+  color: #fff;
+  text-shadow: 0 0 16px rgba(193, 60, 255, .72);
+}
+
+.trk-footer__meta {
+  justify-self: end;
+  display: grid;
+  gap: 10px;
+  text-align: right;
+  color: var(--trk-muted);
+  font-size: .95rem;
   font-weight: 800;
 }
 
-.trk-footer__legal {
-  justify-self: end;
-  font-size: .94rem;
+.trk-footer__meta p,
+.trk-footer__meta span {
+  margin: 0;
 }
 
 .trk-reveal {
@@ -7524,8 +7564,12 @@ summary:focus-visible {
     text-align: center;
   }
 
-  .trk-footer__legal {
+  .trk-footer__brand,
+  .trk-footer nav,
+  .trk-footer__meta {
     justify-self: center;
+    text-align: center;
+    justify-items: center;
   }
 }
 
@@ -7716,6 +7760,7 @@ summary:focus-visible {
   .trk-advantages-grid,
   .trk-progress-grid,
   .trk-ecosystem-line,
+  .trk-footer__columns,
   .trk-price-options,
   .trk-check-list--price,
   .trk-recovery-grid {

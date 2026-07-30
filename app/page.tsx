@@ -528,7 +528,7 @@ export default async function HomePage() {
         </section>
 
         <footer className="trk-footer">
-          <div>
+          <div className="trk-footer__intro">
             <div className="trk-footer__brand">
               <Image
                 src="/brand/traknio-logo-mark-exact.png"
@@ -545,14 +545,23 @@ export default async function HomePage() {
             </div>
             <p>Application premium de musculation et de suivi sportif.</p>
           </div>
-          <nav aria-label="Liens de pied de page">
-            <Link href="/privacy">Confidentialité</Link>
-            <Link href="/terms">Conditions d&apos;utilisation</Link>
-            <Link href="/data-deletion">Suppression des données</Link>
-            <a href="mailto:support@traknio.com">Support</a>
-            <a href="mailto:contact@traknio.com">Contact</a>
-          </nav>
-          <p className="trk-footer__legal">Édité par CorsaiManager</p>
+          <div className="trk-footer__columns">
+            <nav aria-label="Liens légaux">
+              <strong>Légal</strong>
+              <Link href="/privacy">Confidentialité</Link>
+              <Link href="/terms">Conditions d&apos;utilisation</Link>
+              <Link href="/data-deletion">Suppression des données</Link>
+            </nav>
+            <nav aria-label="Contact Traknio">
+              <strong>Contact</strong>
+              <a href="mailto:contact@traknio.com">contact@traknio.com</a>
+              <a href="mailto:support@traknio.com">support@traknio.com</a>
+            </nav>
+          </div>
+          <div className="trk-footer__meta">
+            <p>Édité par CorsaiManager</p>
+            <span>Traknio © 2026</span>
+          </div>
         </footer>
       </main>
     </>
