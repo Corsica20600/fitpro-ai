@@ -27,7 +27,12 @@ type ExerciseCardProps = {
 };
 
 function hasMotionMedia(exercise: ExerciseCardProps["exercise"]) {
-  return Boolean(exercise.fallbackAnimationPath || exercise.media.some((item) => item.type === "ANIMATION"));
+  return exercise.media.some((item) => {
+    if (item.type !== "ANIMATION") return false;
+    const source = item.publicUrl || item.url || "";
+    const format = (item.format || source.split("?")[0]?.split(".").pop() || "").toLowerCase();
+    return ["gif", "mp4", "webm", "apng", "lottie", "json"].includes(format);
+  });
 }
 
 export function ExerciseCard({ exercise }: ExerciseCardProps) {

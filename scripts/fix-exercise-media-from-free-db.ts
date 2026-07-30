@@ -95,8 +95,8 @@ async function main() {
       data: {
         fallbackThumbnailPath: thumbUrl,
         fallbackImagePath: imageUrl,
-        fallbackAnimationPath: thumbUrl,
-        primaryAnimationPath: thumbUrl,
+        fallbackAnimationPath: imageUrl,
+        primaryAnimationPath: null,
       },
     });
 
