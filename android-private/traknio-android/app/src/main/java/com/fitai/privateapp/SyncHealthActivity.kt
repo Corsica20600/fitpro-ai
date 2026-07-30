@@ -2,19 +2,15 @@ package com.fitai.privateapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.webkit.CookieManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
 import com.fitai.privateapp.databinding.ActivitySyncHealthBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class SyncHealthActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySyncHealthBinding
-    private lateinit var samsungHealthProvider: SamsungHealthProvider
     private lateinit var healthConnectProvider: HealthConnectProvider
     private lateinit var healthConnectPermissionLauncher: ActivityResultLauncher<Set<String>>
     private var syncPendingAfterHealthConnectPermission = false
@@ -39,7 +35,7 @@ class SyncHealthActivity : AppCompatActivity() {
                 if (syncPendingAfterHealthConnectPermission) {
                     syncPendingAfterHealthConnectPermission = false
                     if (grantedRequired.isNotEmpty()) {
-                        syncHealthConnect(requestMissingPermissions = false)
+                        runHealthSync(requestPermissions = false, force = true)
                     } else {
                         binding.buttonSync.isEnabled = true
                         binding.textStatus.text = "Aucune permission Health Connect accordee."
@@ -54,7 +50,6 @@ class SyncHealthActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.tab_sync_health)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        samsungHealthProvider = SamsungHealthProviderFactory(applicationContext).create()
         binding.textConfig.text = "API: ${BuildConfig.FITAI_SYNC_BASE_URL}"
         binding.buttonSync.setOnClickListener { syncNow() }
         binding.buttonBackToFitAi.setOnClickListener { finish() }
@@ -74,127 +69,38 @@ class SyncHealthActivity : AppCompatActivity() {
     private fun syncNow() {
         binding.buttonSync.isEnabled = false
         binding.textStatus.text = "Sync en cours..."
-
         lifecycleScope.launch {
-            val auth = resolveHealthAuth()
-            if (auth == null) {
-                binding.buttonSync.isEnabled = true
-                binding.textStatus.text = "Connecte-toi a Google dans Traknio avant la sync Health."
-                return@launch
-            }
-
-            if (healthConnectProvider.isAvailable()) {
-                syncHealthConnect(auth = auth)
-                return@launch
-            }
-
-            val permissionState = samsungHealthProvider.ensurePermissions(this@SyncHealthActivity)
-            binding.textPermissionState.text = permissionState.message
-            if (!permissionState.permissionsGranted && !permissionState.usingMockFallback) {
-                binding.buttonSync.isEnabled = true
-                binding.textStatus.text = "Erreur Samsung Health: permissions non accordees"
-                return@launch
-            }
-
-            val readResult = samsungHealthProvider.readLatestMetrics()
-            if (readResult.records.isEmpty()) {
-                binding.buttonSync.isEnabled = true
-                binding.textStatus.text = "Aucune donnee trouvee"
-                return@launch
-            }
-            val result = withContext(Dispatchers.IO) {
-                SamsungSyncApi.push(
-                    baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                    healthDeviceToken = auth.healthDeviceToken,
-                    records = readResult.records,
-                    source = HealthSyncSource.SAMSUNG_HEALTH,
-                )
-            }
-
-            binding.buttonSync.isEnabled = true
-            binding.textStatus.text = if (result.ok) {
-                "Sync reussie: ${result.message}"
-            } else {
-                "Erreur Samsung Health: ${result.message}"
-            }
+            runHealthSync(requestPermissions = true, force = true)
         }
     }
 
-    private data class HealthAuth(val healthDeviceToken: String)
-
-    private suspend fun resolveHealthAuth(): HealthAuth? {
-        val savedToken = prefs.getString("health_device_token", null)?.takeIf { it.isNotBlank() }
-        if (savedToken != null) {
-            return HealthAuth(savedToken)
-        }
-
-        val cookieHeader = CookieManager.getInstance().getCookie(BuildConfig.FITAI_SYNC_BASE_URL)
-        val tokenResult = withContext(Dispatchers.IO) {
-            SamsungSyncApi.issueHealthDeviceToken(
-                baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                cookieHeader = cookieHeader,
-            )
-        }
-
-        if (tokenResult.ok && !tokenResult.token.isNullOrBlank()) {
-            prefs.edit().putString("health_device_token", tokenResult.token).apply()
-            return HealthAuth(tokenResult.token)
-        }
-
-        return null
-    }
-
-    private suspend fun syncHealthConnect(requestMissingPermissions: Boolean = true, auth: HealthAuth? = null) {
-        val resolvedAuth = auth ?: resolveHealthAuth()
-        if (resolvedAuth == null) {
-            binding.buttonSync.isEnabled = true
-            binding.textStatus.text = "Connecte-toi a Google dans Traknio avant la sync Health."
-            return
-        }
-
-        val missing = healthConnectProvider.missingPermissions()
-        if (missing.isNotEmpty() && requestMissingPermissions) {
-            binding.textPermissionState.text = "Autorisation Health Connect requise."
-            binding.textStatus.text = "Ouverture des permissions Health Connect..."
-            syncPendingAfterHealthConnectPermission = true
-            healthConnectPermissionLauncher.launch(HealthConnectProvider.permissions)
-            return
-        }
-
-        val granted = healthConnectProvider.grantedPermissions().intersect(HealthConnectProvider.permissions)
-        if (granted.isEmpty()) {
-            binding.buttonSync.isEnabled = true
-            binding.textPermissionState.text = "Permissions Health Connect incompletes."
-            binding.textStatus.text = "Aucune permission Health Connect accordee."
-            return
-        }
-
-        binding.textPermissionState.text = if (missing.isEmpty()) {
-            "Permissions Health Connect accordees."
-        } else {
-            "Permissions Health Connect partielles (${granted.size}/${HealthConnectProvider.permissions.size})."
-        }
-        val readResult = healthConnectProvider.readLatestMetrics()
-        if (readResult.records.isEmpty()) {
-            binding.buttonSync.isEnabled = true
-            binding.textStatus.text = readResult.message
-            return
-        }
-
-        val result = withContext(Dispatchers.IO) {
-            SamsungSyncApi.push(
-                baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
-                healthDeviceToken = resolvedAuth.healthDeviceToken,
-                records = readResult.records,
-                source = HealthSyncSource.HEALTH_CONNECT,
-            )
-        }
-
-        binding.buttonSync.isEnabled = true
-        binding.textStatus.text = if (result.ok) {
-            "Sync Health Connect reussie: ${result.message}"
-        } else {
-            "Erreur Health Connect: ${result.message}"
+    private suspend fun runHealthSync(requestPermissions: Boolean, force: Boolean) {
+        val outcome = HealthSyncRunner.sync(
+            context = applicationContext,
+            requestPermissions = requestPermissions,
+            force = force,
+        )
+        when (outcome) {
+            is HealthSyncOutcome.NeedsPermissions -> {
+                binding.textPermissionState.text = "Autorisation Health Connect requise."
+                binding.textStatus.text = "Ouverture des permissions Health Connect..."
+                syncPendingAfterHealthConnectPermission = true
+                healthConnectPermissionLauncher.launch(HealthConnectProvider.permissions)
+            }
+            is HealthSyncOutcome.Success -> {
+                binding.buttonSync.isEnabled = true
+                binding.textPermissionState.text = "Permissions Health Connect accordees."
+                binding.textStatus.text = outcome.message
+                HealthSyncWorker.schedule(applicationContext)
+            }
+            is HealthSyncOutcome.Skipped -> {
+                binding.buttonSync.isEnabled = true
+                binding.textStatus.text = outcome.message
+            }
+            is HealthSyncOutcome.Failed -> {
+                binding.buttonSync.isEnabled = true
+                binding.textStatus.text = outcome.message
+            }
         }
     }
 
@@ -213,11 +119,11 @@ class SyncHealthActivity : AppCompatActivity() {
                 prefs.edit().putBoolean("health_perm_requested", true).apply()
                 binding.buttonSync.isEnabled = false
                 binding.textStatus.text = if (missing.isEmpty()) "Sync Health Connect automatique..." else "Preparation Health Connect..."
-                syncHealthConnect(requestMissingPermissions = true)
+                runHealthSync(requestPermissions = true, force = true)
                 return@launch
             }
 
-            val state = samsungHealthProvider.ensurePermissions(this@SyncHealthActivity)
+            val state = SamsungHealthProviderFactory(applicationContext).create().ensurePermissions(this@SyncHealthActivity)
             binding.textPermissionState.text = state.message
             prefs.edit().putBoolean("health_perm_requested", true).apply()
         }

@@ -11,6 +11,7 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceError
 import android.webkit.WebResourceResponse
 import android.webkit.WebResourceRequest
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -34,6 +35,8 @@ class MainActivity : AppCompatActivity() {
         window.setBackgroundDrawableResource(R.color.fitai_system_bar)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        HealthSyncWorker.schedule(applicationContext)
+        HealthSyncWorker.runSoon(applicationContext)
 
         applyDarkSystemBars()
         supportActionBar?.hide()
@@ -78,6 +81,13 @@ class MainActivity : AppCompatActivity() {
         binding.webViewFitAi.settings.databaseEnabled = true
         binding.webViewFitAi.settings.loadsImagesAutomatically = true
         binding.webViewFitAi.setBackgroundColor(Color.rgb(10, 19, 40))
+        binding.webViewFitAi.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                super.onProgressChanged(view, newProgress)
+                binding.launchProgress.isIndeterminate = false
+                binding.launchProgress.progress = newProgress.coerceIn(0, 100)
+            }
+        }
         binding.webViewFitAi.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
@@ -85,6 +95,7 @@ class MainActivity : AppCompatActivity() {
                 binding.webLoading.visibility = View.VISIBLE
                 binding.launchOverlay.visibility = View.VISIBLE
                 binding.launchOverlay.alpha = 1f
+                binding.launchProgress.progress = 6
             }
 
             override fun onPageCommitVisible(view: WebView?, url: String?) {
@@ -149,6 +160,7 @@ class MainActivity : AppCompatActivity() {
             .withEndAction {
                 binding.launchOverlay.visibility = View.GONE
                 binding.launchOverlay.alpha = 1f
+                binding.launchProgress.progress = 0
             }
             .start()
     }
