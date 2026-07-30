@@ -252,7 +252,7 @@ private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel)
                 lineHeight = 60.sp,
             )
             Text(
-                text = state.payload.exerciseName,
+                text = if (state.pausedRestRemaining != null) "Chrono en pause" else state.payload.exerciseName,
                 color = Color(0xFFB7C9EA),
                 fontSize = 10.sp,
                 maxLines = 1,
@@ -265,8 +265,12 @@ private fun RestScreen(state: WatchScreenState.Ready, viewModel: WatchViewModel)
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 RoundActionButton("-15", enabled, viewModel::removeRest)
+                RoundActionButton(
+                    text = if (state.pausedRestRemaining != null) "▶" else "Ⅱ",
+                    enabled = enabled,
+                    onClick = viewModel::toggleRestPause,
+                )
                 RoundActionButton("+15", enabled, viewModel::addRest)
-                RoundActionButton("Passer", enabled, viewModel::skipRest)
             }
             Spacer(Modifier.height(5.dp))
             FinishButton(state, viewModel)

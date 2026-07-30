@@ -26,6 +26,7 @@ sealed interface WatchScreenState {
         val displayRestRemaining: Int,
         val syncLabel: String,
         val busyAction: String? = null,
+        val pausedRestRemaining: Int? = null,
         val finishConfirm: Boolean = false,
         val error: String? = null,
     ) : WatchScreenState

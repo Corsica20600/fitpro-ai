@@ -34,6 +34,35 @@ class WatchViewModel(
 
     fun skipRest() = perform("skip") { payload -> api.skipRest(payload.sessionId) }
 
+    fun toggleRestPause() {
+        val ready = _state.value as? WatchScreenState.Ready ?: return
+        if (ready.busyAction != null) return
+
+        val pausedRemaining = ready.pausedRestRemaining
+        if (pausedRemaining != null) {
+            deadline = createRestDeadline(pausedRemaining)
+            _state.value = ready.copy(
+                displayRestRemaining = remainingFromDeadline(deadline),
+                pausedRestRemaining = null,
+                syncLabel = "Sync OK",
+                finishConfirm = false,
+                error = null,
+            )
+            return
+        }
+
+        val remaining = remainingFromDeadline(deadline)
+        if (remaining <= 0) return
+        deadline = null
+        _state.value = ready.copy(
+            displayRestRemaining = remaining,
+            pausedRestRemaining = remaining,
+            syncLabel = "Pause",
+            finishConfirm = false,
+            error = null,
+        )
+    }
+
     fun addRest() = perform("add-rest", optimistic = { addOptimisticRest(15) }) { payload ->
         api.addRest(payload.sessionId, 15)
     }
@@ -135,19 +164,23 @@ class WatchViewModel(
 
         val elapsedNow = SystemClock.elapsedRealtime()
         val nextDeadline = createRestDeadline(payload.restRemaining, elapsedNow)
-        if (shouldReplaceDeadline(deadline, nextDeadline, contextChanged, elapsedNow)) {
+        val currentPausedRest = (_state.value as? WatchScreenState.Ready)?.pausedRestRemaining
+        val effectivePausedRest = if (contextChanged) null else currentPausedRest
+        if (effectivePausedRest == null && shouldReplaceDeadline(deadline, nextDeadline, contextChanged, elapsedNow)) {
             deadline = nextDeadline
         }
 
         _state.value = WatchScreenState.Ready(
             payload = payload,
-            displayRestRemaining = remainingFromDeadline(deadline, elapsedNow),
+            displayRestRemaining = effectivePausedRest ?: remainingFromDeadline(deadline, elapsedNow),
             syncLabel = syncLabel,
+            pausedRestRemaining = effectivePausedRest,
         )
     }
 
     private fun updateDisplayRemaining() {
         val ready = _state.value as? WatchScreenState.Ready ?: return
+        if (ready.pausedRestRemaining != null) return
         val remaining = remainingFromDeadline(deadline)
         if (remaining == ready.displayRestRemaining) return
         if (remaining <= 0) deadline = null
@@ -156,8 +189,16 @@ class WatchViewModel(
 
     private fun addOptimisticRest(seconds: Int) {
         val now = SystemClock.elapsedRealtime()
-        val remaining = remainingFromDeadline(deadline, now)
-        deadline = createRestDeadline((remaining + seconds).coerceAtLeast(0), now)
+        val ready = _state.value as? WatchScreenState.Ready
+        val pausedRemaining = ready?.pausedRestRemaining
+        val remaining = pausedRemaining ?: remainingFromDeadline(deadline, now)
+        val nextRemaining = (remaining + seconds).coerceAtLeast(0)
+        if (pausedRemaining != null) {
+            deadline = null
+            _state.value = ready.copy(displayRestRemaining = nextRemaining, pausedRestRemaining = nextRemaining)
+            return
+        }
+        deadline = createRestDeadline(nextRemaining, now)
         updateDisplayRemaining()
     }
 }
