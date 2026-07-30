@@ -202,11 +202,6 @@ export default async function HomePage() {
           <div className="trk-hero__visual" aria-label="Aperçus de l'application Traknio">
             <div className="trk-orbit trk-orbit--blue" />
             <div className="trk-orbit trk-orbit--violet" />
-            <div className="trk-float-card trk-float-card--recovery">
-              <span>Récupération</span>
-              <strong>82</strong>
-              <small>Sommeil + activité</small>
-            </div>
             <PhoneShot
               src="/brand/traknio-login-reference.png"
               alt="Aperçu smartphone de Traknio"
@@ -215,17 +210,12 @@ export default async function HomePage() {
             />
             <div className="trk-watch-shot">
               <Image
-                src="/brand/traknio-watch-reference.png"
+                src="/brand/traknio-watch-transparent.png"
                 alt="Aperçu Galaxy Watch de Traknio"
-                width={260}
-                height={274}
+                width={1024}
+                height={1024}
                 priority
               />
-            </div>
-            <div className="trk-float-card trk-float-card--progress">
-              <span>Progression</span>
-              <strong>+2,5 kg</strong>
-              <small>Développé couché</small>
             </div>
           </div>
         </section>
@@ -314,10 +304,10 @@ export default async function HomePage() {
             <PhoneShot src="/brand/traknio-launch-reference.png" alt="Application mobile Traknio" />
             <div className="trk-watch-shot trk-watch-shot--large">
               <Image
-                src="/brand/traknio-watch-reference.png"
+                src="/brand/traknio-watch-transparent.png"
                 alt="Interface Traknio sur Galaxy Watch"
-                width={260}
-                height={274}
+                width={1024}
+                height={1024}
               />
             </div>
           </div>

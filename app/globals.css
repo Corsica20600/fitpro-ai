@@ -6700,7 +6700,6 @@ summary:focus-visible {
   height: auto;
 }
 
-.trk-float-card,
 .trk-dashboard-card,
 .trk-recovery-card,
 .trk-progress-main,
@@ -6716,36 +6715,10 @@ summary:focus-visible {
   backdrop-filter: blur(18px);
 }
 
-.trk-float-card {
-  position: absolute;
-  z-index: 3;
-  min-width: 190px;
-  display: grid;
-  gap: 4px;
-  padding: 18px;
-}
-
-.trk-float-card--recovery {
-  top: 18%;
-  left: 0;
-}
-
-.trk-float-card--progress {
-  right: 6%;
-  bottom: 8%;
-}
-
-.trk-float-card span,
-.trk-float-card small,
 .trk-dashboard-card span,
 .trk-mini-stat span,
 .trk-price-card small {
   color: var(--trk-muted);
-}
-
-.trk-float-card strong {
-  font-size: 2rem;
-  line-height: 1;
 }
 
 .trk-proof-band {
@@ -7575,25 +7548,10 @@ summary:focus-visible {
     justify-self: center;
   }
 
-  .trk-float-card {
-    min-width: 148px;
-    padding: 13px;
-  }
-
-  .trk-float-card--recovery {
-    left: 0;
-    top: 12%;
-  }
-
-  .trk-float-card--progress {
-    right: 0;
-    bottom: 6%;
-  }
-
   .trk-watch-shot {
     right: auto;
     bottom: auto;
-    width: min(44vw, 176px);
+    width: min(58vw, 218px);
     justify-self: center;
     margin: 0;
   }
@@ -7655,7 +7613,7 @@ summary:focus-visible {
   .trk-watch-shot--large {
     right: auto;
     bottom: auto;
-    width: min(47vw, 190px);
+    width: min(62vw, 244px);
   }
 
   .trk-score-ring {
