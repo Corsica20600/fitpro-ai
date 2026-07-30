@@ -155,6 +155,7 @@ export default async function HomePage() {
       "@type": "Offer",
       price: "4.99",
       priceCurrency: "EUR",
+      description: "4,99 €/mois ou 39,99 €/an",
     },
     description:
       "Application premium de musculation avec programmes IA, suivi des charges, Galaxy Watch, Health Connect et Spotify.",
@@ -184,9 +185,9 @@ export default async function HomePage() {
               instantanément tes séances avec ta Galaxy Watch.
             </p>
             <div className="trk-actions">
-              <Link className="trk-button trk-button--primary" href="/login">
-                Commencer gratuitement
-              </Link>
+              <a className="trk-button trk-button--primary" href="#tarifs">
+                Voir les tarifs
+              </a>
               <a className="trk-button trk-button--ghost" href="#fonctionnalites">
                 Découvrir Traknio
               </a>
@@ -419,10 +420,18 @@ export default async function HomePage() {
           <SectionLabel>Tarifs</SectionLabel>
           <h2>Une expérience premium, simple à lancer</h2>
           <article className="trk-price-card">
-            <div>
+            <div className="trk-price-card__head">
               <span>Traknio Premium</span>
-              <strong>4,99 €</strong>
-              <small>/ mois</small>
+              <div className="trk-price-options" aria-label="Prix Traknio Premium">
+                <div>
+                  <strong>4,99 €</strong>
+                  <small>/ mois</small>
+                </div>
+                <div>
+                  <strong>39,99 €</strong>
+                  <small>/ an</small>
+                </div>
+              </div>
             </div>
             <ul className="trk-check-list trk-check-list--price">
               {pricingFeatures.map((feature) => (
@@ -430,7 +439,7 @@ export default async function HomePage() {
               ))}
             </ul>
             <Link className="trk-button trk-button--primary" href="/login">
-              Essayer Traknio
+              Télécharger l&apos;application
             </Link>
           </article>
         </section>
