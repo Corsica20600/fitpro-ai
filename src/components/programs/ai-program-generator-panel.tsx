@@ -67,6 +67,14 @@ export function AiProgramGeneratorPanel() {
           setError(`Limite mensuelle atteinte : ${data.used}/${data.limit} programmes IA generes ce mois-ci.`);
           return;
         }
+        if (data?.error === "missing_api_key") {
+          setError("Generation IA indisponible : la cle OpenAI n'est pas configuree sur le serveur.");
+          return;
+        }
+        if (data?.error === "openai_error" || data?.error === "openai_exception") {
+          setError("Generation IA indisponible : OpenAI n'a pas repondu correctement.");
+          return;
+        }
         setError(`Generation impossible (${data?.error ?? "unknown_error"})`);
         return;
       }
