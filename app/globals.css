@@ -6467,6 +6467,14 @@ summary:focus-visible {
   white-space: nowrap;
 }
 
+.trk-header__cta--disabled,
+.trk-button--disabled {
+  cursor: default;
+  opacity: .74;
+  filter: saturate(.82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
 .trk-button--ghost {
   background: rgba(255, 255, 255, .04);
   color: #eaf2ff;
@@ -7554,7 +7562,8 @@ summary:focus-visible {
     display: grid;
   }
 
-  .trk-mobile-menu a {
+  .trk-mobile-menu a,
+  .trk-mobile-menu span {
     min-height: 44px;
     display: flex;
     align-items: center;
@@ -7562,6 +7571,11 @@ summary:focus-visible {
     border-radius: 8px;
     color: #eef5ff;
     font-weight: 900;
+  }
+
+  .trk-mobile-menu span {
+    color: rgba(238, 245, 255, .56);
+    cursor: default;
   }
 
   .trk-mobile-menu a:hover,

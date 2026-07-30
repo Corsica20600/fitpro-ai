@@ -45,9 +45,9 @@ export function PublicHeader() {
           ))}
         </div>
 
-        <Link className="trk-header__cta" href="/login">
-          Télécharger l&apos;application
-        </Link>
+        <span className="trk-header__cta trk-header__cta--disabled" aria-disabled="true">
+          Bientôt disponible
+        </span>
 
         <button
           className="trk-menu-button"
@@ -68,9 +68,7 @@ export function PublicHeader() {
             {link.label}
           </a>
         ))}
-        <Link href="/login" onClick={() => setIsOpen(false)}>
-          Télécharger l&apos;application
-        </Link>
+        <span aria-disabled="true">Bientôt disponible</span>
       </div>
     </header>
   );

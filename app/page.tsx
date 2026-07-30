@@ -492,9 +492,9 @@ export default async function HomePage() {
                 <CheckItem key={feature}>{feature}</CheckItem>
               ))}
             </ul>
-            <Link className="trk-button trk-button--primary" href="/login">
-              Télécharger l&apos;application
-            </Link>
+            <span className="trk-button trk-button--primary trk-button--disabled" aria-disabled="true">
+              Bientôt disponible
+            </span>
           </article>
         </section>
 
@@ -516,9 +516,9 @@ export default async function HomePage() {
         <section className="trk-final-cta trk-reveal">
           <div>
             <h2>Ta prochaine progression commence avec ta prochaine séance</h2>
-            <Link className="trk-button trk-button--light" href="/login">
-              Télécharger Traknio
-            </Link>
+            <span className="trk-button trk-button--light trk-button--disabled" aria-disabled="true">
+              Bientôt disponible
+            </span>
           </div>
           <PhoneShot
             src="/brand/traknio-phone-hero-v2.png"
