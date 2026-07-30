@@ -2899,7 +2899,7 @@ body {
 
 .exercise-muscle-badge {
   min-width: 0;
-  max-width: calc(100% - 42px);
+  max-width: 100%;
   overflow: hidden;
   padding: 5px 9px;
   border: 1px solid rgba(0, 224, 255, .35);
@@ -2908,60 +2908,6 @@ body {
   background: rgba(4, 20, 40, .72);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.exercise-media-badge {
-  flex: 0 0 auto;
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 1px solid rgba(120, 168, 255, .34);
-  border-radius: 11px;
-  background: rgba(5, 12, 26, .74);
-  box-shadow: 0 0 18px rgba(47, 143, 255, .16);
-}
-
-.exercise-media-badge.is-motion {
-  border-color: rgba(0, 224, 255, .44);
-  background:
-    linear-gradient(135deg, rgba(21, 91, 255, .34), rgba(193, 60, 255, .22)),
-    rgba(5, 12, 26, .78);
-}
-
-.exercise-media-badge.is-image {
-  border-color: rgba(138, 148, 166, .34);
-}
-
-.exercise-media-icon {
-  position: relative;
-  display: block;
-  width: 15px;
-  height: 15px;
-}
-
-.exercise-media-badge.is-motion .exercise-media-icon::before {
-  position: absolute;
-  inset: 2px 1px;
-  content: "";
-  clip-path: polygon(20% 0, 100% 50%, 20% 100%);
-  background: linear-gradient(135deg, #00e0ff, #c13cff);
-}
-
-.exercise-media-badge.is-image .exercise-media-icon {
-  border: 2px solid #a8b4c6;
-  border-radius: 4px;
-}
-
-.exercise-media-badge.is-image .exercise-media-icon::before {
-  position: absolute;
-  right: 1px;
-  bottom: 1px;
-  left: 1px;
-  height: 6px;
-  content: "";
-  clip-path: polygon(0 100%, 38% 28%, 58% 62%, 76% 36%, 100% 100%);
-  background: #a8b4c6;
 }
 
 .exercise-card-overlay h3 {

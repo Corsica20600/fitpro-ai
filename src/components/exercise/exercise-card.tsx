@@ -26,21 +26,11 @@ type ExerciseCardProps = {
   };
 };
 
-function hasMotionMedia(exercise: ExerciseCardProps["exercise"]) {
-  return exercise.media.some((item) => {
-    if (item.type !== "ANIMATION") return false;
-    const source = item.publicUrl || item.url || "";
-    const format = (item.format || source.split("?")[0]?.split(".").pop() || "").toLowerCase();
-    return ["gif", "mp4", "webm", "apng", "lottie", "json"].includes(format);
-  });
-}
-
 export function ExerciseCard({ exercise }: ExerciseCardProps) {
   const override = getExerciseOverride(exercise.slug);
   const title = getExerciseDisplayName(exercise);
   const primaryMuscle = exercise.primaryMusclesFr[0] || exercise.primaryMuscles[0] || "Full body";
   const equipment = exercise.equipmentFr[0] || exercise.equipment[0] || "Poids du corps";
-  const hasAnimation = hasMotionMedia(exercise) || Boolean(override?.frameAnimationUrls?.length);
 
   return (
     <Link
@@ -61,13 +51,6 @@ export function ExerciseCard({ exercise }: ExerciseCardProps) {
       <div className="exercise-card-overlay">
         <div className="exercise-card-kicker">
           <span className="exercise-muscle-badge">{primaryMuscle}</span>
-          <span
-            className={`exercise-media-badge ${hasAnimation ? "is-motion" : "is-image"}`}
-            aria-label={hasAnimation ? "Vidéo ou animation disponible" : "Image disponible"}
-            title={hasAnimation ? "Vidéo ou animation disponible" : "Image disponible"}
-          >
-            <span className="exercise-media-icon" aria-hidden="true" />
-          </span>
         </div>
         <h3 className="exercise-card-title">{title}</h3>
         <div className="chips" aria-label="Informations de l'exercice">
