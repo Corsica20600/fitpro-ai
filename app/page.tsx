@@ -205,7 +205,7 @@ export default async function HomePage() {
             <PhoneShot
               src="/brand/traknio-phone-hero-v2.png"
               alt="Aperçu smartphone de Traknio"
-              className="trk-phone-shot--hero"
+              className="trk-phone-shot--hero trk-phone-shot--transparent"
               priority
             />
             <div className="trk-watch-shot">
@@ -456,7 +456,11 @@ export default async function HomePage() {
               Télécharger Traknio
             </Link>
           </div>
-          <PhoneShot src="/brand/traknio-phone-hero-v2.png" alt="Aperçu final de Traknio" />
+          <PhoneShot
+            src="/brand/traknio-phone-hero-v2.png"
+            alt="Aperçu final de Traknio"
+            className="trk-phone-shot--transparent"
+          />
         </section>
 
         <footer className="trk-footer">

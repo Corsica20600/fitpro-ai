@@ -6682,10 +6682,23 @@ summary:focus-visible {
 
 .trk-phone-shot--hero {
   z-index: 2;
-  width: min(100%, 354px);
+  width: min(100%, 390px);
   justify-self: end;
   transform: rotateY(-7deg) rotateX(2deg);
   animation: trkFloat 5.5s ease-in-out infinite;
+}
+
+.trk-phone-shot--transparent {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.trk-phone-shot--transparent img {
+  border-radius: 0;
+  filter: drop-shadow(0 34px 70px rgba(0, 0, 0, .58));
 }
 
 .trk-watch-shot {
