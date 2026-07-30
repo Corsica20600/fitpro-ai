@@ -55,8 +55,14 @@ export function ExerciseCard({ exercise }: ExerciseCardProps) {
       />
       <div className="exercise-card-overlay">
         <div className="exercise-card-kicker">
-          <span>{primaryMuscle}</span>
-          <span>{hasAnimation ? "Media animé" : "Image"}</span>
+          <span className="exercise-muscle-badge">{primaryMuscle}</span>
+          <span
+            className={`exercise-media-badge ${hasAnimation ? "is-motion" : "is-image"}`}
+            aria-label={hasAnimation ? "Vidéo ou animation disponible" : "Image disponible"}
+            title={hasAnimation ? "Vidéo ou animation disponible" : "Image disponible"}
+          >
+            <span className="exercise-media-icon" aria-hidden="true" />
+          </span>
         </div>
         <h3 className="exercise-card-title">{title}</h3>
         <div className="chips" aria-label="Informations de l'exercice">
