@@ -11,7 +11,7 @@
   --brand-blue: #1E58FF;
   --brand-violet: #7A3CFF;
   --brand-magenta: #C13CFF;
-  --brand-cyan: #00E0FF;
+  --brand-cyan: #00DCFF;
   --brand-slate: #8A94A6;
   --bg: #020611;
   --bg-soft: var(--brand-navy);
@@ -1546,7 +1546,7 @@ h4,
 }
 
 .landing-stat-card span {
-  color: #00E0FF;
+  color: #00DCFF;
   font-size: .75rem;
   font-weight: 950;
   letter-spacing: .18em;
@@ -1619,7 +1619,7 @@ h4,
 }
 
 .legal-list li::marker {
-  color: #00E0FF;
+  color: #00DCFF;
 }
 
 .settings-service-card {
@@ -1921,7 +1921,7 @@ h4,
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #00E0FF, #8ef5c9);
+  background: linear-gradient(90deg, #00DCFF, #8ef5c9);
 }
 
 .muscle-distribution-row em {
@@ -1978,7 +1978,7 @@ h4,
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #00E0FF, #8ef5c9);
+  background: linear-gradient(90deg, #00DCFF, #8ef5c9);
 }
 .spotify-now-playing {
   min-width: 0;
@@ -3340,7 +3340,7 @@ body {
   --line: #28416b;
   --line-soft: #1a2a47;
   --accent: #2a86ff;
-  --accent-2: #00E0FF;
+  --accent-2: #00DCFF;
   --success: #1fd79d;
   --warning: #ffcf52;
   --danger: #ff5a6e;
@@ -3517,7 +3517,7 @@ body {
 }
 
 .dashboard-progress-track span {
-  background: linear-gradient(90deg, #1E58FF, #00E0FF);
+  background: linear-gradient(90deg, #1E58FF, #00DCFF);
   box-shadow: 0 0 16px rgba(47, 143, 255, .44);
 }
 
@@ -3527,7 +3527,7 @@ body {
 }
 
 .progress-bar-track i {
-  background: linear-gradient(90deg, #1E58FF, #00E0FF);
+  background: linear-gradient(90deg, #1E58FF, #00DCFF);
   box-shadow: 0 0 12px rgba(47, 143, 255, .36);
 }
 
@@ -3682,8 +3682,8 @@ body {
   --fit-text: #f7fbff;
   --fit-text-muted: #8A94A6;
   --fit-text-soft: #d9e7ff;
-  --fit-accent: #00E0FF;
-  --fit-accent-cyan: #00E0FF;
+  --fit-accent: #00DCFF;
+  --fit-accent-cyan: #00DCFF;
   --fit-accent-violet: #7A3CFF;
   --fit-success: #1fd79d;
   --fit-warning: #ffcf52;
@@ -4456,7 +4456,7 @@ body::before {
 /* === Final visual harmonization: Traknio technical premium identity === */
 :root {
   --fit-blue: #1E58FF;
-  --fit-cyan: #00E0FF;
+  --fit-cyan: #00DCFF;
   --fit-violet: #7A3CFF;
   --fit-green: #67d51b;
   --fit-orange: #ff8a16;
@@ -5214,7 +5214,7 @@ summary:focus-visible {
 
 .watch-page-v2 {
   --watch-blue: #1E58FF;
-  --watch-cyan: #00E0FF;
+  --watch-cyan: #00DCFF;
   --watch-violet: #7A3CFF;
   --watch-green: #67d51b;
   --watch-orange: #ff981a;
@@ -6292,17 +6292,17 @@ summary:focus-visible {
 
 /* Traknio public redesign */
 .trk-public {
-  --trk-bg: #020612;
-  --trk-bg-2: #060b1a;
+  --trk-bg: #0A1328;
+  --trk-bg-2: #020611;
   --trk-surface: rgba(9, 17, 35, .76);
   --trk-surface-strong: rgba(12, 23, 48, .92);
   --trk-line: rgba(138, 174, 255, .16);
   --trk-text: #f8fbff;
-  --trk-muted: #a8b5cf;
-  --trk-blue: #1d8dff;
-  --trk-cyan: #00dcff;
-  --trk-violet: #8548ff;
-  --trk-pink: #c23cff;
+  --trk-muted: #8A94A6;
+  --trk-blue: #1E58FF;
+  --trk-cyan: #00DCFF;
+  --trk-violet: #7A3CFF;
+  --trk-pink: #C13CFF;
   min-height: 100svh;
   width: 100%;
   overflow-x: clip;
