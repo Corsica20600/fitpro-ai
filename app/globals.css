@@ -300,13 +300,14 @@ h4,
 
 .program-day-item {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 64px minmax(0, 1fr);
   gap: 8px;
   align-items: center;
   border: 1px solid rgba(255, 255, 255, .06);
   border-radius: 12px;
   padding: 7px;
   background: rgba(17, 26, 43, .72);
+  min-width: 0;
 }
 
 .program-day-item-image {
@@ -332,6 +333,9 @@ h4,
   margin: 0;
   font-size: .9rem;
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 }
 
 .program-day-item-head {
@@ -339,6 +343,7 @@ h4,
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .reorder-controls {
@@ -2435,6 +2440,15 @@ h4,
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
+  min-width: 0;
+}
+.program-card-v2__head > div {
+  min-width: 0;
+}
+.program-card-v2__head .chip {
+  flex: 0 0 auto;
+  max-width: 45%;
+  text-align: center;
 }
 .program-card-v2__actions,
 .program-card-v2__details {
@@ -5043,14 +5057,45 @@ summary:focus-visible {
   min-width: 0;
 }
 
+.program-card-v2 *,
+.active-program-card *,
+.program-day-item * {
+  min-width: 0;
+}
+
+.program-card-v2 h2,
+.active-program-card h2,
+.program-card-v2 .muted,
+.active-program-card .muted,
+.program-card-metrics span,
+.program-card-metrics b,
+.program-day-item .muted {
+  overflow-wrap: anywhere;
+}
+
+.program-card-metrics span {
+  text-align: left;
+}
+
 .program-card-v2 .chips {
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .program-card-v2 .chip {
   max-width: 100%;
   overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.program-day-item .form-grid,
+.program-day-item .grid-2,
+.program-day-item .brand-select,
+.program-day-item .brand-select__trigger {
+  width: 100%;
+  min-width: 0;
 }
 
 .personal-record-card {
