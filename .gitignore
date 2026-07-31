@@ -53,3 +53,28 @@ android-private/traknio-android/.idea/caches/
 
 # Source visual kept locally only; public/brand contains the optimized tracked copy.
 documents/images/ChatGPT Image 28 juil. 2026, 08_33_533.png
+
+# Android generated build artifacts
+**/build/
+**/release/
+*.apk
+*.aab
+*.apks
+output-metadata.json
+baselineProfiles/
+
+# Android / Gradle local files
+.gradle/
+local.properties
+*.jks
+*.keystore
+keystore.properties
+
+# Android release artifacts
+android-private/traknio-android/app/release/
+android-private/traknio-android/wear/release/
+
+# Signing files
+*.jks
+*.keystore
+keystore.properties
