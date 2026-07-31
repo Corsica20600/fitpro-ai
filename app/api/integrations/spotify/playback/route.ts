@@ -63,6 +63,7 @@ export async function POST(request: Request) {
   const actions: Record<string, { path: string; method: "POST" | "PUT" }> = {
     previous: { path: "/me/player/previous", method: "POST" },
     play: { path: "/me/player/play", method: "PUT" },
+    pause: { path: "/me/player/pause", method: "PUT" },
     next: { path: "/me/player/next", method: "POST" },
   };
   const target = actions[action];

@@ -39,7 +39,7 @@ export function SpotifyNowPlaying({ displayName }: SpotifyNowPlayingProps) {
     };
   }, [refresh]);
 
-  async function perform(action: "previous" | "play" | "next") {
+  async function perform(action: "previous" | "play" | "pause" | "next") {
     setBusyAction(action);
     try {
       await fetch("/api/integrations/spotify/playback", {
@@ -47,6 +47,9 @@ export function SpotifyNowPlaying({ displayName }: SpotifyNowPlayingProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action }),
       });
+      if (action === "play" || action === "pause") {
+        setPlayback((current) => current ? { ...current, playing: action === "play" } : current);
+      }
       window.setTimeout(() => void refresh(), 300);
       window.setTimeout(() => void refresh(), 1200);
     } finally {
@@ -56,6 +59,7 @@ export function SpotifyNowPlaying({ displayName }: SpotifyNowPlayingProps) {
 
   const title = playback?.title || "Spotify connecté";
   const artist = playback?.artist || displayName || "Lecture prête";
+  const playPauseAction = playback?.playing ? "pause" : "play";
 
   return (
     <section className="spotify-now-playing" aria-label="Spotify Now Playing">
@@ -73,7 +77,14 @@ export function SpotifyNowPlaying({ displayName }: SpotifyNowPlayingProps) {
       </div>
       <div className="spotify-now-playing__controls" aria-label="Contrôles Spotify">
         <button type="button" aria-label="Titre précédent" disabled={busyAction != null} onClick={() => void perform("previous")}>{"<<"}</button>
-        <button type="button" aria-label="Lecture" disabled={busyAction != null} onClick={() => void perform("play")}>{">"}</button>
+        <button
+          type="button"
+          aria-label={playback?.playing ? "Mettre Spotify en pause" : "Reprendre Spotify"}
+          disabled={busyAction != null}
+          onClick={() => void perform(playPauseAction)}
+        >
+          {playback?.playing ? "||" : ">"}
+        </button>
         <button type="button" aria-label="Titre suivant" disabled={busyAction != null} onClick={() => void perform("next")}>{">>"}</button>
       </div>
     </section>
