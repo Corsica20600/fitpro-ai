@@ -486,10 +486,25 @@ export function GuidedWorkoutClient({
     }
 
     const interval = window.setInterval(pullWatchState, 1000);
+    const pullFreshState = () => {
+      void pullWatchState();
+      router.refresh();
+    };
+    const onVisibleAgain = () => {
+      if (document.visibilityState === "visible") pullFreshState();
+    };
+    window.addEventListener("focus", pullFreshState);
+    window.addEventListener("pageshow", pullFreshState);
+    window.addEventListener("traknio:app-resume", pullFreshState);
+    document.addEventListener("visibilitychange", onVisibleAgain);
     void pullWatchState();
     return () => {
       alive = false;
       window.clearInterval(interval);
+      window.removeEventListener("focus", pullFreshState);
+      window.removeEventListener("pageshow", pullFreshState);
+      window.removeEventListener("traknio:app-resume", pullFreshState);
+      document.removeEventListener("visibilitychange", onVisibleAgain);
     };
   }, [sessionId, exercises, getPlannedRestForIndex, clearRestTimer, router, summary]);
 

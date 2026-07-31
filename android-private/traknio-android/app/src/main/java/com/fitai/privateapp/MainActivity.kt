@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.WebResourceError
 import android.webkit.WebResourceResponse
@@ -58,6 +59,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (::binding.isInitialized) {
+            binding.webViewFitAi.onResume()
+            binding.webViewFitAi.resumeTimers()
+            updateWorkoutScreenPolicy(binding.webViewFitAi.url)
+            binding.webViewFitAi.evaluateJavascript(
+                "window.dispatchEvent(new Event('traknio:app-resume'));",
+                null,
+            )
+        }
+    }
+
+    override fun onPause() {
+        if (::binding.isInitialized) {
+            binding.webViewFitAi.onPause()
+        }
+        super.onPause()
+    }
+
     private fun applyDarkSystemBars() {
         window.statusBarColor = Color.rgb(3, 7, 18)
         window.navigationBarColor = Color.rgb(3, 7, 18)
@@ -91,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         binding.webViewFitAi.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                updateWorkoutScreenPolicy(url)
                 binding.webErrorPanel.visibility = View.GONE
                 binding.webLoading.visibility = View.VISIBLE
                 binding.launchOverlay.visibility = View.VISIBLE
@@ -100,11 +122,13 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageCommitVisible(view: WebView?, url: String?) {
                 super.onPageCommitVisible(view, url)
+                updateWorkoutScreenPolicy(url)
                 hideLaunchOverlay()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
+                updateWorkoutScreenPolicy(url)
                 binding.webLoading.visibility = View.GONE
                 hideLaunchOverlay()
             }
@@ -144,6 +168,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
         binding.webViewFitAi.loadUrl(buildInitialUrl())
+    }
+
+    private fun updateWorkoutScreenPolicy(url: String?) {
+        val uri = runCatching { Uri.parse(url.orEmpty()) }.getOrNull()
+        val keepScreenOn = uri?.path?.startsWith("/workout") == true
+        binding.webViewFitAi.keepScreenOn = keepScreenOn
+        if (keepScreenOn) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun showWebError() {
