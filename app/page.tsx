@@ -48,14 +48,14 @@ const recoveryMetrics = [
 ] as const;
 
 const pricingFeatures = [
-  "Programme personnalisé par IA",
+  "Programme IA personnalisé",
   "Séances illimitées",
   "Suivi des charges",
   "Galaxy Watch",
   "Health Connect",
   "Statistiques complètes",
-  "Spotify",
-  "Futures améliorations incluses",
+  "Connecteur Spotify",
+  "Améliorations incluses",
 ] as const;
 
 const advantageItems = [
