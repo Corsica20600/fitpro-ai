@@ -965,7 +965,7 @@ h4,
 }
 
 .app-brand-logo {
-  width: min(206px, 58vw);
+  width: min(290px, 70vw);
   height: auto;
   display: block;
   object-fit: contain;

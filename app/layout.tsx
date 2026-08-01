@@ -92,24 +92,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <div className="app-shell">
           <header className="app-topbar">
             <div className="app-brand" aria-label={BRAND.name}>
-              <span className="app-brand-mark" aria-hidden="true">
-                <Image
-                  src="/brand/traknio-logo-mark-exact.png"
-                  alt=""
-                  width={170}
-                  height={90}
-                  priority
-                />
-              </span>
-              <span className="app-brand-wordmark" aria-hidden="true">
-                <span>T</span>
-                <span>R</span>
-                <span className="app-brand-wordmark__a">A</span>
-                <span>K</span>
-                <span>N</span>
-                <span>I</span>
-                <span>O</span>
-              </span>
+              <Image
+                src="/brand/traknio-site-lockup-v2.png"
+                alt="Traknio - Train smarter. Progress further."
+                width={1614}
+                height={311}
+                className="app-brand-logo"
+                priority
+              />
             </div>
             {isConnected ? (
               <Link href="/settings" prefetch={false} className="settings-top-link" aria-label="Ouvrir les paramètres">
