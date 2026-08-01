@@ -7505,6 +7505,224 @@ summary:focus-visible {
   margin: 0;
 }
 
+.trk-public-legal {
+  padding-top: 132px;
+}
+
+.trk-legal-hero,
+.trk-legal-grid,
+.trk-legal-note {
+  width: min(1320px, calc(100% - 56px));
+  margin-inline: auto;
+}
+
+.trk-legal-hero {
+  min-height: 390px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  align-items: end;
+  gap: clamp(34px, 7vw, 110px);
+  padding: 60px 0 50px;
+}
+
+.trk-legal-hero__copy {
+  display: grid;
+  gap: 22px;
+}
+
+.trk-legal-hero h1 {
+  max-width: 860px;
+  margin: 0;
+  color: #fff;
+  font-family: var(--font-exo-2), var(--font-raleway), sans-serif;
+  font-size: clamp(3.6rem, 9vw, 8.8rem);
+  font-weight: 950;
+  line-height: .92;
+  letter-spacing: 0;
+}
+
+.trk-legal-hero__copy > p:last-child {
+  max-width: 780px;
+  margin: 0;
+  color: rgba(220, 231, 255, .78);
+  font-size: clamp(1.05rem, 1.7vw, 1.42rem);
+  font-weight: 750;
+  line-height: 1.75;
+}
+
+.trk-legal-status,
+.trk-legal-card,
+.trk-legal-note {
+  border: 1px solid var(--trk-line);
+  border-radius: 8px;
+  background:
+    radial-gradient(110% 80% at 85% 0%, rgba(30, 88, 255, .16), transparent 58%),
+    linear-gradient(180deg, rgba(12, 23, 48, .82), rgba(5, 11, 24, .92));
+  box-shadow: inset 0 1px 0 rgba(235, 247, 255, .06), 0 20px 60px rgba(0, 0, 0, .28);
+}
+
+.trk-legal-status {
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+}
+
+.trk-legal-status span,
+.trk-legal-card h2,
+.trk-legal-note h2 {
+  font-family: var(--font-orbitron), var(--font-exo-2), sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.trk-legal-status span {
+  color: var(--trk-cyan);
+  font-size: .76rem;
+  font-weight: 950;
+}
+
+.trk-legal-status strong {
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3.7rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.trk-legal-status p {
+  margin: 0;
+  color: rgba(215, 228, 255, .78);
+  font-weight: 750;
+  line-height: 1.7;
+}
+
+.trk-legal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.trk-legal-card {
+  min-height: 360px;
+  padding: clamp(24px, 3vw, 34px);
+}
+
+.trk-legal-card h2,
+.trk-legal-note h2 {
+  margin: 0 0 22px;
+  color: var(--trk-cyan);
+  font-size: .82rem;
+  font-weight: 950;
+}
+
+.trk-legal-card ul,
+.trk-legal-card ol {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding-left: 1.15rem;
+  color: rgba(231, 239, 255, .84);
+  font-weight: 720;
+  line-height: 1.65;
+}
+
+.trk-legal-card li::marker {
+  color: var(--trk-pink);
+  font-weight: 950;
+}
+
+.trk-legal-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 76px;
+  padding: 30px 34px;
+}
+
+.trk-legal-note h2 {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.trk-legal-note p {
+  margin: 0;
+  color: rgba(215, 228, 255, .8);
+  font-size: 1.04rem;
+  font-weight: 750;
+  line-height: 1.65;
+}
+
+.trk-legal-note div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.trk-legal-note a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  border: 1px solid rgba(193, 60, 255, .34);
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #fff;
+  font-weight: 900;
+  background: rgba(193, 60, 255, .09);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.trk-legal-note a:hover,
+.trk-legal-note a:focus-visible {
+  border-color: var(--trk-pink);
+  box-shadow: 0 0 22px rgba(193, 60, 255, .34);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1060px) {
+  .trk-legal-hero,
+  .trk-legal-grid,
+  .trk-legal-note {
+    width: min(100% - 36px, 920px);
+  }
+
+  .trk-legal-hero,
+  .trk-legal-grid,
+  .trk-legal-note {
+    grid-template-columns: 1fr;
+  }
+
+  .trk-legal-card {
+    min-height: 0;
+  }
+
+  .trk-legal-note div {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .trk-public-legal {
+    padding-top: 104px;
+  }
+
+  .trk-legal-hero {
+    min-height: 0;
+    padding: 42px 0 30px;
+  }
+
+  .trk-legal-status,
+  .trk-legal-card,
+  .trk-legal-note {
+    padding: 22px;
+  }
+
+  .trk-legal-hero h1 {
+    font-size: clamp(2.8rem, 16vw, 4.4rem);
+  }
+}
+
 .trk-reveal {
   animation: trkReveal .7s ease both;
 }

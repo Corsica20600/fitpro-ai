@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const navLinks = [
-  { href: "#fonctionnalites", label: "Fonctionnalités" },
-  { href: "#montre", label: "Montre" },
-  { href: "#progression", label: "Progression" },
-  { href: "#tarifs", label: "Tarifs" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#fonctionnalites", label: "Fonctionnalités" },
+  { href: "/#montre", label: "Montre" },
+  { href: "/#progression", label: "Progression" },
+  { href: "/#tarifs", label: "Tarifs" },
+  { href: "/#faq", label: "FAQ" },
 ] as const;
 
 export function PublicHeader() {

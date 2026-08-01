@@ -548,9 +548,9 @@ export default async function HomePage() {
           <div className="trk-footer__columns">
             <nav aria-label="Liens légaux">
               <strong>Légal</strong>
-              <Link href="/privacy">Confidentialité</Link>
-              <Link href="/terms">Conditions d&apos;utilisation</Link>
-              <Link href="/data-deletion">Suppression des données</Link>
+              <Link href="/legal/privacy">Confidentialité</Link>
+              <Link href="/legal/terms">Conditions d&apos;utilisation</Link>
+              <Link href="/legal/data-deletion">Suppression des données</Link>
             </nav>
             <nav aria-label="Contact Traknio">
               <strong>Contact</strong>

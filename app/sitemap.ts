@@ -3,9 +3,9 @@ import { absoluteUrl } from "@/src/lib/site-url";
 
 const publicRoutes = [
   { path: "/", priority: 1 },
-  { path: "/privacy", priority: 0.7 },
-  { path: "/terms", priority: 0.7 },
-  { path: "/data-deletion", priority: 0.7 },
+  { path: "/legal/privacy", priority: 0.7 },
+  { path: "/legal/terms", priority: 0.7 },
+  { path: "/legal/data-deletion", priority: 0.7 },
 ] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
