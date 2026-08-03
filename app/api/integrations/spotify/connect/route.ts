@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { absoluteUrl } from "@/src/lib/site-url";
 import { getSpotifyAuthorizeUrl, isSpotifyConfigured } from "@/src/server/spotify";
 
-const STATE_COOKIE = "fitai_spotify_oauth_state";
+const STATE_COOKIE = "traknio_spotify_oauth_state";
 
 export async function GET() {
   const session = await auth().catch(() => null);

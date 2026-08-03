@@ -4,7 +4,7 @@ export async function GET() {
   try {
     const data = await getAccountExportData();
     const exportedAt = data.exportedAt.slice(0, 10);
-    const filename = `fitai-pro-export-${exportedAt}.json`;
+    const filename = `traknio-export-${exportedAt}.json`;
 
     return Response.json(data, {
       headers: {

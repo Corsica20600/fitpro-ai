@@ -7,7 +7,7 @@ import { prisma } from "@/src/lib/prisma";
 import { getSpotifyMe, exchangeSpotifyCode, SpotifyIntegrationError } from "@/src/server/spotify";
 import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
 
-const STATE_COOKIE = "fitai_spotify_oauth_state";
+const STATE_COOKIE = "traknio_spotify_oauth_state";
 
 function settingsRedirect(path: string) {
   return NextResponse.redirect(absoluteUrl(path));

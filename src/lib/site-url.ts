@@ -1,4 +1,4 @@
-const FALLBACK_SITE_URL = "https://fitai-pro.vercel.app";
+const FALLBACK_SITE_URL = "https://www.traknio.com";
 
 export function getSiteUrl() {
   const rawUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || FALLBACK_SITE_URL;
