@@ -7,35 +7,59 @@ android {
     namespace = "com.traknio.app"
     compileSdk = 35
 
+    fun readLocalProperty(name: String): String? {
+        val localProperties = rootProject.file("local.properties")
+        if (!localProperties.exists()) return null
+
+        return localProperties.readLines()
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.startsWith("#") }
+            .firstOrNull { it.startsWith("$name=") }
+            ?.substringAfter("=")
+            ?.trim()
+            ?.trim('"', '\'')
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun propertyValue(name: String): String? {
+        return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
+            ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
+            ?: readLocalProperty(name)
+    }
+
+    fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+    val releaseStoreFile = propertyValue("TRAKNIO_RELEASE_STORE_FILE")
+    val releaseStorePassword = propertyValue("TRAKNIO_RELEASE_STORE_PASSWORD")
+    val releaseKeyAlias = propertyValue("TRAKNIO_RELEASE_KEY_ALIAS")
+    val releaseKeyPassword = propertyValue("TRAKNIO_RELEASE_KEY_PASSWORD")
+    val hasReleaseSigning = listOf(
+        releaseStoreFile,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword,
+    ).all { !it.isNullOrBlank() }
+
+    signingConfigs {
+        create("release") {
+            if (!releaseStoreFile.isNullOrBlank()) {
+                storeFile = rootProject.file(releaseStoreFile)
+            }
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    }
+
     defaultConfig {
         applicationId = "com.traknio.app"
         minSdk = 29
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 7
         versionName = "0.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        fun readLocalProperty(name: String): String? {
-            val localProperties = rootProject.file("local.properties")
-            if (!localProperties.exists()) return null
-
-            return localProperties.readLines()
-                .asSequence()
-                .map { it.trim() }
-                .filter { it.isNotBlank() && !it.startsWith("#") }
-                .firstOrNull { it.startsWith("$name=") }
-                ?.substringAfter("=")
-                ?.trim()
-                ?.trim('"', '\'')
-                ?.takeIf { it.isNotBlank() }
-        }
-
-        fun propertyValue(name: String): String? {
-            return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
-                ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
-                ?: readLocalProperty(name)
-        }
 
         val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
@@ -43,7 +67,6 @@ android {
             ?: "traknio_premium"
         val googlePlayPackageName = propertyValue("GOOGLE_PLAY_PACKAGE_NAME")
             ?: "com.traknio.app"
-        fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
         buildConfigField("String", "TRAKNIO_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
         buildConfigField("String", "GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID", buildConfigString(googlePlayProductId))
         buildConfigField("String", "GOOGLE_PLAY_PACKAGE_NAME", buildConfigString(googlePlayPackageName))
@@ -51,6 +74,9 @@ android {
 
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

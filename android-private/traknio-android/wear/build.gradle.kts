@@ -5,54 +5,76 @@ plugins {
 
 android {
     namespace = "com.traknio.watch"
-    compileSdk = 34
+    compileSdk = 35
+
+    fun readLocalProperty(name: String): String? {
+        val localProperties = rootProject.file("local.properties")
+        if (!localProperties.exists()) return null
+
+        return localProperties.readLines()
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.startsWith("#") }
+            .firstOrNull { it.startsWith("$name=") }
+            ?.substringAfter("=")
+            ?.trim()
+            ?.trim('"', '\'')
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun readRootEnv(name: String): String? {
+        val rootEnv = rootProject.projectDir.parentFile?.parentFile?.resolve(".env")
+            ?: return null
+        if (!rootEnv.exists()) return null
+
+        return rootEnv.readLines()
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotBlank() && !it.startsWith("#") }
+            .firstOrNull { it.startsWith("$name=") }
+            ?.substringAfter("=")
+            ?.trim()
+            ?.trim('"', '\'')
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun propertyValue(name: String): String? {
+        return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
+            ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
+            ?: readLocalProperty(name)
+            ?: readRootEnv(name)
+    }
+
+    fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+    val releaseStoreFile = propertyValue("TRAKNIO_RELEASE_STORE_FILE")
+    val releaseStorePassword = propertyValue("TRAKNIO_RELEASE_STORE_PASSWORD")
+    val releaseKeyAlias = propertyValue("TRAKNIO_RELEASE_KEY_ALIAS")
+    val releaseKeyPassword = propertyValue("TRAKNIO_RELEASE_KEY_PASSWORD")
+    val hasReleaseSigning = listOf(
+        releaseStoreFile,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword,
+    ).all { !it.isNullOrBlank() }
+
+    signingConfigs {
+        create("release") {
+            if (!releaseStoreFile.isNullOrBlank()) {
+                storeFile = rootProject.file(releaseStoreFile)
+            }
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    }
 
     defaultConfig {
         applicationId = "com.traknio.watch"
         minSdk = 30
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
-
-        fun readLocalProperty(name: String): String? {
-            val localProperties = rootProject.file("local.properties")
-            if (!localProperties.exists()) return null
-
-            return localProperties.readLines()
-                .asSequence()
-                .map { it.trim() }
-                .filter { it.isNotBlank() && !it.startsWith("#") }
-                .firstOrNull { it.startsWith("$name=") }
-                ?.substringAfter("=")
-                ?.trim()
-                ?.trim('"', '\'')
-                ?.takeIf { it.isNotBlank() }
-        }
-
-        fun readRootEnv(name: String): String? {
-            val rootEnv = rootProject.projectDir.parentFile?.parentFile?.resolve(".env")
-                ?: return null
-            if (!rootEnv.exists()) return null
-
-            return rootEnv.readLines()
-                .asSequence()
-                .map { it.trim() }
-                .filter { it.isNotBlank() && !it.startsWith("#") }
-                .firstOrNull { it.startsWith("$name=") }
-                ?.substringAfter("=")
-                ?.trim()
-                ?.trim('"', '\'')
-                ?.takeIf { it.isNotBlank() }
-        }
-
-        fun propertyValue(name: String): String? {
-            return (project.findProperty(name) as String?)?.trim()?.takeIf { it.isNotBlank() }
-                ?: System.getenv(name)?.trim()?.takeIf { it.isNotBlank() }
-                ?: readLocalProperty(name)
-                ?: readRootEnv(name)
-        }
-
-        fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
         val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
@@ -67,6 +89,9 @@ android {
 
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
