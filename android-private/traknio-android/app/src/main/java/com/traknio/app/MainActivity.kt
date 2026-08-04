@@ -202,7 +202,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildInitialUrl(): String {
         val path = intent.getStringExtra(EXTRA_INITIAL_PATH)?.trim().orEmpty()
-        if (path.isBlank()) return traknioUrl
+        if (path.isBlank()) return "$traknioUrl/dashboard"
         val safePath = if (path.startsWith("/")) path else "/$path"
         return traknioUrl + safePath
     }
