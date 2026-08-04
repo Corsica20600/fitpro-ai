@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasPremiumAccess } from "@/src/lib/premium-access-rules";
 import { prisma } from "@/src/lib/prisma";
 import { hashDeviceToken } from "@/src/lib/device-token";
 
@@ -21,10 +22,24 @@ export async function requireHealthSyncAccess(
         lastSeenAt: true,
         revokedAt: true,
         userProfileId: true,
+        userProfile: {
+          select: {
+            email: true,
+            subscriptionStatus: true,
+            subscriptionCurrentPeriodEnd: true,
+          },
+        },
       },
     });
 
     if (device && !device.revokedAt) {
+      if (!hasPremiumAccess(device.userProfile)) {
+        return {
+          ok: false,
+          response: NextResponse.json({ ok: false, error: "premium_required" }, { status: 402 }),
+        };
+      }
+
       const now = Date.now();
       const lastSeenAtMs = device.lastSeenAt?.getTime() ?? 0;
       if (now - lastSeenAtMs > 60_000) {

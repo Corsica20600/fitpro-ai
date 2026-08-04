@@ -3,7 +3,7 @@
 import type { IntegrationProvider } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
-import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
+import { requirePremiumAccess } from "@/src/server/premium-access";
 
 function asIntegrationProvider(value: FormDataEntryValue | null): IntegrationProvider | null {
   const provider = String(value ?? "").trim();
@@ -14,7 +14,7 @@ function asIntegrationProvider(value: FormDataEntryValue | null): IntegrationPro
 }
 
 export async function disconnectIntegrationAction(formData: FormData) {
-  const profile = await getAuthenticatedUserProfile();
+  const profile = await requirePremiumAccess();
   const provider = asIntegrationProvider(formData.get("provider"));
 
   if (!provider) {
@@ -36,7 +36,7 @@ export async function disconnectIntegrationAction(formData: FormData) {
 }
 
 export async function enableHealthConnectPreparationAction() {
-  const profile = await getAuthenticatedUserProfile();
+  const profile = await requirePremiumAccess();
 
   await prisma.integrationConnection.upsert({
     where: { userProfileId_provider: { userProfileId: profile.id, provider: "HEALTH_CONNECT" } },

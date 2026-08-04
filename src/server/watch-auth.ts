@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { hasPremiumAccess } from "@/src/lib/premium-access-rules";
 import { prisma } from "@/src/lib/prisma";
 import { hashWatchDeviceToken } from "@/src/lib/watch-device-token";
 
@@ -21,10 +22,21 @@ export async function requireWatchAccess(request: Request): Promise<WatchAccessR
     const email = session.user.email.trim().toLowerCase();
     const profile = await prisma.userProfile.findUnique({
       where: { email },
-      select: { id: true, email: true },
+      select: {
+        id: true,
+        email: true,
+        subscriptionStatus: true,
+        subscriptionCurrentPeriodEnd: true,
+      },
     });
 
     if (profile) {
+      if (!hasPremiumAccess(profile)) {
+        return {
+          ok: false,
+          response: NextResponse.json({ error: "premium_required" }, { status: 402 }),
+        };
+      }
       return { ok: true, mode: "session", userProfileId: profile.id, profileEmail: profile.email };
     }
 
@@ -40,11 +52,24 @@ export async function requireWatchAccess(request: Request): Promise<WatchAccessR
         lastSeenAt: true,
         revokedAt: true,
         userProfileId: true,
-        userProfile: { select: { email: true } },
+        userProfile: {
+          select: {
+            email: true,
+            subscriptionStatus: true,
+            subscriptionCurrentPeriodEnd: true,
+          },
+        },
       },
     });
 
     if (device && !device.revokedAt) {
+      if (!hasPremiumAccess(device.userProfile)) {
+        return {
+          ok: false,
+          response: NextResponse.json({ error: "premium_required" }, { status: 402 }),
+        };
+      }
+
       const now = Date.now();
       const lastSeenAtMs = device.lastSeenAt?.getTime() ?? 0;
       if (now - lastSeenAtMs > 60_000) {

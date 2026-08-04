@@ -4,10 +4,10 @@ import { randomBytes } from "crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
 import { hashWatchDeviceToken } from "@/src/lib/watch-device-token";
-import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
+import { requirePremiumAccess } from "@/src/server/premium-access";
 
 function createWatchDeviceToken() {
-  return `faiw_${randomBytes(32).toString("base64url")}`;
+  return `trkw_${randomBytes(32).toString("base64url")}`;
 }
 
 function cleanDeviceLabel(value: FormDataEntryValue | null) {
@@ -16,7 +16,7 @@ function cleanDeviceLabel(value: FormDataEntryValue | null) {
 }
 
 export async function createWatchDeviceTokenAction(formData: FormData) {
-  const profile = await getAuthenticatedUserProfile();
+  const profile = await requirePremiumAccess();
   const token = createWatchDeviceToken();
   const label = cleanDeviceLabel(formData.get("label"));
 
@@ -32,7 +32,7 @@ export async function createWatchDeviceTokenAction(formData: FormData) {
 }
 
 export async function revokeWatchDeviceAction(formData: FormData) {
-  const profile = await getAuthenticatedUserProfile();
+  const profile = await requirePremiumAccess();
   const deviceId = String(formData.get("deviceId") ?? "").trim();
 
   if (!deviceId) {

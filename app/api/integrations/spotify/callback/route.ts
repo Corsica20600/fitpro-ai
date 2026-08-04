@@ -5,7 +5,7 @@ import { absoluteUrl } from "@/src/lib/site-url";
 import { encryptIntegrationSecret } from "@/src/lib/integration-crypto";
 import { prisma } from "@/src/lib/prisma";
 import { getSpotifyMe, exchangeSpotifyCode, SpotifyIntegrationError } from "@/src/server/spotify";
-import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
+import { requirePremiumAccess } from "@/src/server/premium-access";
 
 const STATE_COOKIE = "traknio_spotify_oauth_state";
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const profile = await getAuthenticatedUserProfile();
+    const profile = await requirePremiumAccess();
     const token = await exchangeSpotifyCode(code);
     const spotifyProfile = await getSpotifyMe(token.access_token);
     const expiresAt = new Date(Date.now() + Math.max(60, token.expires_in) * 1000);

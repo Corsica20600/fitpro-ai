@@ -4,6 +4,7 @@ import { AppShell } from "@/src/components/ui/app-shell";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PageHeader } from "@/src/components/ui/page-header";
 import { BRAND } from "@/src/lib/brand";
+import { getFreeAccessEmails, hasPremiumAccess } from "@/src/lib/premium-access-rules";
 import { isStripeConfigured } from "@/src/lib/stripe";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 import { deleteAccountAction } from "@/src/server/account-actions";
@@ -47,6 +48,7 @@ function formatDate(date: Date | null | undefined) {
 
 type SettingsPageProps = {
   searchParams?: Promise<{
+    access?: string | string[];
     billing?: string | string[];
     billingError?: string | string[];
     deleteError?: string | string[];
@@ -126,6 +128,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
     auth().catch(() => null),
     getAccountSettingsData(),
     props.searchParams ?? Promise.resolve({} as {
+      access?: string | string[];
       billing?: string | string[];
       billingError?: string | string[];
       deleteError?: string | string[];
@@ -138,6 +141,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
     }),
   ]);
   const deleteError = getFirstParam(searchParams.deleteError);
+  const access = getFirstParam(searchParams.access);
   const billing = getFirstParam(searchParams.billing);
   const billingError = getBillingErrorMessage(getFirstParam(searchParams.billingError));
   const integrationMessage = getIntegrationMessage(getFirstParam(searchParams.integration));
@@ -157,6 +161,10 @@ export default async function SettingsPage(props: SettingsPageProps) {
     || subscriptionStatus === "TRIALING"
     || (subscriptionStatus === "PAST_DUE" && subscriptionHasKnownEnd)
     || (subscriptionStatus === "CANCELED" && subscriptionHasKnownEnd);
+  const internalFreeAccess = getFreeAccessEmails().has(email.trim().toLowerCase());
+  const premiumAccess = hasPremiumAccess(accountData.profile);
+  const entitlementActive = subscriptionActive || internalFreeAccess;
+  const subscriptionLabel = internalFreeAccess && !subscriptionActive ? "Actif" : getSubscriptionLabel(subscriptionStatus);
   const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
   const spotify = accountData.integrations.find((item) => item.provider === "SPOTIFY");
   const healthConnect = accountData.integrations.find((item) => item.provider === "HEALTH_CONNECT");
@@ -213,8 +221,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
             Sur Android, l&apos;abonnement passe par Google Play. Sur le web, Stripe reste disponible pour les tests hors Play Store.
           </p>
         </div>
-        <span className={`chip ${subscriptionActive ? "success" : "warning"}`}>
-          {getSubscriptionLabel(subscriptionStatus)}
+        <span className={`chip ${entitlementActive ? "success" : "warning"}`}>
+          {subscriptionLabel}
         </span>
         {accountData.profile.subscriptionCancelAtPeriodEnd ? (
           <p className="settings-footnote">
@@ -241,9 +249,14 @@ export default async function SettingsPage(props: SettingsPageProps) {
         {billingError ? (
           <p className="settings-danger-error">{billingError}</p>
         ) : null}
+        {access === "premium" && !premiumAccess ? (
+          <p className="settings-danger-error">
+            Abonnement requis pour accéder à l&apos;application.
+          </p>
+        ) : null}
         {connected ? (
           <div className="settings-billing-actions">
-            {!subscriptionActive ? (
+            {!entitlementActive ? (
               <>
                 <a className="primary-button full-line" href="traknio://billing/google-play">
                   Activer avec Google Play
@@ -283,6 +296,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
         ) : null}
       </GlassCard>
 
+      {premiumAccess ? (
       <GlassCard className="settings-data-card">
         <div>
           <p className="eyebrow">Données {BRAND.name}</p>
@@ -320,7 +334,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
           </a>
         ) : null}
       </GlassCard>
+      ) : null}
 
+      {premiumAccess ? (
       <section className="settings-grid" aria-label="Intégrations connectées">
         {integrationMessage ? (
           <p className="settings-success-message">{integrationMessage}</p>
@@ -387,7 +403,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
           )}
         </GlassCard>
       </section>
+      ) : null}
 
+      {premiumAccess ? (
       <section className="settings-grid" aria-label="Connexions et services">
         {settingSections.map((section) => (
           <GlassCard key={section.title} className="settings-service-card">
@@ -400,7 +418,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
           </GlassCard>
         ))}
       </section>
+      ) : null}
 
+      {premiumAccess ? (
       <GlassCard className="settings-watch-pairing-card">
         <div>
           <p className="eyebrow">Montre Wear OS</p>
@@ -453,6 +473,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
           )}
         </div>
       </GlassCard>
+      ) : null}
 
       <GlassCard className="settings-legal-card">
         <div>

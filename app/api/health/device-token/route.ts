@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { hashDeviceToken } from "@/src/lib/device-token";
-import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
+import { requirePremiumApiAccess } from "@/src/server/premium-access";
 
 type TokenRequest = {
   label?: string;
@@ -18,14 +18,10 @@ function cleanDeviceLabel(value: unknown) {
 }
 
 export async function POST(request: Request) {
-  const profile = await getAuthenticatedUserProfile().catch((error: unknown) => {
-    if (error instanceof Error && error.message === "AUTH_REQUIRED") return null;
-    throw error;
-  });
-
-  if (!profile) {
-    return NextResponse.json({ ok: false, error: "auth_required" }, { status: 401 });
-  }
+  const access = await requirePremiumApiAccess().catch(() => null);
+  if (!access) return NextResponse.json({ ok: false, error: "auth_required" }, { status: 401 });
+  if (!access.ok) return access.response;
+  const { profile } = access;
 
   let body: TokenRequest = {};
   try {

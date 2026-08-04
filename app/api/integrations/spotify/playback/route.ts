@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
+import { requirePremiumApiAccess } from "@/src/server/premium-access";
 import { getSpotifyAccessTokenForProfile } from "@/src/server/spotify";
 
 type SpotifyPlaybackItem = {
@@ -22,8 +22,10 @@ async function spotifyFetch(path: string, accessToken: string, init?: RequestIni
 }
 
 export async function GET() {
-  const profile = await getAuthenticatedUserProfile().catch(() => null);
-  if (!profile) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const access = await requirePremiumApiAccess().catch(() => null);
+  if (!access) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!access.ok) return access.response;
+  const { profile } = access;
 
   const accessToken = await getSpotifyAccessTokenForProfile(profile.id).catch(() => null);
   if (!accessToken) return NextResponse.json({ connected: false });
@@ -52,8 +54,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const profile = await getAuthenticatedUserProfile().catch(() => null);
-  if (!profile) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const access = await requirePremiumApiAccess().catch(() => null);
+  if (!access) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!access.ok) return access.response;
+  const { profile } = access;
 
   const accessToken = await getSpotifyAccessTokenForProfile(profile.id).catch(() => null);
   if (!accessToken) return NextResponse.json({ error: "spotify_not_connected" }, { status: 404 });

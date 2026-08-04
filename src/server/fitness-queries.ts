@@ -1,6 +1,8 @@
 import { auth, LEGACY_DEMO_EMAIL, PRIMARY_USER_EMAIL } from "@/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/src/lib/prisma";
 import { getExerciseDisplayName } from "@/src/lib/exercise-overrides";
+import { hasPremiumAccess } from "@/src/lib/premium-access-rules";
 import { getSessionExerciseReplacements, resolveReplacementExercises } from "@/src/server/session-exercise-replacements";
 
 function normalizeEmail(email?: string | null) {
@@ -407,7 +409,12 @@ export async function getOrCreateDemoProfile() {
     ? getProfileDisplayName(session.user.name, activeEmail)
     : "Erwan";
 
-  return getOrCreateProfileForEmail(activeEmail, displayName);
+  const profile = await getOrCreateProfileForEmail(activeEmail, displayName);
+  if (!hasPremiumAccess(profile)) {
+    redirect("/settings?access=premium");
+  }
+
+  return profile;
 }
 
 export async function getCurrentUserProfile() {
