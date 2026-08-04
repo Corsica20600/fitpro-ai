@@ -1,4 +1,4 @@
-package com.fitai.wear
+package com.traknio.watch
 
 import android.os.Bundle
 import android.app.Activity

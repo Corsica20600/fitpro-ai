@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fitai.wear"
+    namespace = "com.traknio.watch"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.fitai.prowear"
+        applicationId = "com.traknio.watch"
         minSdk = 30
         targetSdk = 34
         versionCode = 1
@@ -54,15 +54,15 @@ android {
 
         fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-        val syncBaseUrl = propertyValue("FITAI_SYNC_BASE_URL")
+        val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
-        val watchToken = propertyValue("FITAI_WATCH_TOKEN")
+        val watchToken = propertyValue("TRAKNIO_WATCH_TOKEN")
             ?: ""
-        val watchDeviceToken = propertyValue("FITAI_WATCH_DEVICE_TOKEN")
+        val watchDeviceToken = propertyValue("TRAKNIO_WATCH_DEVICE_TOKEN")
             ?: ""
-        buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
-        buildConfigField("String", "FITAI_WATCH_TOKEN", buildConfigString(watchToken))
-        buildConfigField("String", "FITAI_WATCH_DEVICE_TOKEN", buildConfigString(watchDeviceToken))
+        buildConfigField("String", "TRAKNIO_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
+        buildConfigField("String", "TRAKNIO_WATCH_TOKEN", buildConfigString(watchToken))
+        buildConfigField("String", "TRAKNIO_WATCH_DEVICE_TOKEN", buildConfigString(watchDeviceToken))
     }
 
     buildTypes {

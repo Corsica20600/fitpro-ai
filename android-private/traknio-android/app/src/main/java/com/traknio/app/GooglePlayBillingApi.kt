@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import org.json.JSONObject
 import java.net.HttpURLConnection

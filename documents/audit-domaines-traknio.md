@@ -17,11 +17,11 @@ Fait localement :
 - Dossier local renommé : `C:\dev\traknio\traknio-app`.
 - Projet Android renommé : `android-private\traknio-android`.
 
-Encore à décider avant publication :
+Etat actuel :
 
-- Renommer ou non les identifiants Android `com.fitai.*` vers `com.traknio.*`.
-- Mettre à jour les noms de fichiers Android `fitai_*` si on veut une cohérence totale.
-- Ne pas renommer mécaniquement la base ou les variables sans étape contrôlée : certains noms `FITAI_*` sont techniques et utilisés dans Android.
+- Identifiants Android alignés sur Traknio : `com.traknio.app` et `com.traknio.watch`.
+- Noms de fichiers Android alignés sur `traknio_*`.
+- Variables Android alignées sur `TRAKNIO_*`.
 
 ## 3. Vercel et DNS OVH
 
@@ -46,7 +46,7 @@ Variables Vercel à vérifier :
 - `NEXT_PUBLIC_SITE_URL=https://traknio.com`
 - `AUTH_URL=https://traknio.com` si utilisé par NextAuth/Auth.js.
 - `NEXTAUTH_URL=https://traknio.com` si encore présent.
-- `FITAI_SYNC_BASE_URL=https://traknio.com` pour les builds Android téléphone et montre.
+- `TRAKNIO_SYNC_BASE_URL=https://traknio.com` pour les builds Android téléphone et montre.
 - `DATABASE_URL` et `DIRECT_URL` inchangées, mais bien présentes en Production.
 - Variables Spotify et Stripe inchangées côté secret, mais leurs URLs de callback/webhook changent.
 
@@ -92,9 +92,9 @@ Source utile :
 
 Avant publication Play Store :
 
-- Décider si l'identifiant `applicationId = "com.fitai.proapp"` reste privé ou devient `com.traknio.app`.
+- Valider définitivement l'identifiant `applicationId = "com.traknio.app"`.
 - Attention : l'identifiant Android ne se change plus librement après publication Play Store.
-- Mettre `FITAI_SYNC_BASE_URL=https://traknio.com` dans `android-private\traknio-android\gradle.properties`.
+- Mettre `TRAKNIO_SYNC_BASE_URL=https://traknio.com` dans `android-private\traknio-android\gradle.properties`.
 - Rebuilder l'APK/AAB téléphone après changement de domaine.
 - Tester :
   - ouverture WebView ;
@@ -109,8 +109,8 @@ Avant publication Play Store :
 
 Avant publication :
 
-- Décider si `applicationId = "com.fitai.prowear"` devient `com.traknio.watch`.
-- Mettre `FITAI_SYNC_BASE_URL=https://traknio.com` pour le module `wear`.
+- Valider définitivement l'identifiant `applicationId = "com.traknio.watch"`.
+- Mettre `TRAKNIO_SYNC_BASE_URL=https://traknio.com` pour le module `wear`.
 - Rebuilder l'APK montre après changement de domaine.
 - Tester :
   - récupération séance active ;
@@ -162,4 +162,4 @@ Checklist finale :
 - Historique séance OK.
 - Montre OK.
 - Export/suppression des données OK.
-- Aucun lien public ne pointe vers `fitai-pro*.vercel.app`.
+- Aucun lien public ne pointe vers `traknio-pro*.vercel.app`.

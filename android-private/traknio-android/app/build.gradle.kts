@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fitai.privateapp"
+    namespace = "com.traknio.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.fitai.proapp"
+        applicationId = "com.traknio.app"
         minSdk = 29
         targetSdk = 34
         versionCode = 7
@@ -37,14 +37,14 @@ android {
                 ?: readLocalProperty(name)
         }
 
-        val syncBaseUrl = propertyValue("FITAI_SYNC_BASE_URL")
+        val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
         val googlePlayProductId = propertyValue("GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID")
             ?: "traknio_premium"
         val googlePlayPackageName = propertyValue("GOOGLE_PLAY_PACKAGE_NAME")
-            ?: "com.fitai.proapp"
+            ?: "com.traknio.app"
         fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-        buildConfigField("String", "FITAI_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
+        buildConfigField("String", "TRAKNIO_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
         buildConfigField("String", "GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID", buildConfigString(googlePlayProductId))
         buildConfigField("String", "GOOGLE_PLAY_PACKAGE_NAME", buildConfigString(googlePlayPackageName))
     }

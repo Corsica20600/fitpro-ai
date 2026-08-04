@@ -3,7 +3,7 @@
 Ce dossier documente le setup Android prive (non publie) pour synchroniser Health Connect et Samsung Health vers Traknio.
 
 Version actuelle :
-- Ouverture directe de l'URL configuree dans `FITAI_SYNC_BASE_URL`.
+- Ouverture directe de l'URL configuree dans `TRAKNIO_SYNC_BASE_URL`.
 - WebView Traknio complete.
 - Ecran natif de synchronisation Health Connect / Samsung Health.
 
@@ -86,10 +86,9 @@ Le projet Android est dans:
 Pour ta machine, ajoute les valeurs dans `android-private/traknio-android/local.properties`, qui est ignore par Git:
 
 ```properties
-FITAI_SYNC_BASE_URL=https://www.traknio.com
-FITAI_SYNC_TOKEN=ton_token_health_connect
-FITAI_WATCH_TOKEN=ton_token_montre_global
-FITAI_WATCH_DEVICE_TOKEN=ton_token_montre_appairee
+TRAKNIO_SYNC_BASE_URL=https://www.traknio.com
+TRAKNIO_WATCH_TOKEN=ton_token_montre_global
+TRAKNIO_WATCH_DEVICE_TOKEN=ton_token_montre_appairee
 ```
 
 En local emulator Android: utiliser `http://10.0.2.2:3000` pour parler au serveur local.
@@ -142,8 +141,8 @@ Dans le projet Android:
 
 Fichiers concernes:
 
-- `app/src/main/java/com/fitai/privateapp/SamsungHealthProvider.kt`
-- `app/src/main/java/com/fitai/privateapp/MainActivity.kt`
+- `app/src/main/java/com/traknio/app/SamsungHealthProvider.kt`
+- `app/src/main/java/com/traknio/app/MainActivity.kt`
 
 Flux attendu:
 

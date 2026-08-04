@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.os.Bundle
 import android.webkit.CookieManager
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class BillingActivity : AppCompatActivity() {
-    private val baseUrl = BuildConfig.FITAI_SYNC_BASE_URL.trimEnd('/')
+    private val baseUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/')
     private val productId = BuildConfig.GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID
     private val packageNameForPlay = BuildConfig.GOOGLE_PLAY_PACKAGE_NAME
     private lateinit var billingClient: BillingClient

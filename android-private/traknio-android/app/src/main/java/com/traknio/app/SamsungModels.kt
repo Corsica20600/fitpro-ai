@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 data class SamsungMetricRecord(
     val metric: String,

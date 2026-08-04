@@ -3,7 +3,7 @@
 ## Produit Google Play
 
 - App Android: Traknio
-- Package actuel: `com.fitai.proapp`
+- Package actuel: `com.traknio.app`
 - Produit abonnement: `traknio_premium`
 - Base plan mensuel: `monthly_499`
 - Prix cible: `4,99 EUR / mois`
@@ -14,7 +14,7 @@
 Production, puis Preview si besoin:
 
 ```env
-GOOGLE_PLAY_PACKAGE_NAME=com.fitai.proapp
+GOOGLE_PLAY_PACKAGE_NAME=com.traknio.app
 GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID=traknio_premium
 GOOGLE_PLAY_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
 ```
@@ -50,6 +50,6 @@ Le service account doit avoir acces a l'API Google Play Android Developer pour v
 
 ## Nettoyage avant publication
 
-- Decider si `applicationId` reste `com.fitai.proapp` ou devient `com.traknio.app`.
+- Valider définitivement `applicationId = "com.traknio.app"` avant la première publication Play Store.
 - Une fois publie sur Play Store, l'identifiant package ne doit plus changer.
 - Supprimer Stripe de l'UX Android publique si Google Play exige l'achat exclusivement via Play Billing.

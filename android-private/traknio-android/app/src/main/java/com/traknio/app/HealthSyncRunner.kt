@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.content.Context
 import android.webkit.CookieManager
@@ -55,10 +55,10 @@ object HealthSyncRunner {
         val savedToken = prefs.getString(KEY_HEALTH_DEVICE_TOKEN, null)?.takeIf { it.isNotBlank() }
         if (savedToken != null) return savedToken
 
-        val resolvedCookieHeader = cookieHeader ?: CookieManager.getInstance().getCookie(BuildConfig.FITAI_SYNC_BASE_URL)
+        val resolvedCookieHeader = cookieHeader ?: CookieManager.getInstance().getCookie(BuildConfig.TRAKNIO_SYNC_BASE_URL)
         val tokenResult = withContext(Dispatchers.IO) {
             SamsungSyncApi.issueHealthDeviceToken(
-                baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
+                baseUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL,
                 cookieHeader = resolvedCookieHeader,
             )
         }
@@ -79,7 +79,7 @@ object HealthSyncRunner {
 
         val result = withContext(Dispatchers.IO) {
             SamsungSyncApi.push(
-                baseUrl = BuildConfig.FITAI_SYNC_BASE_URL,
+                baseUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL,
                 healthDeviceToken = token,
                 records = readResult.records,
                 source = source,

@@ -48,7 +48,7 @@ next-env.d.ts
 /app/generated/prisma
 
 .vercel
-wear-os/app/src/main/java/com/fitai/wear/FitAiConfig.kt
+wear-os/app/src/main/java/com/traknio/wear/TraknioConfig.kt
 android-private/traknio-android/.idea/caches/
 
 # Source visual kept locally only; public/brand contains the optimized tracked copy.

@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.os.Bundle
 import android.widget.TextView

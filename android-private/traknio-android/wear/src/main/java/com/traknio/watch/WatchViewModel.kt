@@ -1,4 +1,4 @@
-package com.fitai.wear
+package com.traknio.watch
 
 import android.os.SystemClock
 import androidx.lifecycle.ViewModel
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class WatchViewModel(
-    private val api: FitAiWatchApi = FitAiWatchApi(),
+    private val api: TraknioWatchApi = TraknioWatchApi(),
 ) : ViewModel() {
     private val _state = MutableStateFlow<WatchScreenState>(WatchScreenState.Loading)
     val state: StateFlow<WatchScreenState> = _state.asStateFlow()

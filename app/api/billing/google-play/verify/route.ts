@@ -14,7 +14,7 @@ type VerifyRequest = {
 };
 
 function expectedPackageName() {
-  return process.env.GOOGLE_PLAY_PACKAGE_NAME?.trim() || "com.fitai.proapp";
+  return process.env.GOOGLE_PLAY_PACKAGE_NAME?.trim() || "com.traknio.app";
 }
 
 function expectedProductId() {

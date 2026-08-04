@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.content.Intent
 import android.graphics.Color
@@ -18,22 +18,22 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import com.fitai.privateapp.databinding.ActivityMainBinding
+import com.traknio.app.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        const val EXTRA_INITIAL_PATH = "com.fitai.privateapp.EXTRA_INITIAL_PATH"
+        const val EXTRA_INITIAL_PATH = "com.traknio.app.EXTRA_INITIAL_PATH"
     }
 
     private lateinit var binding: ActivityMainBinding
-    private val fitAiUrl = BuildConfig.FITAI_SYNC_BASE_URL.trimEnd('/')
-    private val allowedHosts = setOfNotNull(Uri.parse(fitAiUrl).host?.lowercase())
+    private val traknioUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/')
+    private val allowedHosts = setOfNotNull(Uri.parse(traknioUrl).host?.lowercase())
     private val samsungFallbackUrl = "https://www.samsung.com/global/galaxy/apps/samsung-health/"
     private val spotifyFallbackUrl = "https://open.spotify.com/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setBackgroundDrawableResource(R.color.fitai_system_bar)
+        window.setBackgroundDrawableResource(R.color.traknio_system_bar)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         HealthSyncWorker.schedule(applicationContext)
@@ -43,8 +43,8 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.hide()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (binding.webViewFitAi.canGoBack()) {
-                    binding.webViewFitAi.goBack()
+                if (binding.webViewTraknio.canGoBack()) {
+                    binding.webViewTraknio.goBack()
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
@@ -55,17 +55,17 @@ class MainActivity : AppCompatActivity() {
         setupWebView()
         binding.webRetryButton.setOnClickListener {
             binding.webErrorPanel.visibility = View.GONE
-            binding.webViewFitAi.reload()
+            binding.webViewTraknio.reload()
         }
     }
 
     override fun onResume() {
         super.onResume()
         if (::binding.isInitialized) {
-            binding.webViewFitAi.onResume()
-            binding.webViewFitAi.resumeTimers()
-            updateWorkoutScreenPolicy(binding.webViewFitAi.url)
-            binding.webViewFitAi.evaluateJavascript(
+            binding.webViewTraknio.onResume()
+            binding.webViewTraknio.resumeTimers()
+            updateWorkoutScreenPolicy(binding.webViewTraknio.url)
+            binding.webViewTraknio.evaluateJavascript(
                 "window.dispatchEvent(new Event('traknio:app-resume'));",
                 null,
             )
@@ -74,7 +74,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         if (::binding.isInitialized) {
-            binding.webViewFitAi.onPause()
+            binding.webViewTraknio.onPause()
         }
         super.onPause()
     }
@@ -96,20 +96,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupWebView() {
         CookieManager.getInstance().setAcceptCookie(true)
-        CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webViewFitAi, true)
-        binding.webViewFitAi.settings.javaScriptEnabled = true
-        binding.webViewFitAi.settings.domStorageEnabled = true
-        binding.webViewFitAi.settings.databaseEnabled = true
-        binding.webViewFitAi.settings.loadsImagesAutomatically = true
-        binding.webViewFitAi.setBackgroundColor(Color.rgb(10, 19, 40))
-        binding.webViewFitAi.webChromeClient = object : WebChromeClient() {
+        CookieManager.getInstance().setAcceptThirdPartyCookies(binding.webViewTraknio, true)
+        binding.webViewTraknio.settings.javaScriptEnabled = true
+        binding.webViewTraknio.settings.domStorageEnabled = true
+        binding.webViewTraknio.settings.databaseEnabled = true
+        binding.webViewTraknio.settings.loadsImagesAutomatically = true
+        binding.webViewTraknio.setBackgroundColor(Color.rgb(10, 19, 40))
+        binding.webViewTraknio.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
                 binding.launchProgress.isIndeterminate = false
                 binding.launchProgress.progress = newProgress.coerceIn(0, 100)
             }
         }
-        binding.webViewFitAi.webViewClient = object : WebViewClient() {
+        binding.webViewTraknio.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 updateWorkoutScreenPolicy(url)
@@ -167,13 +167,13 @@ class MainActivity : AppCompatActivity() {
                 return handleNavigationUrl(target)
             }
         }
-        binding.webViewFitAi.loadUrl(buildInitialUrl())
+        binding.webViewTraknio.loadUrl(buildInitialUrl())
     }
 
     private fun updateWorkoutScreenPolicy(url: String?) {
         val uri = runCatching { Uri.parse(url.orEmpty()) }.getOrNull()
         val keepScreenOn = uri?.path?.startsWith("/workout") == true
-        binding.webViewFitAi.keepScreenOn = keepScreenOn
+        binding.webViewTraknio.keepScreenOn = keepScreenOn
         if (keepScreenOn) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
@@ -202,9 +202,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildInitialUrl(): String {
         val path = intent.getStringExtra(EXTRA_INITIAL_PATH)?.trim().orEmpty()
-        if (path.isBlank()) return fitAiUrl
+        if (path.isBlank()) return traknioUrl
         val safePath = if (path.startsWith("/")) path else "/$path"
-        return fitAiUrl + safePath
+        return traknioUrl + safePath
     }
 
     private fun handleNavigationUrl(rawUrl: String): Boolean {

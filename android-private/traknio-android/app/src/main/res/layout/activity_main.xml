@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/fitai_system_bar">
+    android:background="@color/traknio_system_bar">
 
     <WebView
-        android:id="@+id/webViewFitAi"
+        android:id="@+id/webViewTraknio"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/fitai_system_bar" />
+        android:background="@color/traknio_system_bar" />
 
     <ProgressBar
         android:id="@+id/webLoading"
@@ -22,7 +22,7 @@
         android:id="@+id/launchOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/fitai_system_bar"
+        android:background="@color/traknio_system_bar"
         android:clickable="true"
         android:focusable="true">
 
@@ -40,7 +40,7 @@
             android:layout_height="16dp"
             android:layout_gravity="bottom|center_horizontal"
             android:layout_marginBottom="25dp"
-            android:background="@color/fitai_system_bar" />
+            android:background="@color/traknio_system_bar" />
 
         <ProgressBar
             android:id="@+id/launchProgress"
@@ -60,7 +60,7 @@
         android:id="@+id/webErrorPanel"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/fitai_system_bar"
+        android:background="@color/traknio_system_bar"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="28dp"

@@ -8,7 +8,7 @@ type WatchAccessResult =
   | { ok: false; response: NextResponse };
 
 function getExpectedWatchToken() {
-  return process.env.FITAI_WATCH_TOKEN?.trim() || "";
+  return process.env.TRAKNIO_WATCH_TOKEN?.trim() || "";
 }
 
 function safeTokenEquals(actual: string, expected: string) {

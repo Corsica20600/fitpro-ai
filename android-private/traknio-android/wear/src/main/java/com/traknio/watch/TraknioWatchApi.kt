@@ -1,4 +1,4 @@
-package com.fitai.wear
+package com.traknio.watch
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -8,10 +8,10 @@ import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 
-class FitAiWatchApi(
-    private val baseUrl: String = BuildConfig.FITAI_SYNC_BASE_URL.trimEnd('/'),
-    private val watchToken: String = BuildConfig.FITAI_WATCH_TOKEN,
-    private val watchDeviceToken: String = BuildConfig.FITAI_WATCH_DEVICE_TOKEN,
+class TraknioWatchApi(
+    private val baseUrl: String = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/'),
+    private val watchToken: String = BuildConfig.TRAKNIO_WATCH_TOKEN,
+    private val watchDeviceToken: String = BuildConfig.TRAKNIO_WATCH_DEVICE_TOKEN,
 ) {
     suspend fun currentSession(sessionId: String? = null): WatchPayload = requestPayload(
         path = if (sessionId.isNullOrBlank()) {

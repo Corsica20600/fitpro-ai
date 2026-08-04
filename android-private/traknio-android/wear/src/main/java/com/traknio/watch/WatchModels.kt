@@ -1,4 +1,4 @@
-package com.fitai.wear
+package com.traknio.watch
 
 data class WatchPayload(
     val sessionId: String,

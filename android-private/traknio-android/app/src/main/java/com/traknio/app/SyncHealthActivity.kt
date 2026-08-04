@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,7 +6,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
-import com.fitai.privateapp.databinding.ActivitySyncHealthBinding
+import com.traknio.app.databinding.ActivitySyncHealthBinding
 import kotlinx.coroutines.launch
 
 class SyncHealthActivity : AppCompatActivity() {
@@ -50,14 +50,14 @@ class SyncHealthActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.tab_sync_health)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        binding.textConfig.text = "API: ${BuildConfig.FITAI_SYNC_BASE_URL}"
+        binding.textConfig.text = "API: ${BuildConfig.TRAKNIO_SYNC_BASE_URL}"
         binding.buttonSync.setOnClickListener { syncNow() }
-        binding.buttonBackToFitAi.setOnClickListener { finish() }
-        binding.buttonOpenSettings.setOnClickListener { openFitAiSettings() }
+        binding.buttonBackToTraknio.setOnClickListener { finish() }
+        binding.buttonOpenSettings.setOnClickListener { openTraknioSettings() }
         requestPermissionsIfNeeded()
     }
 
-    private fun openFitAiSettings() {
+    private fun openTraknioSettings() {
         val intent = Intent(this, MainActivity::class.java).apply {
             putExtra(MainActivity.EXTRA_INITIAL_PATH, "/settings")
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP

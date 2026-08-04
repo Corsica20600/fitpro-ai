@@ -2,11 +2,11 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
 export const PRIMARY_USER_EMAIL = "longin.erwan@gmail.com";
-export const LEGACY_DEMO_EMAIL = "demo@fitai.local";
+export const LEGACY_DEMO_EMAIL = "demo@traknio.local";
 
 function getAllowedEmails() {
   return new Set(
-    (process.env.FITAI_ALLOWED_EMAILS ?? "")
+    (process.env.TRAKNIO_ALLOWED_EMAILS ?? "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),

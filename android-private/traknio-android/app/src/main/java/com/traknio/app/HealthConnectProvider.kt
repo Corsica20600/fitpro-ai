@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.content.Context
 import android.util.Log
@@ -19,7 +19,7 @@ import java.time.temporal.ChronoUnit
 
 class HealthConnectProvider(private val context: Context) {
     companion object {
-        private const val TAG = "FITAI_HEALTH_CONNECT"
+        private const val TAG = "TRAKNIO_HEALTH_CONNECT"
 
         val permissions = setOf(
             HealthPermission.getReadPermission(StepsRecord::class),

@@ -1,4 +1,4 @@
-package com.fitai.privateapp
+package com.traknio.app
 
 import android.app.Activity
 import android.content.Context
@@ -45,7 +45,7 @@ class SamsungHealthProviderMock : SamsungHealthProvider {
 
 private class SamsungHealthProviderSdk(private val context: Context) : SamsungHealthProvider {
     companion object {
-        private const val TAG = "FITAI_HEALTH"
+        private const val TAG = "TRAKNIO_HEALTH"
         private const val LAST_24_HOURS_SECONDS = 60L * 60L * 24L
         private const val STEPS_DATA_TYPE_ID = "com.samsung.health.step_count"
         private const val HEART_RATE_DATA_TYPE_ID = "com.samsung.health.heart_rate"

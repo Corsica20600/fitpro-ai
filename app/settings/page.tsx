@@ -25,7 +25,7 @@ function getSettingSections(watchPairingEnabled: boolean) {
     title: "Wear OS",
     description: watchPairingEnabled
       ? "Synchronisation montre protégée par token côté API."
-      : "Synchronisation montre en compatibilité temporaire, ajoute FITAI_WATCH_TOKEN dans Vercel.",
+      : "Synchronisation montre en compatibilité temporaire, ajoute TRAKNIO_WATCH_TOKEN dans Vercel.",
     status: watchPairingEnabled ? "Sécurisé" : "Compatibilité",
     tone: "violet",
   },
@@ -113,7 +113,7 @@ function getIntegrationErrorMessage(value: string | undefined) {
 }
 
 export default async function SettingsPage(props: SettingsPageProps) {
-  const watchPairingEnabled = Boolean(process.env.FITAI_WATCH_TOKEN?.trim());
+  const watchPairingEnabled = Boolean(process.env.TRAKNIO_WATCH_TOKEN?.trim());
   const spotifyConfigured = isSpotifyConfigured();
   const settingSections = getSettingSections(watchPairingEnabled);
   const [session, accountData, searchParams] = await Promise.all([
@@ -399,7 +399,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
           <div className="settings-token-box">
             <span>Token généré pour {watchLabel || "Montre Wear OS"}</span>
             <code>{watchToken}</code>
-            <small>Copie-le dans `FITAI_WATCH_DEVICE_TOKEN` puis rebuild l&apos;APK montre. Il ne sera plus affiché ensuite.</small>
+            <small>Copie-le dans `TRAKNIO_WATCH_DEVICE_TOKEN` puis rebuild l&apos;APK montre. Il ne sera plus affiché ensuite.</small>
           </div>
         ) : null}
         {watch === "revoked" ? (

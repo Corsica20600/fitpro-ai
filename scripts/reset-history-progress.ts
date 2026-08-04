@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const DEMO_EMAIL = "demo@fitai.local";
+const DEMO_EMAIL = "demo@traknio.local";
 
 async function main() {
   const profile = await prisma.userProfile.findUnique({

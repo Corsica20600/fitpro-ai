@@ -48,11 +48,11 @@
             android:text="@string/button_sync" />
 
         <Button
-            android:id="@+id/buttonBackToFitAi"
+            android:id="@+id/buttonBackToTraknio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="@string/button_back_to_fitai" />
+            android:text="@string/button_back_to_traknio" />
 
         <Button
             android:id="@+id/buttonOpenSettings"
