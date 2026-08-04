@@ -1307,6 +1307,15 @@ h4,
   gap: 10px;
 }
 
+.settings-stripe-plan-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-stripe-plan-grid form {
+  margin: 0;
+}
+
 .settings-success-message {
   margin: 0;
   border: 1px solid rgba(109, 239, 184, .34);

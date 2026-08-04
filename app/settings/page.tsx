@@ -83,6 +83,12 @@ function getBillingErrorMessage(error: string | undefined) {
   if (error === "config") {
     return "Stripe n'est pas encore configuré dans Vercel. Ajoute les variables Stripe avant de lancer un paiement.";
   }
+  if (error === "monthlyConfig") {
+    return "Le prix Stripe mensuel n'est pas configuré. Ajoute STRIPE_MONTHLY_PRICE_ID ou STRIPE_PRICE_ID dans Vercel.";
+  }
+  if (error === "yearlyConfig") {
+    return "Le prix Stripe annuel n'est pas configuré. Ajoute STRIPE_YEARLY_PRICE_ID dans Vercel.";
+  }
   if (error === "checkout") {
     return "Stripe n'a pas renvoyé de lien Checkout. Vérifie le prix configuré.";
   }
@@ -242,11 +248,20 @@ export default async function SettingsPage(props: SettingsPageProps) {
                 <a className="primary-button full-line" href="traknio://billing/google-play">
                   Activer avec Google Play
                 </a>
-                <form action={createBillingCheckoutAction}>
-                  <button type="submit" className="ghost-btn full-line" disabled={!stripeConfigured}>
-                    Tester via Stripe web
-                  </button>
-                </form>
+                <div className="settings-stripe-plan-grid">
+                  <form action={createBillingCheckoutAction}>
+                    <input type="hidden" name="billingInterval" value="monthly" />
+                    <button type="submit" className="ghost-btn full-line" disabled={!stripeConfigured}>
+                      Stripe web · 4,99 € / mois
+                    </button>
+                  </form>
+                  <form action={createBillingCheckoutAction}>
+                    <input type="hidden" name="billingInterval" value="yearly" />
+                    <button type="submit" className="ghost-btn full-line" disabled={!stripeConfigured}>
+                      Stripe web · 39,99 € / an
+                    </button>
+                  </form>
+                </div>
               </>
             ) : null}
             {canOpenPortal ? (

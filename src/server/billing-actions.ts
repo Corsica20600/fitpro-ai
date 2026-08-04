@@ -2,21 +2,26 @@
 
 import { redirect } from "next/navigation";
 import { absoluteUrl } from "@/src/lib/site-url";
-import { getStripe, isStripeConfigured } from "@/src/lib/stripe";
+import { getStripe, getStripePriceId, isStripeConfigured, type StripeBillingInterval } from "@/src/lib/stripe";
 import { prisma } from "@/src/lib/prisma";
 import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
 
-export async function createBillingCheckoutAction() {
+function getBillingInterval(formData: FormData): StripeBillingInterval {
+  return formData.get("billingInterval") === "yearly" ? "yearly" : "monthly";
+}
+
+export async function createBillingCheckoutAction(formData: FormData) {
   if (!isStripeConfigured()) {
     redirect("/settings?billingError=config");
   }
 
+  const billingInterval = getBillingInterval(formData);
   const profile = await getAuthenticatedUserProfile();
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_PRICE_ID?.trim();
+  const priceId = getStripePriceId(billingInterval);
 
   if (!priceId) {
-    redirect("/settings?billingError=config");
+    redirect(`/settings?billingError=${billingInterval === "yearly" ? "yearlyConfig" : "monthlyConfig"}`);
   }
 
   let customerId = profile.stripeCustomerId;
@@ -46,10 +51,12 @@ export async function createBillingCheckoutAction() {
     cancel_url: absoluteUrl("/settings?billing=cancelled"),
     metadata: {
       userProfileId: profile.id,
+      billingInterval,
     },
     subscription_data: {
       metadata: {
         userProfileId: profile.id,
+        billingInterval,
       },
     },
   });
