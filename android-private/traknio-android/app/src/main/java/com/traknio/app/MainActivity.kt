@@ -218,7 +218,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (scheme == "traknio" && host == "billing" && uri.path == "/google-play") {
-            startActivity(Intent(this, BillingActivity::class.java))
+            val billingIntent = Intent(this, BillingActivity::class.java).apply {
+                putExtra(BillingActivity.EXTRA_BASE_PLAN_ID, uri.getQueryParameter("plan").orEmpty())
+            }
+            startActivity(billingIntent)
             return true
         }
 

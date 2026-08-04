@@ -20,9 +20,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class BillingActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_BASE_PLAN_ID = "com.traknio.app.EXTRA_BASE_PLAN_ID"
+        private const val DEFAULT_BASE_PLAN_ID = "monthly"
+    }
+
     private val baseUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/')
     private val productId = BuildConfig.GOOGLE_PLAY_SUBSCRIPTION_PRODUCT_ID
     private val packageNameForPlay = BuildConfig.GOOGLE_PLAY_PACKAGE_NAME
+    private val requestedBasePlanId: String
+        get() = intent.getStringExtra(EXTRA_BASE_PLAN_ID)
+            ?.trim()
+            ?.takeIf { it == "monthly" || it == "yearly" }
+            ?: DEFAULT_BASE_PLAN_ID
     private lateinit var billingClient: BillingClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,9 +106,12 @@ class BillingActivity : AppCompatActivity() {
     }
 
     private fun launchBillingFlow(productDetails: ProductDetails) {
-        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        val offer = productDetails.subscriptionOfferDetails
+            ?.firstOrNull { it.basePlanId == requestedBasePlanId }
+            ?: productDetails.subscriptionOfferDetails?.firstOrNull()
+        val offerToken = offer?.offerToken
         if (offerToken.isNullOrBlank()) {
-            showAndFinish("Offre Google Play indisponible")
+            showAndFinish("Offre Google Play indisponible pour $requestedBasePlanId")
             return
         }
 

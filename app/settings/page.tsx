@@ -258,9 +258,14 @@ export default async function SettingsPage(props: SettingsPageProps) {
           <div className="settings-billing-actions">
             {!entitlementActive ? (
               <>
-                <a className="primary-button full-line" href="traknio://billing/google-play">
-                  Activer avec Google Play
-                </a>
+                <div className="settings-stripe-plan-grid">
+                  <a className="primary-button full-line" href="traknio://billing/google-play?plan=monthly">
+                    Google Play · 4,99 € / mois
+                  </a>
+                  <a className="ghost-btn full-line" href="traknio://billing/google-play?plan=yearly">
+                    Google Play · 39,99 € / an
+                  </a>
+                </div>
                 <div className="settings-stripe-plan-grid">
                   <form action={createBillingCheckoutAction}>
                     <input type="hidden" name="billingInterval" value="monthly" />
