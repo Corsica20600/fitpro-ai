@@ -19,16 +19,16 @@ export const metadata = privatePageMetadata(
   `Paramètres privés ${BRAND.name} pour compte, export de données et intégrations.`,
 );
 
-function getSettingSections(watchPairingEnabled: boolean) {
+function getSettingSections(watchConnected: boolean) {
   return [
   {
     eyebrow: "Montre",
     title: "Wear OS",
-    description: watchPairingEnabled
-      ? "Synchronisation montre protégée par token côté API."
-      : "Synchronisation montre en compatibilité temporaire, ajoute TRAKNIO_WATCH_TOKEN dans Vercel.",
-    status: watchPairingEnabled ? "Sécurisé" : "Compatibilité",
-    tone: "violet",
+    description: watchConnected
+      ? "Ta montre est associée et peut suivre la séance en direct."
+      : "Associe une montre Wear OS pour suivre les séries, repos et changements en séance.",
+    status: watchConnected ? "Connectée" : "À associer",
+    tone: watchConnected ? "success" : "violet",
   },
   ] as const;
 }
@@ -121,9 +121,7 @@ function getIntegrationErrorMessage(value: string | undefined) {
 }
 
 export default async function SettingsPage(props: SettingsPageProps) {
-  const watchPairingEnabled = Boolean(process.env.TRAKNIO_WATCH_TOKEN?.trim());
   const spotifyConfigured = isSpotifyConfigured();
-  const settingSections = getSettingSections(watchPairingEnabled);
   const [session, accountData, searchParams] = await Promise.all([
     auth().catch(() => null),
     getAccountSettingsData(),
@@ -168,6 +166,8 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const canOpenPortal = Boolean(accountData.profile.stripeCustomerId);
   const spotify = accountData.integrations.find((item) => item.provider === "SPOTIFY");
   const healthConnect = accountData.integrations.find((item) => item.provider === "HEALTH_CONNECT");
+  const watchConnected = accountData.watchDevices.length > 0;
+  const settingSections = getSettingSections(watchConnected);
   const spotifyConnected = spotify?.status === "CONNECTED";
   const healthPrepared = healthConnect?.status === "PENDING" || healthConnect?.status === "CONNECTED";
   const latestSessionDate = accountData.latestSession?.endedAt
@@ -424,24 +424,24 @@ export default async function SettingsPage(props: SettingsPageProps) {
       <GlassCard className="settings-watch-pairing-card">
         <div>
           <p className="eyebrow">Montre Wear OS</p>
-          <h2>Pairing avancé</h2>
+          <h2>Connecteur montre</h2>
           <p className="muted">
-            Génère un token personnel pour relier une montre au compte {email}. Les anciennes montres peuvent encore
-            fonctionner avec le token global, mais ce pairing isole mieux les comptes.
+            Associe une montre Wear OS au compte {email} pour synchroniser la séance, les séries validées,
+            les temps de repos et les changements d'exercices.
           </p>
         </div>
         {watchToken ? (
           <div className="settings-token-box">
-            <span>Token généré pour {watchLabel || "Montre Wear OS"}</span>
+            <span>Connecteur préparé pour {watchLabel || "Montre Wear OS"}</span>
             <code>{watchToken}</code>
-            <small>Copie-le dans `TRAKNIO_WATCH_DEVICE_TOKEN` puis rebuild l&apos;APK montre. Il ne sera plus affiché ensuite.</small>
+            <small>À copier dans `TRAKNIO_WATCH_DEVICE_TOKEN` pour le build montre de test. Il ne sera plus affiché ensuite.</small>
           </div>
         ) : null}
         {watch === "revoked" ? (
-          <p className="settings-success-message">Montre révoquée. Elle ne pourra plus accéder à ce compte.</p>
+          <p className="settings-success-message">Montre dissociée. Elle ne pourra plus accéder à ce compte.</p>
         ) : null}
         {watchError === "device" ? (
-          <p className="settings-danger-error">Montre introuvable ou déjà révoquée.</p>
+          <p className="settings-danger-error">Montre introuvable ou déjà dissociée.</p>
         ) : null}
         <form action={createWatchDeviceTokenAction} className="settings-watch-token-form">
           <label>
@@ -449,7 +449,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
             <input className="input" name="label" type="text" placeholder="Galaxy Watch Ultra" autoComplete="off" />
           </label>
           <button type="submit" className="ghost-btn full-line">
-            Générer un token de montre
+            Préparer la montre
           </button>
         </form>
         <div className="settings-watch-device-list">
@@ -469,7 +469,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
               </article>
             ))
           ) : (
-            <p className="muted">Aucune montre personnelle pairée pour le moment.</p>
+            <p className="muted">Aucune montre associée pour le moment.</p>
           )}
         </div>
       </GlassCard>
