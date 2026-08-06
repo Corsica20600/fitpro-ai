@@ -70,11 +70,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.traknio.watch"
+        applicationId = "com.traknio.app"
         minSdk = 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 10
+        versionName = "0.5.2"
 
         val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
