@@ -11,7 +11,7 @@ import { deleteAccountAction } from "@/src/server/account-actions";
 import { createBillingCheckoutAction, openBillingPortalAction } from "@/src/server/billing-actions";
 import { getAccountSettingsData } from "@/src/server/fitness-queries";
 import { disconnectIntegrationAction, enableHealthConnectPreparationAction } from "@/src/server/integration-actions";
-import { createWatchDeviceTokenAction, revokeWatchDeviceAction } from "@/src/server/watch-pairing-actions";
+import { revokeWatchDeviceAction } from "@/src/server/watch-pairing-actions";
 import { isSpotifyConfigured } from "@/src/server/spotify";
 
 export const metadata = privatePageMetadata(
@@ -56,8 +56,6 @@ type SettingsPageProps = {
     integrationError?: string | string[];
     watch?: string | string[];
     watchError?: string | string[];
-    watchLabel?: string | string[];
-    watchToken?: string | string[];
   }>;
 };
 
@@ -134,8 +132,6 @@ export default async function SettingsPage(props: SettingsPageProps) {
       integrationError?: string | string[];
       watch?: string | string[];
       watchError?: string | string[];
-      watchLabel?: string | string[];
-      watchToken?: string | string[];
     }),
   ]);
   const deleteError = getFirstParam(searchParams.deleteError);
@@ -146,8 +142,6 @@ export default async function SettingsPage(props: SettingsPageProps) {
   const integrationError = getIntegrationErrorMessage(getFirstParam(searchParams.integrationError));
   const watch = getFirstParam(searchParams.watch);
   const watchError = getFirstParam(searchParams.watchError);
-  const watchLabel = getFirstParam(searchParams.watchLabel);
-  const watchToken = getFirstParam(searchParams.watchToken);
   const email = session?.user?.email ?? accountData.profile.email ?? "Compte Google";
   const name = accountData.profile.displayName || session?.user?.name || `Utilisateur ${BRAND.name}`;
   const connected = Boolean(session?.user?.email);
@@ -431,32 +425,16 @@ export default async function SettingsPage(props: SettingsPageProps) {
           <p className="eyebrow">Montre Wear OS</p>
           <h2>Connecteur montre</h2>
           <p className="muted">
-            Associe une montre Wear OS au compte {email} pour synchroniser la séance, les séries validées,
-            les temps de repos et les changements d'exercices.
+            Ouvre {BRAND.name} sur la montre pendant que ce téléphone est connecté au compte {email}.
+            L'appairage se fait automatiquement et chaque montre reçoit son propre accès sécurisé.
           </p>
         </div>
-        {watchToken ? (
-          <div className="settings-token-box">
-            <span>Connecteur préparé pour {watchLabel || "Montre Wear OS"}</span>
-            <code>{watchToken}</code>
-            <small>À copier dans `TRAKNIO_WATCH_DEVICE_TOKEN` pour le build montre de test. Il ne sera plus affiché ensuite.</small>
-          </div>
-        ) : null}
         {watch === "revoked" ? (
           <p className="settings-success-message">Montre dissociée. Elle ne pourra plus accéder à ce compte.</p>
         ) : null}
         {watchError === "device" ? (
           <p className="settings-danger-error">Montre introuvable ou déjà dissociée.</p>
         ) : null}
-        <form action={createWatchDeviceTokenAction} className="settings-watch-token-form">
-          <label>
-            <span>Nom de la montre</span>
-            <input className="input" name="label" type="text" placeholder="Galaxy Watch Ultra" autoComplete="off" />
-          </label>
-          <button type="submit" className="ghost-btn full-line">
-            Préparer la montre
-          </button>
-        </form>
         <div className="settings-watch-device-list">
           {accountData.watchDevices.length > 0 ? (
             accountData.watchDevices.map((device) => (

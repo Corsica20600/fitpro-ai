@@ -5,16 +5,8 @@ import { prisma } from "@/src/lib/prisma";
 import { hashWatchDeviceToken } from "@/src/lib/watch-device-token";
 
 type WatchAccessResult =
-  | { ok: true; mode: "session" | "device" | "token" | "legacy"; userProfileId?: string; profileEmail?: string | null }
+  | { ok: true; mode: "session" | "device"; userProfileId?: string; profileEmail?: string | null }
   | { ok: false; response: NextResponse };
-
-function getExpectedWatchToken() {
-  return process.env.TRAKNIO_WATCH_TOKEN?.trim() || "";
-}
-
-function safeTokenEquals(actual: string, expected: string) {
-  return actual.length > 0 && expected.length > 0 && actual === expected;
-}
 
 export async function requireWatchAccess(request: Request): Promise<WatchAccessResult> {
   const session = await auth().catch(() => null);
@@ -86,17 +78,6 @@ export async function requireWatchAccess(request: Request): Promise<WatchAccessR
         profileEmail: device.userProfile.email,
       };
     }
-  }
-
-  const expectedToken = getExpectedWatchToken();
-  if (!expectedToken) {
-    // Compatibility mode: the current installed watch app has no token yet.
-    return { ok: true, mode: "legacy" };
-  }
-
-  const providedToken = request.headers.get("x-watch-token")?.trim() || "";
-  if (safeTokenEquals(providedToken, expectedToken)) {
-    return { ok: true, mode: "token" };
   }
 
   return {

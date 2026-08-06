@@ -69,6 +69,7 @@ class MainActivity : AppCompatActivity() {
                 "window.dispatchEvent(new Event('traknio:app-resume'));",
                 null,
             )
+            PhoneWearAccountSync.broadcastConnectedAccount(applicationContext)
         }
     }
 
@@ -129,6 +130,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 updateWorkoutScreenPolicy(url)
+                PhoneWearAccountSync.broadcastConnectedAccount(applicationContext)
                 binding.webLoading.visibility = View.GONE
                 hideLaunchOverlay()
             }

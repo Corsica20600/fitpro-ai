@@ -1,0 +1,104 @@
+package com.traknio.app
+
+import android.webkit.CookieManager
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.WearableListenerService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
+
+class PhoneWearPairingService : WearableListenerService() {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val baseUrl = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/')
+
+    override fun onMessageReceived(messageEvent: MessageEvent) {
+        if (messageEvent.path != WearPairingPaths.PAIRING_REQUEST && messageEvent.path != WearPairingPaths.ACCOUNT_STATE_REQUEST) {
+            return
+        }
+
+        scope.launch {
+            val response = if (messageEvent.path == WearPairingPaths.PAIRING_REQUEST) {
+                requestPairingToken(messageEvent.data)
+            } else {
+                PhoneWearAccountSync.readAccountState()
+                    ?: JSONObject()
+                        .put("ok", false)
+                        .put("error", "auth_required")
+            }
+            val responsePath = if (messageEvent.path == WearPairingPaths.PAIRING_REQUEST) {
+                WearPairingPaths.PAIRING_RESPONSE
+            } else {
+                WearPairingPaths.ACCOUNT_STATE
+            }
+            Wearable.getMessageClient(this@PhoneWearPairingService)
+                .sendMessage(messageEvent.sourceNodeId, responsePath, response.toString().toByteArray())
+                .await()
+        }
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    private fun requestPairingToken(rawRequest: ByteArray): JSONObject {
+        val label = runCatching {
+            JSONObject(String(rawRequest)).optString("label", "Montre Wear OS")
+        }.getOrDefault("Montre Wear OS")
+
+        val cookies = CookieManager.getInstance().getCookie(baseUrl).orEmpty()
+        if (cookies.isBlank()) {
+            return JSONObject()
+                .put("ok", false)
+                .put("error", "auth_required")
+        }
+
+        val body = JSONObject().put("label", label)
+        val connection = (URL("$baseUrl/api/watch/pair/request").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 8_000
+            readTimeout = 8_000
+            doOutput = true
+            setRequestProperty("accept", "application/json")
+            setRequestProperty("content-type", "application/json")
+            setRequestProperty("cookie", cookies)
+        }
+
+        return try {
+            OutputStreamWriter(connection.outputStream).use { writer ->
+                writer.write(body.toString())
+            }
+
+            val statusCode = connection.responseCode
+            val rawBody = readBody(connection, statusCode)
+            val json = JSONObject(rawBody.ifBlank { "{}" })
+            if (statusCode in 200..299) {
+                json
+            } else {
+                JSONObject()
+                    .put("ok", false)
+                    .put("error", json.optString("error", "pairing_failed"))
+            }
+        } catch (error: Throwable) {
+            JSONObject()
+                .put("ok", false)
+                .put("error", error.message ?: "pairing_failed")
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun readBody(connection: HttpURLConnection, statusCode: Int): String {
+        val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
+        return stream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
+    }
+}

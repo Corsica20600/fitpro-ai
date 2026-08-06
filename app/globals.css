@@ -1326,37 +1326,6 @@ h4,
   padding: 12px 14px;
 }
 
-.settings-watch-token-form {
-  display: grid;
-  gap: 10px;
-}
-
-.settings-token-box {
-  display: grid;
-  gap: 8px;
-  border: 1px solid rgba(55, 215, 255, .28);
-  border-radius: 20px;
-  background: rgba(55, 215, 255, .08);
-  padding: 12px;
-}
-
-.settings-token-box span,
-.settings-token-box small {
-  color: #aebfe0;
-  font-size: .76rem;
-  font-weight: 800;
-}
-
-.settings-token-box code {
-  overflow-wrap: anywhere;
-  border-radius: 14px;
-  background: rgba(2, 7, 19, .72);
-  color: #f7fbff;
-  font-size: .78rem;
-  font-weight: 900;
-  padding: 10px;
-}
-
 .settings-watch-device-list {
   display: grid;
   gap: 8px;

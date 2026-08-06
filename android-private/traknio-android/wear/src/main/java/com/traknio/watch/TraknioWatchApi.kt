@@ -10,8 +10,7 @@ import java.net.URL
 
 class TraknioWatchApi(
     private val baseUrl: String = BuildConfig.TRAKNIO_SYNC_BASE_URL.trimEnd('/'),
-    private val watchToken: String = BuildConfig.TRAKNIO_WATCH_TOKEN,
-    private val watchDeviceToken: String = BuildConfig.TRAKNIO_WATCH_DEVICE_TOKEN,
+    private val deviceTokenProvider: () -> String? = { null },
 ) {
     suspend fun currentSession(sessionId: String? = null): WatchPayload = requestPayload(
         path = if (sessionId.isNullOrBlank()) {
@@ -52,6 +51,40 @@ class TraknioWatchApi(
 
     suspend fun completeSession(sessionId: String): WatchPayload = postAction("/api/watch/complete-session", sessionId)
 
+    suspend fun completePairing(pairingToken: String, label: String): PairingResult = withContext(Dispatchers.IO) {
+        val body = JSONObject()
+            .put("pairingToken", pairingToken)
+            .put("label", label)
+
+        val connection = (URL("$baseUrl/api/watch/pair/complete").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 8_000
+            readTimeout = 8_000
+            doOutput = true
+            setRequestProperty("accept", "application/json")
+            setRequestProperty("content-type", "application/json")
+        }
+
+        try {
+            OutputStreamWriter(connection.outputStream).use { writer ->
+                writer.write(body.toString())
+            }
+
+            val statusCode = connection.responseCode
+            val raw = readBody(connection, statusCode)
+            val json = JSONObject(raw.ifBlank { "{}" })
+            if (statusCode !in 200..299) {
+                throw IllegalStateException(json.optString("error", "Appairage refusé"))
+            }
+            PairingResult(
+                deviceToken = json.getString("deviceToken"),
+                accountPairingId = json.getString("accountPairingId"),
+            )
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     private suspend fun postAction(
         path: String,
         sessionId: String,
@@ -71,11 +104,9 @@ class TraknioWatchApi(
             connectTimeout = 8_000
             readTimeout = 8_000
             setRequestProperty("accept", "application/json")
-            if (watchDeviceToken.isNotBlank()) {
-                setRequestProperty("x-watch-device-token", watchDeviceToken)
-            }
-            if (watchToken.isNotBlank()) {
-                setRequestProperty("x-watch-token", watchToken)
+            val deviceToken = deviceTokenProvider()?.trim().orEmpty()
+            if (deviceToken.isNotBlank()) {
+                setRequestProperty("x-watch-device-token", deviceToken)
             }
             if (body != null) {
                 doOutput = true
@@ -136,5 +167,10 @@ class TraknioWatchApi(
         )
     }
 }
+
+data class PairingResult(
+    val deviceToken: String,
+    val accountPairingId: String,
+)
 
 private fun String.urlEncode(): String = java.net.URLEncoder.encode(this, Charsets.UTF_8.name())

@@ -87,8 +87,6 @@ Pour ta machine, ajoute les valeurs dans `android-private/traknio-android/local.
 
 ```properties
 TRAKNIO_SYNC_BASE_URL=https://www.traknio.com
-TRAKNIO_WATCH_TOKEN=ton_token_montre_global
-TRAKNIO_WATCH_DEVICE_TOKEN=ton_token_montre_appairee
 ```
 
 En local emulator Android: utiliser `http://10.0.2.2:3000` pour parler au serveur local.

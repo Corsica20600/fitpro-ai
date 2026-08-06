@@ -152,6 +152,7 @@ model UserProfile {
   programs                      Program[]
   healthDevices                 HealthDevice[]
   integrationConnections        IntegrationConnection[]
+  watchPairingTokens            WatchPairingToken[]
   watchDevices                  WatchDevice[]
   workoutSessions               WorkoutSession[]
   progressMetrics               ProgressMetric[]
@@ -211,6 +212,20 @@ model WatchDevice {
 
   @@index([userProfileId, revokedAt])
   @@index([lastSeenAt])
+}
+
+model WatchPairingToken {
+  id            String      @id @default(cuid())
+  userProfileId String
+  label         String
+  tokenHash     String      @unique
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId, expiresAt])
+  @@index([expiresAt, consumedAt])
 }
 
 model HealthDevice {

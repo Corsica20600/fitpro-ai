@@ -78,13 +78,7 @@ android {
 
         val syncBaseUrl = propertyValue("TRAKNIO_SYNC_BASE_URL")
             ?: "https://www.traknio.com"
-        val watchToken = propertyValue("TRAKNIO_WATCH_TOKEN")
-            ?: ""
-        val watchDeviceToken = propertyValue("TRAKNIO_WATCH_DEVICE_TOKEN")
-            ?: ""
         buildConfigField("String", "TRAKNIO_SYNC_BASE_URL", buildConfigString(syncBaseUrl))
-        buildConfigField("String", "TRAKNIO_WATCH_TOKEN", buildConfigString(watchToken))
-        buildConfigField("String", "TRAKNIO_WATCH_DEVICE_TOKEN", buildConfigString(watchDeviceToken))
     }
 
     buildTypes {
@@ -124,6 +118,8 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.4.1")
     implementation("androidx.wear.compose:compose-material:1.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.8")
 }

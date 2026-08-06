@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Button
@@ -59,7 +61,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun TraknioWearApp(viewModel: WatchViewModel = viewModel()) {
+private fun TraknioWearApp() {
+    val context = LocalContext.current.applicationContext
+    val viewModel: WatchViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return WatchViewModel(context) as T
+            }
+        },
+    )
     val state by viewModel.state.collectAsState()
     val keepScreenOn = (state as? WatchScreenState.Ready)
         ?.payload

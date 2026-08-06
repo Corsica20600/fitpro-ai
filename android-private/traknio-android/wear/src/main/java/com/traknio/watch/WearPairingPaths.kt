@@ -1,0 +1,8 @@
+package com.traknio.watch
+
+object WearPairingPaths {
+    const val PAIRING_REQUEST = "/traknio/watch/pair/request"
+    const val PAIRING_RESPONSE = "/traknio/watch/pair/response"
+    const val ACCOUNT_STATE_REQUEST = "/traknio/watch/account/request"
+    const val ACCOUNT_STATE = "/traknio/watch/account/state"
+}

@@ -1,5 +1,7 @@
 package com.traknio.watch
 
+import android.content.Context
+import android.os.Build
 import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,9 +12,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class WatchViewModel(
-    private val api: TraknioWatchApi = TraknioWatchApi(),
-) : ViewModel() {
+class WatchViewModel(context: Context) : ViewModel() {
+    private val tokenStore = WatchTokenStore(context.applicationContext)
+    private val pairingClient = WearPairingClient(context.applicationContext)
+    private val watchLabel = Build.MODEL?.takeIf { it.isNotBlank() } ?: "Montre Wear OS"
+    private val api: TraknioWatchApi = TraknioWatchApi(
+        deviceTokenProvider = { tokenStore.deviceToken() },
+    )
+
     private val _state = MutableStateFlow<WatchScreenState>(WatchScreenState.Loading)
     val state: StateFlow<WatchScreenState> = _state.asStateFlow()
 
@@ -20,6 +27,8 @@ class WatchViewModel(
     private var latestKey: String? = null
     private var deadline: RestDeadline? = null
     private var pollingJob: Job? = null
+    private var pairingInProgress = false
+    private var lastAccountCheckElapsedMs = 0L
 
     init {
         startPolling()
@@ -114,16 +123,18 @@ class WatchViewModel(
         }
 
         try {
+            ensurePaired()
             applyPayload(api.currentSession(latestPayload?.sessionId), syncLabel = "Sync OK")
         } catch (error: Throwable) {
-            if (latestPayload == null) {
-                _state.value = WatchScreenState.Empty(error.message ?: "Aucune séance active")
-            } else {
-                val ready = _state.value as? WatchScreenState.Ready
-                if (ready != null) {
-                    _state.value = ready.copy(syncLabel = "Sync locale", error = null, busyAction = null)
-                }
+            if (isPairingRequired(error)) {
+                tokenStore.clear()
+                val recovered = runCatching {
+                    ensurePaired()
+                    applyPayload(api.currentSession(latestPayload?.sessionId), syncLabel = "Sync OK")
+                }.isSuccess
+                if (recovered) return
             }
+            handleFetchError(error)
         }
     }
 
@@ -141,8 +152,12 @@ class WatchViewModel(
 
         viewModelScope.launch {
             try {
+                ensurePaired()
                 applyPayload(action(payload), syncLabel = "Sync OK")
             } catch (error: Throwable) {
+                if (isPairingRequired(error)) {
+                    tokenStore.clear()
+                }
                 val fallback = _state.value as? WatchScreenState.Ready
                 if (fallback != null) {
                     _state.value = fallback.copy(
@@ -153,6 +168,53 @@ class WatchViewModel(
                 }
                 fetchState(silent = true)
             }
+        }
+    }
+
+    private suspend fun ensurePaired() {
+        if (!tokenStore.deviceToken().isNullOrBlank()) {
+            verifyPhoneAccountIfNeeded()
+        }
+        if (!tokenStore.deviceToken().isNullOrBlank()) return
+        if (pairingInProgress) return
+
+        pairingInProgress = true
+        try {
+            val temporaryToken = pairingClient.requestTemporaryPairingToken(watchLabel)
+            val result = api.completePairing(temporaryToken.token, watchLabel)
+            tokenStore.save(result.deviceToken, result.accountPairingId)
+        } finally {
+            pairingInProgress = false
+        }
+    }
+
+    private suspend fun verifyPhoneAccountIfNeeded() {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastAccountCheckElapsedMs < 30_000) return
+        lastAccountCheckElapsedMs = now
+
+        val accountPairingId = runCatching {
+            pairingClient.requestCurrentAccountPairingId()
+        }.getOrNull()
+        if (!accountPairingId.isNullOrBlank()) {
+            tokenStore.clearIfAccountChanged(accountPairingId)
+        }
+    }
+
+    private fun isPairingRequired(error: Throwable): Boolean {
+        val message = error.message.orEmpty()
+        return message == "watch_pairing_required" || message == "pairing_token_expired"
+    }
+
+    private fun handleFetchError(error: Throwable) {
+        if (latestPayload == null) {
+            _state.value = WatchScreenState.Empty(error.message ?: "Aucune séance active")
+            return
+        }
+
+        val ready = _state.value as? WatchScreenState.Ready
+        if (ready != null) {
+            _state.value = ready.copy(syncLabel = "Sync locale", error = null, busyAction = null)
         }
     }
 
