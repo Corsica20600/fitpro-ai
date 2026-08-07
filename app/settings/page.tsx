@@ -426,7 +426,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
           <h2>Connecteur montre</h2>
           <p className="muted">
             Ouvre {BRAND.name} sur la montre pendant que ce téléphone est connecté au compte {email}.
-            L'appairage se fait automatiquement et chaque montre reçoit son propre accès sécurisé.
+            L&apos;appairage se fait automatiquement et chaque montre reçoit son propre accès sécurisé.
           </p>
         </div>
         {watch === "revoked" ? (

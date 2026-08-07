@@ -346,8 +346,8 @@ export default async function HomePage() {
               Les détails qui changent vraiment <span>une séance réelle</span>
             </h2>
             <p>
-              Traknio ne se contente pas de générer un programme. L'application garde le fil pendant
-              l'effort, mémorise tes ajustements et synchronise tes actions entre téléphone et montre.
+              Traknio ne se contente pas de générer un programme. L&apos;application garde le fil pendant
+              l&apos;effort, mémorise tes ajustements et synchronise tes actions entre téléphone et montre.
             </p>
           </div>
           <div className="trk-advantages-grid">

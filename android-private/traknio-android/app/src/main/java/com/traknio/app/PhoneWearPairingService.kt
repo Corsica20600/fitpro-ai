@@ -1,6 +1,7 @@
 package com.traknio.app
 
 import android.webkit.CookieManager
+import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
@@ -24,6 +25,7 @@ class PhoneWearPairingService : WearableListenerService() {
         if (messageEvent.path != WearPairingPaths.PAIRING_REQUEST && messageEvent.path != WearPairingPaths.ACCOUNT_STATE_REQUEST) {
             return
         }
+        Log.i(TAG, "message received on phone path=${messageEvent.path} bytes=${messageEvent.data.size}")
 
         scope.launch {
             val response = if (messageEvent.path == WearPairingPaths.PAIRING_REQUEST) {
@@ -42,6 +44,7 @@ class PhoneWearPairingService : WearableListenerService() {
             Wearable.getMessageClient(this@PhoneWearPairingService)
                 .sendMessage(messageEvent.sourceNodeId, responsePath, response.toString().toByteArray())
                 .await()
+            Log.i(TAG, "response sent to watch path=$responsePath ok=${response.optBoolean("ok", false)}")
         }
     }
 
@@ -56,6 +59,7 @@ class PhoneWearPairingService : WearableListenerService() {
         }.getOrDefault("Montre Wear OS")
 
         val cookies = CookieManager.getInstance().getCookie(baseUrl).orEmpty()
+        Log.i(TAG, "pairing token requested backend cookiesPresent=${cookies.isNotBlank()}")
         if (cookies.isBlank()) {
             return JSONObject()
                 .put("ok", false)
@@ -81,6 +85,7 @@ class PhoneWearPairingService : WearableListenerService() {
             val statusCode = connection.responseCode
             val rawBody = readBody(connection, statusCode)
             val json = JSONObject(rawBody.ifBlank { "{}" })
+            Log.i(TAG, "pairing token backend response status=$statusCode ok=${statusCode in 200..299}")
             if (statusCode in 200..299) {
                 json
             } else {
@@ -89,6 +94,7 @@ class PhoneWearPairingService : WearableListenerService() {
                     .put("error", json.optString("error", "pairing_failed"))
             }
         } catch (error: Throwable) {
+            Log.w(TAG, "pairing token backend request failed", error)
             JSONObject()
                 .put("ok", false)
                 .put("error", error.message ?: "pairing_failed")
@@ -100,5 +106,8 @@ class PhoneWearPairingService : WearableListenerService() {
     private fun readBody(connection: HttpURLConnection, statusCode: Int): String {
         val stream = if (statusCode in 200..299) connection.inputStream else connection.errorStream
         return stream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
+    }
+    companion object {
+        private const val TAG = "WATCH_PAIR"
     }
 }

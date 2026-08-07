@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { DailyReadinessCard } from "@/src/components/dashboard/daily-readiness-card";
 import { DashboardGreeting } from "@/src/components/dashboard/dashboard-greeting";
 import { LevelProgress } from "@/src/components/dashboard/level-progress";
+import { TraknioCoachCard } from "@/src/components/dashboard/traknio-coach-card";
 import { WeeklySummary } from "@/src/components/dashboard/weekly-summary";
 import { WorkoutHero } from "@/src/components/dashboard/workout-hero";
 import { AppShell } from "@/src/components/ui/app-shell";
@@ -44,6 +45,8 @@ export default async function DashboardPage() {
       <LevelProgress level={data.level} streakWeeks={data.streak.weeks} />
 
       <DailyReadinessCard readiness={data.readiness} />
+
+      <TraknioCoachCard />
 
       <section className="grid gap-3" aria-labelledby="dashboard-shortcuts-title">
         <div>

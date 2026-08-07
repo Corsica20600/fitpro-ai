@@ -3,6 +3,7 @@ package com.traknio.watch
 import android.content.Context
 import android.os.Build
 import android.os.SystemClock
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -157,6 +158,7 @@ class WatchViewModel(context: Context) : ViewModel() {
             } catch (error: Throwable) {
                 if (isPairingRequired(error)) {
                     tokenStore.clear()
+                    Log.i(TAG, "pairing required from backend; token cleared")
                 }
                 val fallback = _state.value as? WatchScreenState.Ready
                 if (fallback != null) {
@@ -173,6 +175,7 @@ class WatchViewModel(context: Context) : ViewModel() {
 
     private suspend fun ensurePaired() {
         if (!tokenStore.deviceToken().isNullOrBlank()) {
+            Log.i(TAG, "watch token present; verifying account if needed")
             verifyPhoneAccountIfNeeded()
         }
         if (!tokenStore.deviceToken().isNullOrBlank()) return
@@ -180,9 +183,12 @@ class WatchViewModel(context: Context) : ViewModel() {
 
         pairingInProgress = true
         try {
+            Log.i(TAG, "watch token missing; requesting temporary pairing token")
             val temporaryToken = pairingClient.requestTemporaryPairingToken(watchLabel)
+            Log.i(TAG, "temporary pairing token received accountPairingIdPresent=${temporaryToken.accountPairingId.isNotBlank()}")
             val result = api.completePairing(temporaryToken.token, watchLabel)
             tokenStore.save(result.deviceToken, result.accountPairingId)
+            Log.i(TAG, "watch pairing completed")
         } finally {
             pairingInProgress = false
         }
@@ -197,6 +203,7 @@ class WatchViewModel(context: Context) : ViewModel() {
             pairingClient.requestCurrentAccountPairingId()
         }.getOrNull()
         if (!accountPairingId.isNullOrBlank()) {
+            Log.i(TAG, "phone account state received; checking account")
             tokenStore.clearIfAccountChanged(accountPairingId)
         }
     }
@@ -264,3 +271,5 @@ class WatchViewModel(context: Context) : ViewModel() {
         updateDisplayRemaining()
     }
 }
+
+private const val TAG = "WATCH_PAIR"

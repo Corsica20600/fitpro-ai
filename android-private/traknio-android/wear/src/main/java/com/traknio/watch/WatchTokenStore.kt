@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -22,15 +23,18 @@ class WatchTokenStore(context: Context) {
             .putString(KEY_DEVICE_TOKEN, encrypt(deviceToken))
             .putString(KEY_ACCOUNT_PAIRING_ID, accountPairingId)
             .apply()
+        Log.i(TAG, "device token saved accountPairingIdPresent=${accountPairingId.isNotBlank()}")
     }
 
     fun clear() {
         preferences.edit().clear().apply()
+        Log.i(TAG, "device token cleared")
     }
 
     fun clearIfAccountChanged(accountPairingId: String) {
         val current = accountPairingId()
         if (!current.isNullOrBlank() && current != accountPairingId) {
+            Log.i(TAG, "account changed; clearing watch token")
             clear()
         }
     }
@@ -81,5 +85,6 @@ class WatchTokenStore(context: Context) {
         private const val KEY_DEVICE_TOKEN = "device_token"
         private const val KEY_ACCOUNT_PAIRING_ID = "account_pairing_id"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
+        private const val TAG = "WATCH_PAIR"
     }
 }

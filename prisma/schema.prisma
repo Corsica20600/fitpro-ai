@@ -126,6 +126,17 @@ enum MetricType {
   PERFORMANCE
 }
 
+enum CoachWeeklyReportStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum CoachWeeklyReportFeedback {
+  USEFUL
+  NOT_USEFUL
+}
+
 model UserProfile {
   id                            String                  @id @default(cuid())
   displayName                   String
@@ -157,6 +168,7 @@ model UserProfile {
   workoutSessions               WorkoutSession[]
   progressMetrics               ProgressMetric[]
   aiProgramGenerations          AiProgramGeneration[]
+  coachWeeklyReports            CoachWeeklyReport[]
 
   @@index([subscriptionStatus])
 }
@@ -173,6 +185,28 @@ model AiProgramGeneration {
 
   @@index([userProfileId, periodKey, createdAt])
   @@index([periodKey, status])
+}
+
+model CoachWeeklyReport {
+  id            String                    @id @default(cuid())
+  userProfileId String
+  periodKey     String
+  periodStart   DateTime
+  periodEnd     DateTime
+  metrics       Json
+  response      Json?
+  model         String?
+  status        CoachWeeklyReportStatus   @default(PENDING)
+  errorCode     String?
+  feedback      CoachWeeklyReportFeedback?
+  generatedAt   DateTime?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  userProfile   UserProfile               @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([userProfileId, periodKey])
+  @@index([userProfileId, periodEnd])
+  @@index([status, createdAt])
 }
 
 model IntegrationConnection {

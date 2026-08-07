@@ -1,5 +1,6 @@
 package com.traknio.watch
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -52,6 +53,7 @@ class TraknioWatchApi(
     suspend fun completeSession(sessionId: String): WatchPayload = postAction("/api/watch/complete-session", sessionId)
 
     suspend fun completePairing(pairingToken: String, label: String): PairingResult = withContext(Dispatchers.IO) {
+        Log.i(TAG, "pair complete called labelPresent=${label.isNotBlank()}")
         val body = JSONObject()
             .put("pairingToken", pairingToken)
             .put("label", label)
@@ -73,6 +75,7 @@ class TraknioWatchApi(
             val statusCode = connection.responseCode
             val raw = readBody(connection, statusCode)
             val json = JSONObject(raw.ifBlank { "{}" })
+            Log.i(TAG, "pair complete backend response status=$statusCode ok=${statusCode in 200..299}")
             if (statusCode !in 200..299) {
                 throw IllegalStateException(json.optString("error", "Appairage refusé"))
             }
@@ -124,6 +127,7 @@ class TraknioWatchApi(
             val statusCode = connection.responseCode
             val raw = readBody(connection, statusCode)
             val json = JSONObject(raw.ifBlank { "{}" })
+            Log.i(TAG, "watch api response path=$path status=$statusCode ok=${statusCode in 200..299}")
             if (statusCode !in 200..299) {
                 throw IllegalStateException(json.optString("error", "Erreur serveur"))
             }
@@ -172,5 +176,7 @@ data class PairingResult(
     val deviceToken: String,
     val accountPairingId: String,
 )
+
+private const val TAG = "WATCH_PAIR"
 
 private fun String.urlEncode(): String = java.net.URLEncoder.encode(this, Charsets.UTF_8.name())

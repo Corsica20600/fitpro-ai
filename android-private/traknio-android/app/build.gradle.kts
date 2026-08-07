@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.traknio.app"
-    compileSdk = 35
+    compileSdk = 36
 
     fun readLocalProperty(name: String): String? {
         val localProperties = rootProject.file("local.properties")
@@ -55,9 +55,9 @@ android {
     defaultConfig {
         applicationId = "com.traknio.app"
         minSdk = 29
-        targetSdk = 35
-        versionCode = 9
-        versionName = "0.5.2"
+        targetSdk = 36
+        versionCode = 11
+        versionName = "0.5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

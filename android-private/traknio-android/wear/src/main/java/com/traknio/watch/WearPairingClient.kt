@@ -1,6 +1,7 @@
 package com.traknio.watch
 
 import android.content.Context
+import android.util.Log
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
@@ -52,7 +53,9 @@ class WearPairingClient(private val context: Context) {
 
         val listener = MessageClient.OnMessageReceivedListener { event: MessageEvent ->
             if (event.path != responsePath || deferred.isCompleted) return@OnMessageReceivedListener
+            Log.i(TAG, "message received on watch path=$responsePath bytes=${event.data.size}")
             val json = runCatching { JSONObject(String(event.data)) }.getOrElse {
+                Log.w(TAG, "watch response json parse failed path=$responsePath", it)
                 deferred.completeExceptionally(it)
                 return@OnMessageReceivedListener
             }
@@ -62,6 +65,7 @@ class WearPairingClient(private val context: Context) {
         try {
             messageClient.addListener(listener).await()
             val nodes = Wearable.getNodeClient(appContext).connectedNodes.await()
+            Log.i(TAG, "nodes detected count=${nodes.size} requestPath=$requestPath responsePath=$responsePath")
             if (nodes.isEmpty()) {
                 throw IllegalStateException("Téléphone introuvable")
             }
@@ -69,11 +73,15 @@ class WearPairingClient(private val context: Context) {
             val requestBytes = request.toString().toByteArray()
             for (node in nodes) {
                 messageClient.sendMessage(node.id, requestPath, requestBytes).await()
+                Log.i(TAG, "message sent to phone path=$requestPath bytes=${requestBytes.size}")
             }
             return withTimeout(timeoutMs) { deferred.await() }
         } finally {
             messageClient.removeListener(listener)
         }
+    }
+    companion object {
+        private const val TAG = "WATCH_PAIR"
     }
 }
 
