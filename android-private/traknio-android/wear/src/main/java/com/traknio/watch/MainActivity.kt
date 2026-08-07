@@ -324,9 +324,6 @@ private fun CompletedScreen(state: WatchScreenState.Ready, onRefresh: () -> Unit
                 SummaryRow("Durée", formatDuration(summary.durationSeconds))
                 SummaryRow("Volume", "${summary.volumeKg} kg")
                 SummaryRow("Séries", "${summary.sets}")
-                if (summary.calories != null) {
-                    SummaryRow("Calories", "${summary.calories} kcal")
-                }
                 if (summary.levelReached) {
                     SummaryRow("Niveau", "${summary.level}")
                 }
