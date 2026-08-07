@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   closestCenter,
   DndContext,
@@ -22,6 +22,8 @@ import { useRouter } from "next/navigation";
 import { ExerciseVisual } from "@/src/components/exercise/exercise-visual";
 import { BrandSelect } from "@/src/components/ui/brand-select";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
+
+const REORDER_TIP_STORAGE_KEY = "traknio.program-exercise-reorder-tip.seen";
 
 type ExerciseOption = {
   id: string;
@@ -235,12 +237,27 @@ export function ProgramDayExercisesEditor({
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [showReorderTip, setShowReorderTip] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
   );
 
   const ids = useMemo(() => exercises.map((item) => item.id), [exercises]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (window.localStorage.getItem(REORDER_TIP_STORAGE_KEY) !== "true") {
+        setShowReorderTip(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  function dismissReorderTip() {
+    window.localStorage.setItem(REORDER_TIP_STORAGE_KEY, "true");
+    setShowReorderTip(false);
+  }
 
   async function persistMove(exerciseId: string, direction: "up" | "down") {
     const res = await fetch(`/api/programs/${encodeURIComponent(programId)}/exercises/reorder`, {
@@ -392,37 +409,61 @@ export function ProgramDayExercisesEditor({
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      modifiers={[restrictToVerticalAxis]}
-      onDragEnd={(event) => { void onDragEnd(event); }}
-    >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <div className="program-day-list">
-          {replaceFeedback ? (
-            <p
-              className={replaceFeedback.type === "success" ? "status-success" : "status-danger"}
-              role="status"
-              aria-live="polite"
-            >
-              {replaceFeedback.message}
-            </p>
-          ) : null}
-          {exercises.map((ex, idx) => (
-            <SortableExerciseCard
-              key={ex.id}
-              ex={ex}
-              idx={idx}
-              total={exercises.length}
-              exerciseOptions={exerciseOptions}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-              onReplace={onReplace}
-            />
-          ))}
+    <>
+      {showReorderTip ? (
+        <div className="program-reorder-tip-backdrop">
+          <section
+            className="program-reorder-tip"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="program-reorder-tip-title"
+          >
+            <p className="eyebrow">Astuce</p>
+            <h3 id="program-reorder-tip-title">Réorganise ta séance</h3>
+            <p>Maintiens les 6 points pour déplacer un exercice dans ta séance.</p>
+            <PrimaryButton type="button" onClick={dismissReorderTip}>J&apos;ai compris</PrimaryButton>
+          </section>
         </div>
-      </SortableContext>
-    </DndContext>
+      ) : null}
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragEnd={(event) => { void onDragEnd(event); }}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <div className="program-day-list">
+            <p className="program-reorder-hint">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3m6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3M9 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3m6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3M9 15a1.5 1.5 0 1 1 0 3A1.5 1.5 0 0 1 9 15m6 0a1.5 1.5 0 1 1 0 3A1.5 1.5 0 0 1 15 15" />
+              </svg>
+              Maintiens l&apos;icône à 6 points pour déplacer un exercice.
+            </p>
+            {replaceFeedback ? (
+              <p
+                className={replaceFeedback.type === "success" ? "status-success" : "status-danger"}
+                role="status"
+                aria-live="polite"
+              >
+                {replaceFeedback.message}
+              </p>
+            ) : null}
+            {exercises.map((ex, idx) => (
+              <SortableExerciseCard
+                key={ex.id}
+                ex={ex}
+                idx={idx}
+                total={exercises.length}
+                exerciseOptions={exerciseOptions}
+                onUpdate={onUpdate}
+                onDelete={onDelete}
+                onReplace={onReplace}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </>
   );
 }

@@ -298,6 +298,60 @@ h4,
   gap: 8px;
 }
 
+.program-reorder-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 2px;
+  color: #9eb6de;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+.program-reorder-hint svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: #00e0ff;
+  fill: currentColor;
+}
+
+.program-reorder-tip-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 7, 18, .72);
+}
+
+.program-reorder-tip {
+  width: min(100%, 340px);
+  padding: 22px;
+  border: 1px solid rgba(0, 224, 255, .48);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(20, 43, 79, .98), rgba(7, 15, 31, .98));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .58), 0 0 26px rgba(0, 224, 255, .12);
+}
+
+.program-reorder-tip h3 {
+  margin: 5px 0 8px;
+  color: #f5f8ff;
+  font-family: var(--font-raleway), sans-serif;
+  font-size: 1.2rem;
+}
+
+.program-reorder-tip > p:not(.eyebrow) {
+  margin: 0 0 18px;
+  color: #b7c9ea;
+  line-height: 1.5;
+}
+
+.program-reorder-tip .primary-button {
+  width: 100%;
+}
+
 .program-day-item {
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
@@ -353,12 +407,12 @@ h4,
 }
 
 .reorder-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  border: 1px solid rgba(111, 152, 221, .5);
-  background: linear-gradient(180deg, rgba(17, 31, 55, .95), rgba(12, 22, 40, .95));
-  color: #dbe9ff;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 224, 255, .55);
+  background: linear-gradient(180deg, rgba(18, 49, 83, .98), rgba(10, 24, 46, .98));
+  color: #7cecff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -366,9 +420,16 @@ h4,
 }
 
 .reorder-btn svg {
-  width: 15px;
-  height: 15px;
+  width: 19px;
+  height: 19px;
   fill: currentColor;
+}
+
+.reorder-btn:hover,
+.reorder-btn:focus-visible {
+  border-color: #c13cff;
+  color: #f4eaff;
+  box-shadow: 0 0 0 3px rgba(193, 60, 255, .18), 0 0 16px rgba(0, 224, 255, .18);
 }
 
 .reorder-btn:disabled {
