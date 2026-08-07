@@ -8,6 +8,7 @@ type RestTimerCardProps = {
   onAdd15: () => void;
   onRemove15: () => void;
   onSkip: () => void;
+  restActionPending?: boolean;
 };
 
 function formatTimer(seconds: number) {
@@ -22,6 +23,7 @@ export function RestTimerCard({
   onAdd15,
   onRemove15,
   onSkip,
+  restActionPending = false,
 }: RestTimerCardProps) {
   const percent = totalSeconds > 0 ? Math.max(0, Math.min(100, (remainingSeconds / totalSeconds) * 100)) : 0;
 
@@ -36,9 +38,9 @@ export function RestTimerCard({
       <p className="workout-active-set">{context}</p>
       <p className="muted">{nextLabel}</p>
       <div className="rest-timer-card__actions">
-        <button type="button" className="ghost-btn" onClick={onRemove15}>-15 s</button>
-        <button type="button" className="ghost-btn" onClick={onAdd15}>+15 s</button>
-        <button type="button" className="outline-link" onClick={onSkip}>Passer</button>
+        <button type="button" className="ghost-btn" onClick={onRemove15} disabled={restActionPending}>-15 s</button>
+        <button type="button" className="ghost-btn" onClick={onAdd15} disabled={restActionPending}>+15 s</button>
+        <button type="button" className="outline-link" onClick={onSkip} disabled={restActionPending}>Passer</button>
       </div>
     </section>
   );

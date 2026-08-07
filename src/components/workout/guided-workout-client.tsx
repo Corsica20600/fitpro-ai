@@ -161,6 +161,8 @@ export function GuidedWorkoutClient({
   const [weightByKey, setWeightByKey] = useState<Record<string, number>>({});
   const [plannedSetsByExercise, setPlannedSetsByExercise] = useState<Record<string, number>>({});
   const [justValidated, setJustValidated] = useState(false);
+  const [isSetValidationPending, setIsSetValidationPending] = useState(false);
+  const [isRestActionPending, setIsRestActionPending] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const lastSyncedWatchPositionRef = useRef<string>("");
@@ -170,6 +172,8 @@ export function GuidedWorkoutClient({
   const prevRestRemainingRef = useRef<number>(0);
   const skipRestRequestedRef = useRef(false);
   const surfaceTapReadyAtRef = useRef<number>(0);
+  const setValidationInFlightRef = useRef(false);
+  const restActionInFlightRef = useRef(false);
 
   const computeRemainingFromEndsAt = useCallback((endsAt: number) => {
     return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
@@ -393,7 +397,7 @@ export function GuidedWorkoutClient({
         };
         const state = data.payload;
 
-        if (!alive || !state) return;
+        if (!alive || !state || setValidationInFlightRef.current || restActionInFlightRef.current) return;
         if (state.status === "COMPLETED") {
           clearRestTimer();
           setEnding(true);
@@ -521,89 +525,109 @@ export function GuidedWorkoutClient({
   }, []);
 
   async function onValidateSet(setIndex: number, plannedReps: number) {
+    if (setValidationInFlightRef.current) return;
+    setValidationInFlightRef.current = true;
+    setIsSetValidationPending(true);
     unlockRestAudio();
     const key = `${exercise.id}:${setIndex}`;
     const actualReps = Math.max(1, repsByKey[key] ?? plannedReps);
     const actualWeightKg = Math.max(0, weightByKey[key] ?? exercise.plannedWeightKg ?? 0);
+    const validatedRestSeconds = restChoice;
+    const previousRestEndsAt = restEndsAt;
+    const previousRestRemaining = restRemaining;
 
-    const response = await fetch("/api/workout/log-set", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        exerciseId: exercise.id,
-        programExerciseId: exercise.programExerciseId,
-        currentExerciseIndex: exerciseIndex,
-        totalSetsForExercise: setRows.length,
-        setIndex,
-        targetReps: plannedReps,
-        actualReps,
-        actualWeightKg,
-        restSeconds: restChoice,
-      }),
-    });
+    // Start locally so the rest screen never waits for the set persistence round trip.
+    startRestTimer(validatedRestSeconds);
 
-    if (!response.ok) return;
-    const data = await response.json();
-    const saved = data.set as CompletedSet;
-    setJustValidated(true);
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate?.(28);
-    }
-
-    setCompletedSets((prev) => {
-      const withoutSame = prev.filter((item) => !(item.exerciseId === saved.exerciseId && item.setIndex === saved.setIndex));
-      return [...withoutSame, saved];
-    });
-    const isLastSetForExercise = setIndex >= setRows.length;
-    const optimisticExerciseIndex = isLastSetForExercise
-      ? Math.max(0, Math.min(exercises.length - 1, exerciseIndex + 1))
-      : exerciseIndex;
-    const optimisticSetIndex = isLastSetForExercise ? 1 : (setIndex + 1);
-    startRestTimer(restChoice);
-    if (isLastSetForExercise && exerciseIndex < exercises.length - 1) {
-      setExerciseIndex(optimisticExerciseIndex);
-      setRestChoice(getPlannedRestForIndex(optimisticExerciseIndex));
-    }
-    pushSyncState(
-      optimisticExerciseIndex,
-      optimisticSetIndex,
-      restChoice,
-      isLastSetForExercise && exerciseIndex >= exercises.length - 1 ? "PAUSED" : "ACTIVE",
-    );
     try {
-      const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
-      if (strictStateRes.ok) {
-        const strictData = await strictStateRes.json() as {
-          payload?: { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
-        };
-        const strictState = strictData.payload;
-        if (!strictState) return;
-        let strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
-        const strictSetIndex = Math.max(1, Number(strictState.setIndex ?? (setIndex + 1)));
-        const strictRest = Math.max(0, Number(strictState.restRemaining ?? restChoice));
-        if (isLastSetForExercise && strictExerciseIndex < optimisticExerciseIndex) {
-          strictExerciseIndex = optimisticExerciseIndex;
-        }
-        setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
-        setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
-        setRestRemaining(() => {
-          if (strictRest === 0 && skipRestRequestedRef.current) {
-            skipRestRequestedRef.current = false;
-            return 0;
+      const response = await fetch("/api/workout/log-set", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          exerciseId: exercise.id,
+          programExerciseId: exercise.programExerciseId,
+          currentExerciseIndex: exerciseIndex,
+          totalSetsForExercise: setRows.length,
+          setIndex,
+          targetReps: plannedReps,
+          actualReps,
+          actualWeightKg,
+          restSeconds: validatedRestSeconds,
+        }),
+      });
+
+      if (!response.ok) {
+        setRestEndsAt(previousRestEndsAt);
+        setRestRemaining(previousRestRemaining);
+        return;
+      }
+      const data = await response.json();
+      const saved = data.set as CompletedSet;
+      setJustValidated(true);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(28);
+      }
+
+      setCompletedSets((prev) => {
+        const withoutSame = prev.filter((item) => !(item.exerciseId === saved.exerciseId && item.setIndex === saved.setIndex));
+        return [...withoutSame, saved];
+      });
+      const isLastSetForExercise = setIndex >= setRows.length;
+      const optimisticExerciseIndex = isLastSetForExercise
+        ? Math.max(0, Math.min(exercises.length - 1, exerciseIndex + 1))
+        : exerciseIndex;
+      const optimisticSetIndex = isLastSetForExercise ? 1 : (setIndex + 1);
+      if (isLastSetForExercise && exerciseIndex < exercises.length - 1) {
+        setExerciseIndex(optimisticExerciseIndex);
+        setRestChoice(getPlannedRestForIndex(optimisticExerciseIndex));
+      }
+      pushSyncState(
+        optimisticExerciseIndex,
+        optimisticSetIndex,
+        validatedRestSeconds,
+        isLastSetForExercise && exerciseIndex >= exercises.length - 1 ? "PAUSED" : "ACTIVE",
+      );
+      try {
+        const strictStateRes = await fetch(`/api/watch/current-session?sessionId=${encodeURIComponent(sessionId)}`, { cache: "no-store" });
+        if (strictStateRes.ok) {
+          const strictData = await strictStateRes.json() as {
+            payload?: { exerciseIndex?: number; setIndex?: number; restRemaining?: number };
+          };
+          const strictState = strictData.payload;
+          if (!strictState) return;
+          let strictExerciseIndex = Math.max(1, Number(strictState.exerciseIndex ?? 1)) - 1;
+          const strictSetIndex = Math.max(1, Number(strictState.setIndex ?? (setIndex + 1)));
+          const strictRest = Math.max(0, Number(strictState.restRemaining ?? validatedRestSeconds));
+          if (isLastSetForExercise && strictExerciseIndex < optimisticExerciseIndex) {
+            strictExerciseIndex = optimisticExerciseIndex;
           }
-          return strictRest;
-        });
-        if (strictRest > 0) {
-          const strictEndsAt = Date.now() + strictRest * 1000;
-          setRestEndsAt(strictEndsAt);
-        } else {
-          setRestEndsAt(null);
+          setExerciseIndex(Math.max(0, Math.min(exercises.length - 1, strictExerciseIndex)));
+          setRestChoice(getPlannedRestForIndex(strictExerciseIndex));
+          setRestRemaining(() => {
+            if (strictRest === 0 && skipRestRequestedRef.current) {
+              skipRestRequestedRef.current = false;
+              return 0;
+            }
+            return strictRest;
+          });
+          if (strictRest > 0) {
+            const strictEndsAt = Date.now() + strictRest * 1000;
+            setRestEndsAt(strictEndsAt);
+          } else {
+            setRestEndsAt(null);
+          }
+          lastSyncedWatchPositionRef.current = `${strictExerciseIndex}:${strictSetIndex}:${strictRest}`;
         }
-        lastSyncedWatchPositionRef.current = `${strictExerciseIndex}:${strictSetIndex}:${strictRest}`;
+      } catch {
+        // The local rest timer remains valid if the follow-up sync read is unavailable.
       }
     } catch {
-      // No-op: UI keeps last known local state if strict read fails.
+      setRestEndsAt(previousRestEndsAt);
+      setRestRemaining(previousRestRemaining);
+    } finally {
+      setValidationInFlightRef.current = false;
+      setIsSetValidationPending(false);
     }
   }
 
@@ -672,6 +696,9 @@ export function GuidedWorkoutClient({
   }
 
   async function onAdjustRest(deltaSeconds: number) {
+    if (restActionInFlightRef.current) return;
+    restActionInFlightRef.current = true;
+    setIsRestActionPending(true);
     unlockRestAudio();
     const currentRemaining = Math.max(0, restRemaining);
     const optimisticRemaining = Math.max(0, currentRemaining + deltaSeconds);
@@ -681,7 +708,6 @@ export function GuidedWorkoutClient({
       clearRestTimer();
       skipRestRequestedRef.current = true;
     }
-    pushSyncState(exerciseIndex, Math.max(1, nextSetIndex), optimisticRemaining);
     lastSyncedWatchPositionRef.current = `${exerciseIndex}:${Math.max(1, nextSetIndex)}:${optimisticRemaining}`;
 
     try {
@@ -705,6 +731,9 @@ export function GuidedWorkoutClient({
       skipRestRequestedRef.current = false;
     } catch {
       // Keep the local timer usable even if sync is temporarily unavailable.
+    } finally {
+      restActionInFlightRef.current = false;
+      setIsRestActionPending(false);
     }
   }
 
@@ -953,6 +982,7 @@ export function GuidedWorkoutClient({
           onAdd15={() => void onAdjustRest(15)}
           onRemove15={() => void onAdjustRest(-15)}
           onSkip={onSkipRest}
+          restActionPending={isRestActionPending}
         />
         <NextExerciseCard exercise={nextExercise} />
       </section>
@@ -1072,17 +1102,17 @@ export function GuidedWorkoutClient({
           type="button"
           className="workout-validate-main premium-glow"
           onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)}
-          disabled={!activeSet}
+          disabled={!activeSet || isSetValidationPending}
         >
           Série terminée
         </PrimaryAction>
       </CurrentExerciseCard>
       <NextExerciseCard exercise={nextExercise} />
       <section className="workout-secondary-actions">
-        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet}>
+        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet || isSetValidationPending}>
           Modifier / revalider
         </button>
-        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet}>
+        <button type="button" className="outline-link" onClick={() => activeSet && onValidateSet(activeSet.setIndex, activeSet.plannedReps)} disabled={!activeSet || isSetValidationPending}>
           Passer la série
         </button>
         <button type="button" className="outline-link" onClick={() => void openReplacementPanel()}>
