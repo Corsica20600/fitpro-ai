@@ -5,8 +5,10 @@ import Link from "next/link";
 import Script from "next/script";
 import { auth } from "@/auth";
 import { BottomNav } from "@/src/components/ui/bottom-nav";
+import { TraknioAssistant } from "@/src/components/assistant/traknio-assistant";
 import { BRAND } from "@/src/lib/brand";
 import { absoluteUrl, getSiteUrl } from "@/src/lib/site-url";
+import { isTraknioAssistantEnabled } from "@/src/server/assistant/assistant-access";
 import "./globals.css";
 
 const exo2 = Exo_2({ variable: "--font-exo-2", subsets: ["latin"], display: "swap" });
@@ -110,6 +112,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             ) : null}
           </header>
           <main className="screen">{children}</main>
+          {isConnected && isTraknioAssistantEnabled() ? <TraknioAssistant /> : null}
           {isConnected ? <BottomNav /> : null}
         </div>
         <Script id="pwa-sw-register" strategy="afterInteractive">

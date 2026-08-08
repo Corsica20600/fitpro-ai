@@ -178,6 +178,8 @@ model UserProfile {
   progressPhotos                ProgressPhoto[]
   aiProgramGenerations          AiProgramGeneration[]
   coachWeeklyReports            CoachWeeklyReport[]
+  assistantUnansweredQuestions  AssistantUnansweredQuestion[]
+  assistantUsageWindows         AssistantUsageWindow[]
 
   @@index([subscriptionStatus])
 }
@@ -216,6 +218,46 @@ model CoachWeeklyReport {
   @@unique([userProfileId, periodKey])
   @@index([userProfileId, periodEnd])
   @@index([status, createdAt])
+}
+
+model KnowledgeArticle {
+  id           String   @id @default(cuid())
+  title        String
+  category     String
+  content      String
+  keywords     String[] @default([])
+  routeContext String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([active, routeContext])
+  @@index([category, active])
+}
+
+model AssistantUnansweredQuestion {
+  id            String       @id @default(cuid())
+  userProfileId String?
+  question      String
+  routeContext  String?
+  createdAt     DateTime     @default(now())
+  resolved      Boolean      @default(false)
+  userProfile   UserProfile? @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
+
+  @@index([resolved, createdAt])
+  @@index([userProfileId, createdAt])
+}
+
+model AssistantUsageWindow {
+  id            String      @id @default(cuid())
+  userProfileId String
+  windowStart   DateTime
+  requestCount  Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([userProfileId, windowStart])
 }
 
 model BodyMeasurement {
