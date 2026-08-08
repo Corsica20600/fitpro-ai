@@ -43,6 +43,27 @@ function getProgressPhotoFailureReason(error: unknown) {
   return error.name || "unexpected";
 }
 
+function getSafeProgressPhotoFailureDetails(error: unknown) {
+  const record = error && typeof error === "object" ? error as Record<string, unknown> : null;
+  const rawMessage = error instanceof Error ? error.message : "";
+  // Provider messages can contain URLs or authorization details. Keep only a compact diagnostic.
+  const message = rawMessage
+    .replace(/https?:\/\/\S+/gi, "[url]")
+    .replace(/\b(?:token|authorization|bearer)\b[^\s,;]*/gi, "[redacted]")
+    .slice(0, 240);
+
+  return {
+    reason: getProgressPhotoFailureReason(error),
+    errorCode: typeof record?.code === "string" ? record.code.slice(0, 80) : null,
+    statusCode: typeof record?.statusCode === "number"
+      ? record.statusCode
+      : typeof record?.status === "number"
+        ? record.status
+        : null,
+    message: message || null,
+  };
+}
+
 async function getPrivateBlobOidcOptions(): Promise<BlobOidcOptions> {
   const storeId = process.env.BLOB_STORE_ID?.trim();
   if (!storeId) throw new Error("BLOB_STORE_NOT_CONFIGURED");
@@ -188,7 +209,7 @@ export async function createProgressPhoto(
     console.error("PROGRESS_PHOTO_PIPELINE_FAILED", {
       operation: "create",
       stage,
-      reason: getProgressPhotoFailureReason(error),
+      ...getSafeProgressPhotoFailureDetails(error),
     });
     if (uploadedBlobPath && oidc) {
       try {
