@@ -17,6 +17,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +39,9 @@ class MainActivity : AppCompatActivity() {
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val callback = fileChooserCallback ?: return@registerForActivityResult
         fileChooserCallback = null
-        callback.onReceiveValue(extractSelectedImageUris(result.resultCode, result.data))
+        val selectedUris = extractSelectedImageUris(result.resultCode, result.data)
+        logFileChooser("result resultCode=${result.resultCode} delivered=${selectedUris?.size ?: 0}")
+        callback.onReceiveValue(selectedUris)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,6 +115,7 @@ class MainActivity : AppCompatActivity() {
         binding.webViewTraknio.settings.domStorageEnabled = true
         binding.webViewTraknio.settings.databaseEnabled = true
         binding.webViewTraknio.settings.loadsImagesAutomatically = true
+        binding.webViewTraknio.settings.allowContentAccess = true
         binding.webViewTraknio.setBackgroundColor(Color.rgb(10, 19, 40))
         binding.webViewTraknio.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -131,9 +135,11 @@ class MainActivity : AppCompatActivity() {
                 if (filePathCallback == null) return false
 
                 return runCatching {
+                    logFileChooser("request acceptTypes=${fileChooserParams?.acceptTypes?.joinToString() ?: "default"}")
                     fileChooserLauncher.launch(buildImagePickerIntent(fileChooserParams))
                     true
                 }.getOrElse {
+                    logFileChooser("launch_failed error=${it.javaClass.simpleName}")
                     fileChooserCallback = null
                     filePathCallback.onReceiveValue(null)
                     false
@@ -234,7 +240,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun extractSelectedImageUris(resultCode: Int, data: Intent?): Array<Uri>? {
-        if (resultCode != Activity.RESULT_OK || data == null) return null
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            logFileChooser("result_cancelled resultCode=$resultCode")
+            return null
+        }
         val candidates = buildList {
             data.data?.let(::add)
             data.clipData?.let { clip ->
@@ -245,9 +254,28 @@ class MainActivity : AppCompatActivity() {
         }
         return candidates
             .distinct()
-            .filter { uri -> contentResolver.getType(uri)?.lowercase() in supportedImageMimeTypes }
+            .filter { uri ->
+                val mimeType = normalizeImageMimeType(contentResolver.getType(uri))
+                // DocumentsUI may omit the MIME type for a valid content:// URI. Let WebView pass it
+                // through; the browser and server signature checks remain the final validation.
+                val accepted = mimeType == null || mimeType in supportedImageMimeTypes
+                logFileChooser("uri_received mime=${mimeType ?: "unknown"} accepted=$accepted")
+                accepted
+            }
             .toTypedArray()
             .takeIf { it.isNotEmpty() }
+    }
+
+    private fun normalizeImageMimeType(mimeType: String?): String? = when (mimeType?.lowercase()) {
+        "image/jpg", "image/pjpeg" -> "image/jpeg"
+        "image/x-png" -> "image/png"
+        else -> mimeType?.lowercase()
+    }
+
+    private fun logFileChooser(message: String) {
+        if (BuildConfig.DEBUG) {
+            Log.d("TraknioPhoto", "FILE_CHOOSER $message")
+        }
     }
 
     override fun onDestroy() {

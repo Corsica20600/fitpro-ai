@@ -12,9 +12,15 @@ export type ProgressPhotoViewValue = (typeof PROGRESS_PHOTO_VIEWS)[number];
 const MAX_SERVER_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_INPUT_PIXELS = 40_000_000;
 const MAX_IMAGE_EDGE = 1600;
+const isProgressPhotoDebug = process.env.NODE_ENV !== "production";
 
 type ProfileRef = { id: string };
 type BlobOidcOptions = { storeId: string; oidcToken: string };
+
+function logProgressPhotoPipeline(stage: string, details: Record<string, unknown> = {}) {
+  if (!isProgressPhotoDebug) return;
+  console.info("PROGRESS_PHOTO_PIPELINE", { stage, ...details });
+}
 
 async function getPrivateBlobOidcOptions(): Promise<BlobOidcOptions> {
   const storeId = process.env.BLOB_STORE_ID?.trim();
@@ -94,6 +100,14 @@ export async function createProgressPhoto(
   profile: ProfileRef,
   input: { file: File; recordedAt: string; view: string },
 ) {
+  let stage = "validation";
+  let oidc: BlobOidcOptions | null = null;
+  let uploadedBlobPath: string | null = null;
+  logProgressPhotoPipeline("server_validation_started", {
+    fileNameLength: input.file.name.length,
+    mimeType: input.file.type || "unknown",
+    byteSize: input.file.size,
+  });
   if (!PROGRESS_PHOTO_VIEWS.includes(input.view as ProgressPhotoViewValue)) throw new Error("INVALID_PHOTO_VIEW");
   if (!input.file.size || input.file.size > MAX_SERVER_UPLOAD_BYTES) throw new Error("INVALID_PHOTO_SIZE");
   if (!["image/jpeg", "image/png", "image/webp"].includes(input.file.type)) {
@@ -101,33 +115,46 @@ export async function createProgressPhoto(
   }
 
   const recordedAt = parseRecordedAt(input.recordedAt);
-  const source = Buffer.from(await input.file.arrayBuffer());
-  const detectedMimeType = detectProgressPhotoMimeType(source);
-  if (!detectedMimeType || detectedMimeType !== input.file.type) throw new Error("INVALID_PHOTO_SIGNATURE");
-
-  const optimized = await sharp(source, { limitInputPixels: MAX_INPUT_PIXELS, failOn: "error" })
-    .rotate()
-    .resize(MAX_IMAGE_EDGE, MAX_IMAGE_EDGE, { fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 82, effort: 4 })
-    .toBuffer({ resolveWithObject: true });
-
-  const oidc = await getPrivateBlobOidcOptions();
-  const blob = await put(`progress-photos/${randomUUID()}.webp`, optimized.data, {
-    ...oidc,
-    access: "private",
-    addRandomSuffix: false,
-    contentType: "image/webp",
-    cacheControlMaxAge: 60,
-    maximumSizeInBytes: MAX_SERVER_UPLOAD_BYTES,
-  });
-
   try {
+    stage = "read_source";
+    const source = Buffer.from(await input.file.arrayBuffer());
+    const detectedMimeType = detectProgressPhotoMimeType(source);
+    if (!detectedMimeType || detectedMimeType !== input.file.type) throw new Error("INVALID_PHOTO_SIGNATURE");
+    logProgressPhotoPipeline("server_signature_verified", { mimeType: detectedMimeType, byteSize: source.byteLength });
+
+    stage = "optimize";
+    const optimized = await sharp(source, { limitInputPixels: MAX_INPUT_PIXELS, failOn: "error" })
+      .rotate()
+      .resize(MAX_IMAGE_EDGE, MAX_IMAGE_EDGE, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82, effort: 4 })
+      .toBuffer({ resolveWithObject: true });
+    logProgressPhotoPipeline("server_optimized", {
+      byteSize: optimized.info.size,
+      width: optimized.info.width ?? null,
+      height: optimized.info.height ?? null,
+    });
+
+    stage = "blob_upload";
+    oidc = await getPrivateBlobOidcOptions();
+    const blob = await put(`progress-photos/${randomUUID()}.webp`, optimized.data, {
+      ...oidc,
+      access: "private",
+      addRandomSuffix: false,
+      contentType: "image/webp",
+      cacheControlMaxAge: 60,
+      maximumSizeInBytes: MAX_SERVER_UPLOAD_BYTES,
+    });
+    const blobPath = blob.url;
+    uploadedBlobPath = blobPath;
+    logProgressPhotoPipeline("server_blob_uploaded", { byteSize: optimized.info.size });
+
+    stage = "metadata_create";
     const photo = await prisma.progressPhoto.create({
       data: {
         userProfileId: profile.id,
         recordedAt,
         view: input.view as ProgressPhotoViewValue,
-        blobPath: blob.url,
+        blobPath,
         mimeType: "image/webp",
         byteSize: optimized.info.size,
         width: optimized.info.width ?? null,
@@ -136,10 +163,13 @@ export async function createProgressPhoto(
     });
     return toProgressPhotoItem(photo);
   } catch (error) {
-    try {
-      await deleteBlobIfPresent(blob.url, oidc);
-    } catch {
-      console.error("PROGRESS_PHOTO_ORPHAN_CLEANUP_FAILED", { operation: "create" });
+    logProgressPhotoPipeline("server_pipeline_failed", { stage, code: error instanceof Error ? error.message : "unknown" });
+    if (uploadedBlobPath && oidc) {
+      try {
+        await deleteBlobIfPresent(uploadedBlobPath, oidc);
+      } catch {
+        console.error("PROGRESS_PHOTO_ORPHAN_CLEANUP_FAILED", { operation: "create" });
+      }
     }
     throw error;
   }

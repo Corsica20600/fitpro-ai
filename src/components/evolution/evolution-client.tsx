@@ -78,6 +78,54 @@ const PHOTO_VIEWS: Array<{ value: ProgressPhotoView; label: string }> = [
 ];
 const MAX_SOURCE_PHOTO_BYTES = 8 * 1024 * 1024;
 const MAX_SERVER_PHOTO_BYTES = 4 * 1024 * 1024;
+const isProgressPhotoDebug = process.env.NODE_ENV !== "production";
+
+function describePhotoFile(file: File) {
+  const extension = file.name.includes(".") ? file.name.split(".").pop()?.toLowerCase() ?? "" : "";
+  return {
+    extension,
+    fileNameLength: file.name.length,
+    mimeType: file.type || "unknown",
+    byteSize: file.size,
+  };
+}
+
+function logProgressPhotoPipeline(stage: string, details: Record<string, unknown> = {}) {
+  if (!isProgressPhotoDebug) return;
+  console.info("PROGRESS_PHOTO_PIPELINE", { stage, ...details });
+}
+
+function getPhotoErrorCode(error: unknown) {
+  return error instanceof Error && error.message ? error.message : "photo_upload_failed";
+}
+
+function isSupportedSourcePhotoMimeType(mimeType: string) {
+  return !mimeType || ["image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/x-png", "image/webp"].includes(mimeType.toLowerCase());
+}
+
+function getPhotoErrorMessage(code: string) {
+  if (code === "photo_too_large" || code === "photo_too_large_after_prepare") {
+    return "Cette photo reste trop volumineuse après optimisation. Choisis une image de moins de 8 Mo.";
+  }
+  if (["invalid_photo_type", "INVALID_PHOTO_MIME", "INVALID_PHOTO_SIGNATURE", "photo_image_load_failed"].includes(code)) {
+    return "Cette photo n'est pas un JPEG, PNG ou WebP valide. Choisis un autre fichier puis réessaie.";
+  }
+  if (code.startsWith("photo_prepare")) {
+    return "La photo n'a pas pu être préparée sur cet appareil. Réessaie avec une autre image.";
+  }
+  return "La photo n'a pas pu être ajoutée à ta galerie privée. Réessaie dans un instant.";
+}
+
+function loadImageForPhotoPreparation(sourceUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image();
+    image.onload = () => image.naturalWidth > 0 && image.naturalHeight > 0
+      ? resolve(image)
+      : reject(new Error("photo_image_load_failed"));
+    image.onerror = () => reject(new Error("photo_image_load_failed"));
+    image.src = sourceUrl;
+  });
+}
 
 function getPhotoViewLabel(view: ProgressPhotoView) {
   return PHOTO_VIEWS.find((item) => item.value === view)?.label ?? "Libre";
@@ -99,9 +147,11 @@ function measurementSummary(measurement: EvolutionOverview["measurements"][numbe
 async function preparePhotoForPrivateUpload(source: File) {
   const sourceUrl = URL.createObjectURL(source);
   try {
-    const image = new window.Image();
-    image.src = sourceUrl;
-    await image.decode();
+    logProgressPhotoPipeline("prepare_started", describePhotoFile(source));
+    // `Image.decode()` can reject for content:// files in Android WebView even when onload succeeds.
+    // Loading through the image event is supported by browsers and WebView alike.
+    const image = await loadImageForPhotoPreparation(sourceUrl);
+    logProgressPhotoPipeline("image_loaded", { width: image.naturalWidth, height: image.naturalHeight });
 
     const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
     const canvas = document.createElement("canvas");
@@ -110,14 +160,20 @@ async function preparePhotoForPrivateUpload(source: File) {
     const context = canvas.getContext("2d");
     if (!context) throw new Error("photo_prepare_failed");
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    logProgressPhotoPipeline("canvas_ready", { width: canvas.width, height: canvas.height });
 
     for (const quality of [0.86, 0.76, 0.66, 0.56]) {
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
       if (blob && blob.size <= MAX_SERVER_PHOTO_BYTES) {
-        return new File([blob], "progress-photo.webp", { type: "image/webp" });
+        const prepared = new File([blob], "progress-photo.webp", { type: "image/webp" });
+        logProgressPhotoPipeline("image_prepared", { mimeType: prepared.type, byteSize: prepared.size, quality });
+        return prepared;
       }
     }
     throw new Error("photo_too_large_after_prepare");
+  } catch (error) {
+    logProgressPhotoPipeline("prepare_failed", { code: getPhotoErrorCode(error) });
+    throw error;
   } finally {
     URL.revokeObjectURL(sourceUrl);
   }
@@ -141,6 +197,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
   const [draftWeightKg, setDraftWeightKg] = useState("");
   const [draftFatMassKg, setDraftFatMassKg] = useState("");
   const measurementSubmissionInFlight = useRef(false);
+  const photoUploadInFlight = useRef(false);
 
   useEffect(() => () => {
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
@@ -234,9 +291,15 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
     setPhotoPreviewUrl(null);
     setPhotoFile(null);
-    if (!file) return;
+    if (!file) {
+      logProgressPhotoPipeline("selection_cancelled");
+      return;
+    }
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > MAX_SOURCE_PHOTO_BYTES) {
+    logProgressPhotoPipeline("file_selected", describePhotoFile(file));
+
+    if (!isSupportedSourcePhotoMimeType(file.type) || file.size > MAX_SOURCE_PHOTO_BYTES) {
+      logProgressPhotoPipeline("selection_rejected", describePhotoFile(file));
       setError("Choisis une image JPEG, PNG ou WebP de 8 Mo maximum.");
       event.target.value = "";
       return;
@@ -250,9 +313,10 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
 
   async function uploadPhoto(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!photoFile || isUploadingPhoto) return;
+    if (!photoFile || isUploadingPhoto || photoUploadInFlight.current) return;
     const form = event.currentTarget;
 
+    photoUploadInFlight.current = true;
     setIsUploadingPhoto(true);
     setError(null);
     try {
@@ -261,10 +325,12 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
       formData.set("file", uploadFile);
       formData.set("recordedAt", photoDate);
       formData.set("view", photoView);
+      logProgressPhotoPipeline("upload_started", { mimeType: uploadFile.type, byteSize: uploadFile.size });
       const response = await fetch("/api/evolution/photos", { method: "POST", body: formData });
-      const payload = await response.json().catch(() => null) as { ok?: boolean; photo?: ProgressPhotoItem } | null;
+      const payload = await response.json().catch(() => null) as { ok?: boolean; error?: string; photo?: ProgressPhotoItem } | null;
       const photo = payload?.photo;
-      if (!response.ok || !payload?.ok || !photo) throw new Error("photo_upload_failed");
+      logProgressPhotoPipeline("upload_response", { status: response.status, ok: payload?.ok === true, error: payload?.error ?? null });
+      if (!response.ok || !payload?.ok || !photo) throw new Error(payload?.error ?? "photo_upload_failed");
       setOverview((current) => ({ ...current, photos: [photo, ...current.photos], galleryCount: current.galleryCount + 1 }));
       if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
       setPhotoPreviewUrl(null);
@@ -272,10 +338,13 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
       form.reset();
       setSuccess("Photo ajoutée à ta galerie privée.");
       void refreshOverview().catch(() => undefined);
-    } catch {
-      setError("La photo n'a pas pu être préparée ou ajoutée. Vérifie le fichier puis réessaie.");
+    } catch (error) {
+      const code = getPhotoErrorCode(error);
+      logProgressPhotoPipeline("upload_failed", { code });
+      setError(getPhotoErrorMessage(code));
     } finally {
       setIsUploadingPhoto(false);
+      photoUploadInFlight.current = false;
     }
   }
 
