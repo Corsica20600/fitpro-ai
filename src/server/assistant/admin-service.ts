@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { parseAssistantArticleInput } from "./admin-validation";
 import { ASSISTANT_ARTICLE_PROPOSALS, type AssistantArticleProposal } from "./admin-proposals";
+import { findLegacyProposalProgress } from "./admin-proposal-progress";
 
 const articleSelect = {
   id: true,
@@ -66,8 +67,20 @@ export async function getAssistantAdminArticles(input?: {
       select: { proposalId: true, status: true, processedAt: true, articleId: true },
     }),
   ]);
+  const legacyProgress = findLegacyProposalProgress(ASSISTANT_ARTICLE_PROPOSALS, articles, proposalProgress);
+  const resolvedProposalProgress = legacyProgress.length > 0
+    ? await prisma.$transaction(async (tx) => {
+      await tx.assistantArticleProposalProgress.createMany({
+        data: legacyProgress,
+        skipDuplicates: true,
+      });
+      return tx.assistantArticleProposalProgress.findMany({
+        select: { proposalId: true, status: true, processedAt: true, articleId: true },
+      });
+    })
+    : proposalProgress;
   const categories = [...new Set(articles.map((article) => article.category))].sort((a, b) => a.localeCompare(b, "fr"));
-  const progressByProposalId = new Map(proposalProgress.map((progress) => [progress.proposalId, progress]));
+  const progressByProposalId = new Map(resolvedProposalProgress.map((progress) => [progress.proposalId, progress]));
   return {
     articles: articles.map(toArticleDto),
     categories,
