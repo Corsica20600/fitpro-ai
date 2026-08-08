@@ -1,4 +1,5 @@
 import { prisma } from "@/src/lib/prisma";
+import { calculateBodyFatPercentage } from "@/src/lib/body-measurements";
 import {
   BODY_MEASUREMENT_FIELDS,
   type BodyMeasurementField,
@@ -20,7 +21,8 @@ const FIELD_DETAILS: Record<BodyMeasurementField, { label: string; unit: string 
   hipsCm: { label: "Hanches", unit: "cm" },
   leftCalfCm: { label: "Mollet gauche", unit: "cm" },
   rightCalfCm: { label: "Mollet droit", unit: "cm" },
-  bodyFatPercentage: { label: "Masse grasse", unit: "%" },
+  fatMassKg: { label: "Masse grasse", unit: "kg" },
+  bodyFatPercentage: { label: "Masse grasse estimée", unit: "%" },
 };
 
 type EvolutionProfile = {
@@ -125,6 +127,9 @@ export async function createBodyMeasurement(profile: EvolutionProfile, input: Bo
   const measurementData = Object.fromEntries(
     BODY_MEASUREMENT_FIELDS.map((field) => [field, input[field] ?? null]),
   ) as Record<BodyMeasurementField, number | null>;
+
+  const calculatedBodyFatPercentage = calculateBodyFatPercentage(measurementData.weightKg, measurementData.fatMassKg);
+  if (calculatedBodyFatPercentage != null) measurementData.bodyFatPercentage = calculatedBodyFatPercentage;
 
   const measurement = await prisma.$transaction(async (tx) => {
     const created = await tx.bodyMeasurement.create({

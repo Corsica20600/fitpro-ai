@@ -17,6 +17,7 @@ const LIMITS = {
   hipsCm: [20, 250],
   leftCalfCm: [10, 100],
   rightCalfCm: [10, 100],
+  fatMassKg: [1, 250],
   bodyFatPercentage: [1, 75],
   heightCm: [80, 250],
 } as const;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Image from "next/image";
 import { ProgressChart } from "@/src/components/progress/progress-chart";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
+import { calculateBodyFatPercentage } from "@/src/lib/body-measurements";
 import { StatBadge } from "@/src/components/ui/stat-badge";
 import {
   BODY_MEASUREMENT_FIELDS,
@@ -25,7 +26,7 @@ const FIELD_GROUPS: Array<{ title: string; fields: Array<{ key: BodyMeasurementF
     title: "Repères principaux",
     fields: [
       { key: "weightKg", label: "Poids", suffix: "kg" },
-      { key: "bodyFatPercentage", label: "Masse grasse", suffix: "%" },
+      { key: "fatMassKg", label: "Masse grasse", suffix: "kg" },
       { key: "waistCm", label: "Tour de taille", suffix: "cm" },
       { key: "chestCm", label: "Poitrine", suffix: "cm" },
       { key: "hipsCm", label: "Hanches", suffix: "cm" },
@@ -43,6 +44,10 @@ const FIELD_GROUPS: Array<{ title: string; fields: Array<{ key: BodyMeasurementF
     ],
   },
 ];
+
+const MEASUREMENT_DISPLAY_FIELDS = FIELD_GROUPS.flatMap((group) => group.fields);
+const BODY_FAT_PERCENTAGE_FIELD = { key: "bodyFatPercentage" as const, label: "Taux de masse grasse", suffix: "%" };
+const LATEST_MEASUREMENT_FIELDS = MEASUREMENT_DISPLAY_FIELDS.flatMap((field) => field.key === "fatMassKg" ? [field, BODY_FAT_PERCENTAGE_FIELD] : [field]);
 
 function todayInputValue() {
   const now = new Date();
@@ -76,6 +81,19 @@ const MAX_SERVER_PHOTO_BYTES = 4 * 1024 * 1024;
 
 function getPhotoViewLabel(view: ProgressPhotoView) {
   return PHOTO_VIEWS.find((item) => item.value === view)?.label ?? "Libre";
+}
+
+function getMeasurementDetail(field: BodyMeasurementField) {
+  return LATEST_MEASUREMENT_FIELDS.find((item) => item.key === field);
+}
+
+function measurementSummary(measurement: EvolutionOverview["measurements"][number]) {
+  const values = [
+    measurement.weightKg != null ? formatValue(measurement.weightKg, "kg") : null,
+    measurement.waistCm != null ? `Taille ${formatValue(measurement.waistCm, "cm")}` : null,
+    measurement.fatMassKg != null ? `MG ${formatValue(measurement.fatMassKg, "kg")}` : measurement.bodyFatPercentage != null ? `MG ${formatValue(measurement.bodyFatPercentage, "%")}` : null,
+  ].filter(Boolean);
+  return values.length > 0 ? values.join(" • ") : "Mensurations enregistrées";
 }
 
 async function preparePhotoForPrivateUpload(source: File) {
@@ -117,15 +135,27 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
   const [photoDate, setPhotoDate] = useState(todayInputValue());
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [expandedMeasurementId, setExpandedMeasurementId] = useState<string | null>(null);
+  const [measurementMenuId, setMeasurementMenuId] = useState<string | null>(null);
+  const [draftWeightKg, setDraftWeightKg] = useState("");
+  const [draftFatMassKg, setDraftFatMassKg] = useState("");
+  const measurementSubmissionInFlight = useRef(false);
 
   useEffect(() => () => {
     if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
   }, [photoPreviewUrl]);
 
   const latestMeasurement = overview.measurements[0] ?? null;
+  const calculatedBodyFatPercentage = draftWeightKg.trim() !== "" && draftFatMassKg.trim() !== ""
+    ? calculateBodyFatPercentage(
+      Number(draftWeightKg.replace(",", ".")),
+      Number(draftFatMassKg.replace(",", ".")),
+    )
+    : null;
   const latestDetails = useMemo(
     () => latestMeasurement
-      ? BODY_MEASUREMENT_FIELDS.flatMap((field) => latestMeasurement[field] == null ? [] : [{ field, value: latestMeasurement[field] }])
+      ? LATEST_MEASUREMENT_FIELDS.flatMap(({ key }) => latestMeasurement[key] == null ? [] : [{ field: key, value: latestMeasurement[key] }])
       : [],
     [latestMeasurement],
   );
@@ -139,41 +169,59 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
 
   async function submitMeasurement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSaving) return;
-    const formData = new FormData(event.currentTarget);
+    if (isSaving || measurementSubmissionInFlight.current) return;
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const input: BodyMeasurementInput = {
       recordedAt: String(formData.get("recordedAt") ?? ""),
       heightCm: parseOptionalNumber(formData, "heightCm"),
     };
     for (const field of BODY_MEASUREMENT_FIELDS) input[field] = parseOptionalNumber(formData, field);
 
+    measurementSubmissionInFlight.current = true;
     setIsSaving(true);
     setError(null);
+    setSuccess(null);
     try {
       const response = await fetch("/api/evolution/measurements", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       });
-      if (!response.ok) throw new Error("save_failed");
-      await refreshOverview();
-      event.currentTarget.reset();
+      const payload = await response.json().catch(() => null) as { ok?: boolean; measurement?: EvolutionOverview["measurements"][number] } | null;
+      if (!response.ok || !payload?.ok || !payload.measurement) throw new Error("save_failed");
+      const measurement = payload.measurement;
+      setOverview((current) => ({
+        ...current,
+        measurements: [measurement, ...current.measurements],
+        currentWeightKg: measurement.weightKg ?? current.currentWeightKg,
+      }));
+      form.reset();
+      setDraftWeightKg("");
+      setDraftFatMassKg("");
       setFormOpen(false);
+      setSuccess("Relevé enregistré.");
+      void refreshOverview().catch(() => undefined);
     } catch {
       setError("Le relevé n'a pas pu être enregistré. Vérifie les valeurs et réessaie.");
     } finally {
       setIsSaving(false);
+      measurementSubmissionInFlight.current = false;
     }
   }
 
   async function removeMeasurement(measurementId: string) {
-    if (deletingId) return;
+    if (deletingId || !window.confirm("Supprimer ce relevé ?")) return;
     setDeletingId(measurementId);
     setError(null);
+    setSuccess(null);
     try {
       const response = await fetch(`/api/evolution/measurements/${encodeURIComponent(measurementId)}`, { method: "DELETE" });
       if (!response.ok) throw new Error("delete_failed");
-      await refreshOverview();
+      setOverview((current) => ({ ...current, measurements: current.measurements.filter((measurement) => measurement.id !== measurementId) }));
+      setExpandedMeasurementId((current) => current === measurementId ? null : current);
+      setMeasurementMenuId(null);
+      void refreshOverview().catch(() => undefined);
     } catch {
       setError("Le relevé n'a pas pu être supprimé. Réessaie plus tard.");
     } finally {
@@ -195,6 +243,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
     }
 
     setError(null);
+    setSuccess(null);
     setPhotoFile(file);
     setPhotoPreviewUrl(URL.createObjectURL(file));
   }
@@ -202,6 +251,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
   async function uploadPhoto(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!photoFile || isUploadingPhoto) return;
+    const form = event.currentTarget;
 
     setIsUploadingPhoto(true);
     setError(null);
@@ -212,12 +262,16 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
       formData.set("recordedAt", photoDate);
       formData.set("view", photoView);
       const response = await fetch("/api/evolution/photos", { method: "POST", body: formData });
-      if (!response.ok) throw new Error("photo_upload_failed");
-      await refreshOverview();
+      const payload = await response.json().catch(() => null) as { ok?: boolean; photo?: ProgressPhotoItem } | null;
+      const photo = payload?.photo;
+      if (!response.ok || !payload?.ok || !photo) throw new Error("photo_upload_failed");
+      setOverview((current) => ({ ...current, photos: [photo, ...current.photos], galleryCount: current.galleryCount + 1 }));
       if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
       setPhotoPreviewUrl(null);
       setPhotoFile(null);
-      event.currentTarget.reset();
+      form.reset();
+      setSuccess("Photo ajoutée à ta galerie privée.");
+      void refreshOverview().catch(() => undefined);
     } catch {
       setError("La photo n'a pas pu être préparée ou ajoutée. Vérifie le fichier puis réessaie.");
     } finally {
@@ -308,24 +362,35 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
                   {group.fields.map((field) => (
                     <label key={field.key}>
                       <span className="field-label">{field.label} ({field.suffix})</span>
-                      <input className="input" name={field.key} type="number" min="0" step="0.1" inputMode="decimal" />
+                      <input
+                        className="input"
+                        name={field.key}
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        inputMode="decimal"
+                        value={field.key === "weightKg" ? draftWeightKg : field.key === "fatMassKg" ? draftFatMassKg : undefined}
+                        onChange={field.key === "weightKg" ? (event) => setDraftWeightKg(event.target.value) : field.key === "fatMassKg" ? (event) => setDraftFatMassKg(event.target.value) : undefined}
+                      />
                     </label>
                   ))}
                 </div>
               </fieldset>
             ))}
+            {calculatedBodyFatPercentage != null ? <p className="evolution-fat-percentage">Taux de masse grasse calculé : <b>{formatValue(calculatedBodyFatPercentage, "%")}</b></p> : null}
             <PrimaryButton type="submit" disabled={isSaving}>{isSaving ? "Enregistrement..." : "Enregistrer le relevé"}</PrimaryButton>
           </form>
         ) : null}
 
         {error ? <p className="settings-danger-error">{error}</p> : null}
+        {success ? <p className="evolution-success" role="status">{success}</p> : null}
 
         {latestDetails.length === 0 ? (
           <p className="muted">Ajoute un premier relevé pour suivre ton évolution dans le temps.</p>
         ) : (
           <div className="evolution-latest-grid">
             {latestDetails.slice(0, 6).map(({ field, value }) => {
-              const detail = FIELD_GROUPS.flatMap((group) => group.fields).find((item) => item.key === field);
+              const detail = getMeasurementDetail(field);
               return detail ? <span key={field}><small>{detail.label}</small><b>{formatValue(value, detail.suffix)}</b></span> : null;
             })}
           </div>
@@ -390,18 +455,19 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
           <h2>Derniers relevés</h2>
           <div className="evolution-history-list">
             {overview.measurements.map((measurement) => (
-              <article key={measurement.id}>
-                <div>
-                  <strong>{formatDate(measurement.recordedAt)}</strong>
-                  <p>{BODY_MEASUREMENT_FIELDS.flatMap((field) => {
-                    const value = measurement[field];
-                    const detail = FIELD_GROUPS.flatMap((group) => group.fields).find((item) => item.key === field);
-                    return value != null && detail ? [`${detail.label}: ${formatValue(value, detail.suffix)}`] : [];
-                  }).slice(0, 3).join(" · ")}</p>
-                </div>
-                <button type="button" className="ghost-btn danger" disabled={deletingId === measurement.id} onClick={() => void removeMeasurement(measurement.id)}>
-                  {deletingId === measurement.id ? "Suppression..." : "Supprimer"}
+              <article key={measurement.id} className={expandedMeasurementId === measurement.id ? "is-expanded" : ""}>
+                <button type="button" className="evolution-history-summary" onClick={() => setExpandedMeasurementId((current) => current === measurement.id ? null : measurement.id)} aria-expanded={expandedMeasurementId === measurement.id}>
+                  <span><strong>{formatDate(measurement.recordedAt)}</strong><p>{measurementSummary(measurement)}</p></span>
+                  <i aria-hidden="true">⌄</i>
                 </button>
+                <div className="evolution-history-actions">
+                  <button type="button" className="evolution-history-menu" aria-label="Actions du relevé" aria-expanded={measurementMenuId === measurement.id} onClick={() => setMeasurementMenuId((current) => current === measurement.id ? null : measurement.id)}>⋯</button>
+                  {measurementMenuId === measurement.id ? <div className="evolution-history-menu-panel"><button type="button" disabled={deletingId === measurement.id} onClick={() => void removeMeasurement(measurement.id)}>{deletingId === measurement.id ? "Suppression..." : "Supprimer"}</button></div> : null}
+                </div>
+                {expandedMeasurementId === measurement.id ? <div className="evolution-history-details">{MEASUREMENT_DISPLAY_FIELDS.flatMap((field) => {
+                  const value = measurement[field.key];
+                  return value != null ? <span key={field.key}><small>{field.label}</small><b>{formatValue(value, field.suffix)}</b></span> : [];
+                })}{measurement.bodyFatPercentage != null ? <span><small>Taux de masse grasse</small><b>{formatValue(measurement.bodyFatPercentage, "%")}</b></span> : null}</div> : null}
               </article>
             ))}
           </div>

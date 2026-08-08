@@ -9,6 +9,7 @@ export const BODY_MEASUREMENT_FIELDS = [
   "hipsCm",
   "leftCalfCm",
   "rightCalfCm",
+  "fatMassKg",
   "bodyFatPercentage",
 ] as const;
 

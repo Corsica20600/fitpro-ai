@@ -1,5 +1,6 @@
 package com.traknio.app
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -17,6 +18,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.traknio.app.databinding.ActivityMainBinding
 
@@ -30,6 +32,13 @@ class MainActivity : AppCompatActivity() {
     private val allowedHosts = setOfNotNull(Uri.parse(traknioUrl).host?.lowercase())
     private val samsungFallbackUrl = "https://www.samsung.com/global/galaxy/apps/samsung-health/"
     private val spotifyFallbackUrl = "https://open.spotify.com/"
+    private val supportedImageMimeTypes = arrayOf("image/jpeg", "image/png", "image/webp")
+    private var fileChooserCallback: android.webkit.ValueCallback<Array<Uri>>? = null
+    private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val callback = fileChooserCallback ?: return@registerForActivityResult
+        fileChooserCallback = null
+        callback.onReceiveValue(extractSelectedImageUris(result.resultCode, result.data))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,6 +118,25 @@ class MainActivity : AppCompatActivity() {
                 binding.launchProgress.isIndeterminate = false
                 binding.launchProgress.progress = newProgress.coerceIn(0, 100)
             }
+
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?,
+            ): Boolean {
+                fileChooserCallback?.onReceiveValue(null)
+                fileChooserCallback = filePathCallback
+                if (filePathCallback == null) return false
+
+                return runCatching {
+                    fileChooserLauncher.launch(buildImagePickerIntent(fileChooserParams))
+                    true
+                }.getOrElse {
+                    fileChooserCallback = null
+                    filePathCallback.onReceiveValue(null)
+                    false
+                }
+            }
         }
         binding.webViewTraknio.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
@@ -181,6 +209,47 @@ class MainActivity : AppCompatActivity() {
         } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
+    }
+
+    private fun buildImagePickerIntent(fileChooserParams: WebChromeClient.FileChooserParams?): Intent {
+        val requestedTypes = fileChooserParams?.acceptTypes
+            ?.map { it.trim().lowercase() }
+            ?.filter { it in supportedImageMimeTypes }
+            ?.ifEmpty { supportedImageMimeTypes.toList() }
+            ?: supportedImageMimeTypes.toList()
+
+        return Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "image/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, requestedTypes.toTypedArray())
+            putExtra(
+                Intent.EXTRA_ALLOW_MULTIPLE,
+                fileChooserParams?.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE,
+            )
+        }
+    }
+
+    private fun extractSelectedImageUris(resultCode: Int, data: Intent?): Array<Uri>? {
+        if (resultCode != Activity.RESULT_OK || data == null) return null
+        val candidates = buildList {
+            data.data?.let(::add)
+            data.clipData?.let { clip ->
+                for (index in 0 until clip.itemCount) {
+                    clip.getItemAt(index).uri?.let(::add)
+                }
+            }
+        }
+        return candidates
+            .distinct()
+            .filter { uri -> contentResolver.getType(uri)?.lowercase() in supportedImageMimeTypes }
+            .toTypedArray()
+            .takeIf { it.isNotEmpty() }
+    }
+
+    override fun onDestroy() {
+        fileChooserCallback?.onReceiveValue(null)
+        fileChooserCallback = null
+        super.onDestroy()
     }
 
     private fun showWebError() {
