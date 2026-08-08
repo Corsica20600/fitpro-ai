@@ -124,7 +124,7 @@ export function TraknioAssistant() {
             <Avatar compact />
             <div className="traknio-assistant-panel__identity">
               <h2 id="traknio-assistant-title">Assistant Traknio</h2>
-              <p><span aria-hidden="true" />Aide Traknio</p>
+              <p><span aria-hidden="true" />En ligne</p>
             </div>
             <button type="button" className="traknio-assistant-close" aria-label="Fermer l’assistant" onClick={() => setIsOpen(false)}>
               <span aria-hidden="true" />
