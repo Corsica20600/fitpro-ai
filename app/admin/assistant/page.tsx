@@ -1,7 +1,5 @@
 import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
-import { AppShell } from "@/src/components/ui/app-shell";
-import { PageHeader } from "@/src/components/ui/page-header";
 import { AssistantAdminClient } from "@/src/components/assistant/assistant-admin-client";
 import { isTraknioAdminEmail } from "@/src/server/assistant/admin-access";
 import { getAssistantAdminArticles, getAssistantUnansweredQuestions } from "@/src/server/assistant/admin-service";
@@ -22,18 +20,18 @@ export default async function AssistantAdministrationPage() {
   ]);
 
   return (
-    <AppShell className="assistant-admin-shell">
-      <PageHeader
-        eyebrow="Administration privée"
-        title="Centre d’aide Assistant"
-        description="Enrichis les réponses de l’assistant sans modifier le code ni son comportement utilisateur."
-      />
+    <section className="assistant-admin-route">
+      <header className="assistant-admin-page-header">
+        <p className="fit-section-title__eyebrow">Administration privée</p>
+        <h1>Centre d’aide Assistant</h1>
+        <p>Enrichis les réponses de l’assistant sans modifier le code ni son comportement utilisateur.</p>
+      </header>
       <AssistantAdminClient
         initialArticles={articleData.articles}
         initialCategories={articleData.categories}
         initialProposals={articleData.proposals}
         initialQuestions={unansweredQuestions}
       />
-    </AppShell>
+    </section>
   );
 }

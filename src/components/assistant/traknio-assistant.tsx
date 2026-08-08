@@ -52,7 +52,7 @@ export function TraknioAssistant() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messageId = useRef(0);
 
-  const shouldHide = pathname === "/watch" || pathname.startsWith("/workout");
+  const shouldHide = pathname.startsWith("/admin") || pathname === "/watch" || pathname.startsWith("/workout");
 
   useEffect(() => {
     if (!isOpen) return;

@@ -5600,17 +5600,91 @@ summary:focus-visible {
 }
 
 /* Private assistant knowledge center. Kept separate from the user-facing chat styles. */
+.admin-root-shell {
+  min-height: 100dvh;
+  color: #eef5ff;
+  background-color: #050914;
+  background-image: linear-gradient(rgba(37, 80, 138, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 80, 138, .12) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.admin-web-layout {
+  min-height: 100dvh;
+  padding: 24px clamp(20px, 4vw, 64px) 64px;
+}
+
+.admin-web-header,
+.admin-web-main {
+  width: min(1560px, 100%);
+  margin: 0 auto;
+}
+
+.admin-web-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 78px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid rgba(99, 150, 212, .25);
+}
+
+.admin-web-brand {
+  display: inline-flex;
+  width: min(260px, 42vw);
+}
+
+.admin-web-brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.admin-web-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  color: #aab8d5;
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.assistant-admin-route {
+  display: grid;
+  gap: 24px;
+  padding-top: 34px;
+}
+
+.assistant-admin-page-header {
+  display: grid;
+  gap: 8px;
+  max-width: 780px;
+}
+
+.assistant-admin-page-header h1 {
+  margin: 0;
+  font-family: var(--font-heading, "Exo 2", sans-serif);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1.05;
+}
+
+.assistant-admin-page-header > p:last-child {
+  margin: 0;
+  color: #aab8d5;
+  line-height: 1.55;
+}
+
 .assistant-admin-page {
   display: grid;
-  gap: 18px;
-  width: min(1180px, 100%);
-  margin: 0 auto;
+  gap: 22px;
+  width: 100%;
 }
 
 .assistant-admin-layout {
   display: grid;
-  grid-template-columns: minmax(320px, .88fr) minmax(440px, 1.12fr);
-  gap: 18px;
+  grid-template-columns: minmax(390px, 38fr) minmax(600px, 62fr);
+  gap: 24px;
   align-items: start;
 }
 
@@ -5618,7 +5692,12 @@ summary:focus-visible {
 .assistant-admin-editor-card,
 .assistant-admin-questions-card,
 .assistant-admin-proposals-card {
-  padding: clamp(18px, 3vw, 28px);
+  padding: clamp(20px, 2.2vw, 30px);
+}
+
+.assistant-admin-editor-card {
+  position: sticky;
+  top: 22px;
 }
 
 .assistant-admin-section-head {
@@ -5637,6 +5716,60 @@ summary:focus-visible {
 
 .assistant-admin-section-head .muted { margin: 8px 0 0; }
 .assistant-admin-new-button { width: auto; min-width: 130px; padding-inline: 16px; }
+
+.assistant-admin-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid rgba(77, 125, 181, .34);
+  border-radius: 9px;
+  background: rgba(7, 16, 38, .7);
+}
+
+.assistant-admin-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  color: #aebbd5;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.assistant-admin-tabs button:hover,
+.assistant-admin-tabs button:focus-visible {
+  color: #f3f8ff;
+  background: rgba(193, 60, 255, .13);
+}
+
+.assistant-admin-tabs button.is-active {
+  color: #f8fbff;
+  background: rgba(0, 224, 255, .13);
+  box-shadow: inset 0 -2px 0 #00e0ff;
+}
+
+.assistant-admin-tabs span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 5px;
+  color: #9eeeff;
+  border-radius: 999px;
+  background: rgba(0, 224, 255, .12);
+  font-size: .72rem;
+}
 
 .assistant-admin-notice {
   margin: 0;
@@ -5662,9 +5795,8 @@ summary:focus-visible {
 .assistant-admin-proposal-list {
   display: grid;
   gap: 9px;
-  max-height: 610px;
-  overflow: auto;
-  padding-right: 2px;
+  max-height: none;
+  overflow: visible;
 }
 
 .assistant-admin-article {
@@ -5738,14 +5870,22 @@ summary:focus-visible {
 .assistant-admin-question-list p,
 .assistant-admin-proposal-list p { margin: 0 0 6px; line-height: 1.45; }
 .assistant-admin-question-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
-.assistant-admin-proposal-list { max-height: 530px; }
 .assistant-admin-proposal-list article > div { min-width: 0; }
 .assistant-admin-proposal-list strong { display: block; margin-bottom: 4px; }
 .assistant-admin-proposal-list .ghost-btn { flex: 0 0 auto; }
 
-@media (max-width: 820px) {
+@media (max-width: 980px) {
+  .assistant-admin-layout { grid-template-columns: minmax(330px, .9fr) minmax(460px, 1.1fr); gap: 18px; }
+}
+
+@media (max-width: 760px) {
+  .admin-web-layout { padding: 16px 14px 36px; }
+  .admin-web-header { align-items: flex-start; min-height: 0; padding-bottom: 16px; }
+  .admin-web-header__actions { flex-direction: column; align-items: flex-end; gap: 7px; font-size: .76rem; }
+  .admin-web-header__actions .ghost-btn { min-height: 34px; padding: 0 10px; font-size: .76rem; }
+  .assistant-admin-route { gap: 18px; padding-top: 24px; }
   .assistant-admin-layout { grid-template-columns: 1fr; }
-  .assistant-admin-article-list { max-height: 390px; }
+  .assistant-admin-editor-card { position: static; }
 }
 
 @media (max-width: 560px) {
@@ -5759,6 +5899,8 @@ summary:focus-visible {
   .assistant-admin-proposal-list article { flex-direction: column; }
   .assistant-admin-question-actions { justify-content: flex-start; }
   .assistant-admin-question-filter { width: 145px; font-size: .8rem; }
+  .assistant-admin-tabs { width: 100%; }
+  .assistant-admin-tabs button { flex: 1 0 auto; padding-inline: 11px; font-size: .78rem; }
 }
 
 @media (max-width: 719px) {

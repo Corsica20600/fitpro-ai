@@ -27,6 +27,8 @@ type EditorState = {
   markQuestionResolved: boolean;
 };
 
+type AdminSection = "articles" | "questions" | "proposals";
+
 const ROUTE_OPTIONS = [
   { value: "", label: "Toutes les rubriques" },
   { value: "/dashboard", label: "Tableau de bord" },
@@ -96,7 +98,7 @@ export function AssistantAdminClient({
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUpdatingQuestion, setIsUpdatingQuestion] = useState<string | null>(null);
-  const [showProposals, setShowProposals] = useState(false);
+  const [activeSection, setActiveSection] = useState<AdminSection>("articles");
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   const selectedArticle = useMemo(() => articles.find((article) => article.id === selectedId) ?? null, [articles, selectedId]);
@@ -206,6 +208,7 @@ export function AssistantAdminClient({
   }
 
   function answerQuestion(question: UnansweredQuestion) {
+    setActiveSection("articles");
     setSelectedId(null);
     setEditor({
       ...emptyEditor(),
@@ -222,6 +225,7 @@ export function AssistantAdminClient({
   }
 
   function applyProposal(proposal: AssistantArticleProposal) {
+    setActiveSection("articles");
     setSelectedId(null);
     setEditor({ ...emptyEditor(), title: proposal.title, category: proposal.category, routeContext: proposal.routeContext ?? "", keywords: proposal.keywords, content: proposal.content });
     setKeywordDraft("");
@@ -249,7 +253,13 @@ export function AssistantAdminClient({
   return (
     <div className="assistant-admin-page">
       {notice ? <p className={`assistant-admin-notice assistant-admin-notice--${notice.tone}`} role="status">{notice.text}</p> : null}
-      <div className="assistant-admin-layout">
+      <nav className="assistant-admin-tabs" aria-label="Sections du centre d’aide" role="tablist">
+        <button type="button" role="tab" aria-selected={activeSection === "articles"} className={activeSection === "articles" ? "is-active" : ""} onClick={() => setActiveSection("articles")}>Articles <span>{articles.length}</span></button>
+        <button type="button" role="tab" aria-selected={activeSection === "questions"} className={activeSection === "questions" ? "is-active" : ""} onClick={() => setActiveSection("questions")}>Questions sans réponse <span>{questions.filter((question) => !question.resolved).length}</span></button>
+        <button type="button" role="tab" aria-selected={activeSection === "proposals"} className={activeSection === "proposals" ? "is-active" : ""} onClick={() => setActiveSection("proposals")}>Propositions <span>{initialProposals.length}</span></button>
+      </nav>
+
+      {activeSection === "articles" ? <div className="assistant-admin-layout">
         <GlassCard className="assistant-admin-list-card">
           <div className="assistant-admin-section-head">
             <div><p className="fit-section-title__eyebrow">Base de connaissances</p><h2>Articles</h2></div>
@@ -286,17 +296,17 @@ export function AssistantAdminClient({
             <PrimaryButton type="submit" disabled={isSaving}>{isSaving ? "Enregistrement..." : editor.id ? "Enregistrer les modifications" : "Créer l’article"}</PrimaryButton>
           </form>
         </GlassCard>
-      </div>
+      </div> : null}
 
-      <GlassCard className="assistant-admin-questions-card">
+      {activeSection === "questions" ? <GlassCard className="assistant-admin-questions-card">
         <div className="assistant-admin-section-head"><div><p className="fit-section-title__eyebrow">Amélioration progressive</p><h2>Questions sans réponse</h2></div><select className="input assistant-admin-question-filter" value={questionFilter} onChange={(event) => { const nextFilter = event.target.value as typeof questionFilter; setQuestionFilter(nextFilter); void refreshQuestions(nextFilter); }} aria-label="Filtrer les questions"><option value="open">Non traitées</option><option value="resolved">Traitées</option><option value="all">Toutes</option></select></div>
         {questions.length === 0 ? <p className="muted">Aucune question dans cet état. Les nouvelles demandes non couvertes apparaîtront ici.</p> : <div className="assistant-admin-question-list">{questions.map((question) => <article key={question.id}><div><p>{question.question}</p><small>{routeLabel(question.routeContext)} · {formatDate(question.createdAt)}</small></div><div className="assistant-admin-question-actions"><StatBadge tone={question.resolved ? "success" : "warning"}>{question.resolved ? "Traitée" : "À traiter"}</StatBadge>{!question.resolved ? <button type="button" className="ghost-btn" onClick={() => answerQuestion(question)}>Créer une réponse</button> : null}<button type="button" className="ghost-btn" disabled={isUpdatingQuestion === question.id} onClick={() => void updateQuestion(question, !question.resolved)}>{question.resolved ? "Rouvrir" : "Marquer traitée"}</button></div></article>)}</div>}
-      </GlassCard>
+      </GlassCard> : null}
 
-      <GlassCard className="assistant-admin-proposals-card">
-        <div className="assistant-admin-section-head"><div><p className="fit-section-title__eyebrow">Brouillons à vérifier</p><h2>Propositions de première base</h2><p className="muted">{initialProposals.length} propositions issues des fonctions connues de Traknio. Elles ne sont jamais enregistrées automatiquement.</p></div><button type="button" className="ghost-btn" onClick={() => setShowProposals((value) => !value)}>{showProposals ? "Masquer" : "Afficher"}</button></div>
-        {showProposals ? <div className="assistant-admin-proposal-list">{initialProposals.map((proposal) => <article key={proposal.id}><div><strong>{proposal.title}</strong><small>{proposal.category} · {routeLabel(proposal.routeContext)}</small><p>{proposal.content}</p></div><button type="button" className="ghost-btn" onClick={() => applyProposal(proposal)}>Utiliser comme brouillon</button></article>)}</div> : null}
-      </GlassCard>
+      {activeSection === "proposals" ? <GlassCard className="assistant-admin-proposals-card">
+        <div className="assistant-admin-section-head"><div><p className="fit-section-title__eyebrow">Brouillons à vérifier</p><h2>Propositions de première base</h2><p className="muted">{initialProposals.length} propositions issues des fonctions connues de Traknio. Elles ne sont jamais enregistrées automatiquement.</p></div></div>
+        <div className="assistant-admin-proposal-list">{initialProposals.map((proposal) => <article key={proposal.id}><div><strong>{proposal.title}</strong><small>{proposal.category} · {routeLabel(proposal.routeContext)}</small><p>{proposal.content}</p></div><button type="button" className="ghost-btn" onClick={() => applyProposal(proposal)}>Utiliser comme brouillon</button></article>)}</div>
+      </GlassCard> : null}
     </div>
   );
 }
