@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { getStripe } from "@/src/lib/stripe";
 import { prisma } from "@/src/lib/prisma";
+import { purgeProgressPhotoBlobs } from "@/src/server/progress-photos";
 
 function normalizeEmail(email?: string | null) {
   const normalized = email?.trim().toLowerCase();
@@ -34,6 +35,13 @@ export async function deleteAccountAction(formData: FormData) {
   if (!profile) {
     await signOut({ redirectTo: "/data-deletion?accountDeleted=1" });
     return;
+  }
+
+  try {
+    await purgeProgressPhotoBlobs(profile.id);
+  } catch {
+    console.error("ACCOUNT_DELETE_PROGRESS_PHOTO_PURGE_FAILED", { operation: "account_delete" });
+    redirect("/settings?deleteError=photos");
   }
 
   if (profile.stripeSubscriptionId) {

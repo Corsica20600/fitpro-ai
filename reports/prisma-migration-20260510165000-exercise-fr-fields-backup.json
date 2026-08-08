@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-08-08T05:20:06.725Z",
+  "source": "production _prisma_migrations (read-only audit)",
+  "migration": {
+    "migration_name": "20260510165000_exercise_fr_fields",
+    "checksum": "61262958eb7ed57bf24f1c49bbae0f97ab97950cfb01fa81d9e6e22b7c2034a4",
+    "finished_at": "2026-05-10T15:42:20.257Z",
+    "applied_steps_count": 1
+  }
+}

@@ -170,6 +170,17 @@ export default async function ProgressPage(props: PageProps<"/progress">) {
         </div>
       </GlassCard>
 
+      <Link href="/evolution" className="progress-evolution-link">
+        <GlassCard as="span" className="progress-evolution-link__card">
+          <span>
+            <p className="fit-section-title__eyebrow">Suivi physique</p>
+            <strong>Mon évolution</strong>
+            <small>Mensurations, poids et prochaines photos privées.</small>
+          </span>
+          <b aria-hidden="true">→</b>
+        </GlassCard>
+      </Link>
+
       {data.hasData ? (
         <>
           <ProgressRings items={rings} />

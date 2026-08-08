@@ -10,7 +10,7 @@
     "deploy:git": "powershell -ExecutionPolicy Bypass -File scripts/deploy.ps1",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/server/coach/*.test.ts",
+    "test": "tsx --test src/server/coach/*.test.ts src/server/progress-photos.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
@@ -30,11 +30,14 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^6.19.0",
+    "@vercel/blob": "^2.7.0",
+    "@vercel/oidc": "^3.8.2",
     "next": "16.2.5",
     "next-auth": "^5.0.0-beta.32",
     "prisma": "^6.19.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "^0.35.3",
     "stripe": "^22.3.2"
   },
   "devDependencies": {
