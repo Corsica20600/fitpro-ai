@@ -2,4 +2,5 @@
 <resources>
     <color name="ic_launcher_background">#0A1328</color>
     <color name="traknio_system_bar">#0A1328</color>
+    <color name="traknio_splash_background">#01040D</color>
 </resources>

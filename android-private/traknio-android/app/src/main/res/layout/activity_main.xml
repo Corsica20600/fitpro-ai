@@ -22,7 +22,7 @@
         android:id="@+id/launchOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/traknio_system_bar"
+        android:background="@color/traknio_splash_background"
         android:clickable="true"
         android:focusable="true">
 
@@ -31,28 +31,48 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="@string/launch_art_description"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:src="@drawable/traknio_launch_art" />
 
-        <View
-            android:id="@+id/launchProgressMask"
-            android:layout_width="176dp"
-            android:layout_height="16dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="25dp"
-            android:background="@color/traknio_system_bar" />
+            android:layout_marginBottom="30dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-        <ProgressBar
-            android:id="@+id/launchProgress"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="168dp"
-            android:layout_height="4dp"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="31dp"
-            android:indeterminate="false"
-            android:max="100"
-            android:progress="6"
-            android:progressDrawable="@drawable/launch_progress" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:letterSpacing="0.16"
+                android:text="@string/launch_loading"
+                android:textColor="#E8EEFF"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <FrameLayout
+                android:layout_width="224dp"
+                android:layout_height="14dp"
+                android:gravity="center">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/launch_progress_glow" />
+
+                <ProgressBar
+                    android:id="@+id/launchProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="208dp"
+                    android:layout_height="6dp"
+                    android:indeterminate="false"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/launch_progress" />
+            </FrameLayout>
+        </LinearLayout>
 
     </FrameLayout>
 

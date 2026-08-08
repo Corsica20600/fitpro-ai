@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private val spotifyFallbackUrl = "https://open.spotify.com/"
     private val supportedImageMimeTypes = arrayOf("image/jpeg", "image/png", "image/webp")
     private var fileChooserCallback: android.webkit.ValueCallback<Array<Uri>>? = null
+    private var isInitialPageLoad = true
     private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val callback = fileChooserCallback ?: return@registerForActivityResult
         fileChooserCallback = null
@@ -115,8 +116,9 @@ class MainActivity : AppCompatActivity() {
         binding.webViewTraknio.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 super.onProgressChanged(view, newProgress)
-                binding.launchProgress.isIndeterminate = false
-                binding.launchProgress.progress = newProgress.coerceIn(0, 100)
+                if (binding.launchOverlay.visibility == View.VISIBLE) {
+                    binding.launchProgress.progress = newProgress.coerceIn(0, 100)
+                }
             }
 
             override fun onShowFileChooser(
@@ -144,9 +146,11 @@ class MainActivity : AppCompatActivity() {
                 updateWorkoutScreenPolicy(url)
                 binding.webErrorPanel.visibility = View.GONE
                 binding.webLoading.visibility = View.VISIBLE
-                binding.launchOverlay.visibility = View.VISIBLE
-                binding.launchOverlay.alpha = 1f
-                binding.launchProgress.progress = 6
+                if (isInitialPageLoad) {
+                    binding.launchOverlay.visibility = View.VISIBLE
+                    binding.launchOverlay.alpha = 1f
+                    binding.launchProgress.progress = 0
+                }
             }
 
             override fun onPageCommitVisible(view: WebView?, url: String?) {
@@ -260,6 +264,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun hideLaunchOverlay() {
         if (binding.launchOverlay.visibility != View.VISIBLE) return
+        isInitialPageLoad = false
+        binding.launchProgress.progress = 100
         binding.launchOverlay.animate()
             .alpha(0f)
             .setDuration(180L)
