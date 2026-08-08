@@ -19,9 +19,14 @@ export function AppChrome({
 }) {
   const pathname = usePathname();
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isPublicLanding = pathname === "/";
 
   if (isAdminRoute) {
     return <div className="admin-root-shell">{children}</div>;
+  }
+
+  if (isPublicLanding) {
+    return <>{children}</>;
   }
 
   return (
