@@ -14,6 +14,7 @@ export type AssistantArticleInput = {
   routeContext: string | null;
   active: boolean;
   resolvedQuestionId: string | null;
+  sourceProposalId: string | null;
 };
 
 function cleanText(value: unknown, maxLength: number) {
@@ -50,7 +51,10 @@ export function parseAssistantArticleInput(value: unknown): { ok: true; value: A
   const resolvedQuestionId = typeof payload.resolvedQuestionId === "string" && payload.resolvedQuestionId.trim()
     ? payload.resolvedQuestionId.trim()
     : null;
-  return { ok: true, value: { title, category, content, keywords, routeContext, active: payload.active, resolvedQuestionId } };
+  const sourceProposalId = typeof payload.sourceProposalId === "string" && payload.sourceProposalId.trim()
+    ? payload.sourceProposalId.trim()
+    : null;
+  return { ok: true, value: { title, category, content, keywords, routeContext, active: payload.active, resolvedQuestionId, sourceProposalId } };
 }
 
 export function parseResolvedInput(value: unknown) {

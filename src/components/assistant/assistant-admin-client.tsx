@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { StatBadge } from "@/src/components/ui/stat-badge";
-import type { AssistantArticleProposal } from "@/src/server/assistant/admin-proposals";
-import type { AssistantAdminArticle } from "@/src/server/assistant/admin-service";
+import type { AssistantAdminArticle, AssistantAdminProposal } from "@/src/server/assistant/admin-service";
 
 type UnansweredQuestion = {
   id: string;
@@ -25,9 +24,12 @@ type EditorState = {
   active: boolean;
   resolvedQuestionId: string | null;
   markQuestionResolved: boolean;
+  sourceProposalId: string | null;
 };
 
 type AdminSection = "articles" | "questions" | "proposals";
+type ProposalFilter = "pending" | "processed" | "all";
+type QuestionCounts = { open: number; resolved: number; all: number };
 
 const ROUTE_OPTIONS = [
   { value: "", label: "Toutes les rubriques" },
@@ -43,7 +45,7 @@ const ROUTE_OPTIONS = [
 ];
 
 function emptyEditor(): EditorState {
-  return { id: null, title: "", category: "", routeContext: "", keywords: [], content: "", active: true, resolvedQuestionId: null, markQuestionResolved: false };
+  return { id: null, title: "", category: "", routeContext: "", keywords: [], content: "", active: true, resolvedQuestionId: null, markQuestionResolved: false, sourceProposalId: null };
 }
 
 function editorFromArticle(article: AssistantAdminArticle): EditorState {
@@ -57,6 +59,7 @@ function editorFromArticle(article: AssistantAdminArticle): EditorState {
     active: article.active,
     resolvedQuestionId: null,
     markQuestionResolved: false,
+    sourceProposalId: null,
   };
 }
 
@@ -78,15 +81,19 @@ export function AssistantAdminClient({
   initialCategories,
   initialProposals,
   initialQuestions,
+  initialQuestionCounts,
 }: {
   initialArticles: AssistantAdminArticle[];
   initialCategories: string[];
-  initialProposals: AssistantArticleProposal[];
+  initialProposals: AssistantAdminProposal[];
   initialQuestions: UnansweredQuestion[];
+  initialQuestionCounts: QuestionCounts;
 }) {
   const [articles, setArticles] = useState(initialArticles);
   const [categories, setCategories] = useState(initialCategories);
   const [questions, setQuestions] = useState(initialQuestions);
+  const [questionCounts, setQuestionCounts] = useState(initialQuestionCounts);
+  const [proposals, setProposals] = useState(initialProposals);
   const [selectedId, setSelectedId] = useState<string | null>(initialArticles[0]?.id ?? null);
   const [editor, setEditor] = useState<EditorState>(() => initialArticles[0] ? editorFromArticle(initialArticles[0]) : emptyEditor());
   const [query, setQuery] = useState("");
@@ -94,6 +101,7 @@ export function AssistantAdminClient({
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [sort, setSort] = useState<"updatedAt" | "title" | "category">("updatedAt");
   const [questionFilter, setQuestionFilter] = useState<"open" | "resolved" | "all">("open");
+  const [proposalFilter, setProposalFilter] = useState<ProposalFilter>("pending");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -110,10 +118,11 @@ export function AssistantAdminClient({
     if (categoryFilter !== "all") params.set("category", categoryFilter);
     try {
       const response = await fetch(`/api/admin/assistant/articles?${params.toString()}`, { cache: "no-store" });
-      const payload = await response.json().catch(() => null) as { articles?: AssistantAdminArticle[]; categories?: string[] } | null;
-      if (!response.ok || !payload?.articles || !payload.categories) throw new Error("articles_fetch_failed");
+      const payload = await response.json().catch(() => null) as { articles?: AssistantAdminArticle[]; categories?: string[]; proposals?: AssistantAdminProposal[] } | null;
+      if (!response.ok || !payload?.articles || !payload.categories || !payload.proposals) throw new Error("articles_fetch_failed");
       setArticles(payload.articles);
       setCategories(payload.categories);
+      setProposals(payload.proposals);
       if (selectedId && !payload.articles.some((article) => article.id === selectedId)) {
         setSelectedId(null);
       }
@@ -127,9 +136,10 @@ export function AssistantAdminClient({
   async function refreshQuestions(filter = questionFilter) {
     try {
       const response = await fetch(`/api/admin/assistant/unanswered?status=${filter}`, { cache: "no-store" });
-      const payload = await response.json().catch(() => null) as { questions?: UnansweredQuestion[] } | null;
-      if (!response.ok || !payload?.questions) throw new Error("questions_fetch_failed");
+      const payload = await response.json().catch(() => null) as { questions?: UnansweredQuestion[]; counts?: QuestionCounts } | null;
+      if (!response.ok || !payload?.questions || !payload.counts) throw new Error("questions_fetch_failed");
       setQuestions(payload.questions);
+      setQuestionCounts(payload.counts);
     } catch {
       setNotice({ tone: "error", text: "Les questions sans réponse n’ont pas pu être actualisées." });
     }
@@ -183,6 +193,7 @@ export function AssistantAdminClient({
       content: editor.content,
       active: editor.active,
       resolvedQuestionId: editor.markQuestionResolved ? editor.resolvedQuestionId : null,
+      sourceProposalId: editor.id ? null : editor.sourceProposalId,
     };
     setIsSaving(true);
     setNotice(null);
@@ -192,16 +203,19 @@ export function AssistantAdminClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const body = await response.json().catch(() => null) as { article?: AssistantAdminArticle } | null;
-      if (!response.ok || !body?.article) throw new Error("article_save_failed");
+      const body = await response.json().catch(() => null) as { article?: AssistantAdminArticle; error?: string } | null;
+      if (!response.ok || !body?.article) {
+        if (body?.error === "proposal_already_processed") throw new Error("proposal_already_processed");
+        throw new Error("article_save_failed");
+      }
       const saved = body.article;
       setSelectedId(saved.id);
       setEditor(editorFromArticle(saved));
       setKeywordDraft("");
       setNotice({ tone: "success", text: editor.id ? "Article mis à jour." : "Article créé et disponible pour l’assistant." });
-      await Promise.all([refreshArticles(), editor.markQuestionResolved && editor.resolvedQuestionId ? refreshQuestions() : Promise.resolve()]);
-    } catch {
-      setNotice({ tone: "error", text: "La sauvegarde a échoué. Vérifie les champs puis réessaie." });
+      await Promise.all([refreshArticles(), refreshQuestions()]);
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error && error.message === "proposal_already_processed" ? "Cette proposition a déjà été traitée dans un autre article." : "La sauvegarde a échoué. Vérifie les champs puis réessaie." });
     } finally {
       setIsSaving(false);
     }
@@ -224,10 +238,10 @@ export function AssistantAdminClient({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function applyProposal(proposal: AssistantArticleProposal) {
+  function applyProposal(proposal: AssistantAdminProposal) {
     setActiveSection("articles");
     setSelectedId(null);
-    setEditor({ ...emptyEditor(), title: proposal.title, category: proposal.category, routeContext: proposal.routeContext ?? "", keywords: proposal.keywords, content: proposal.content });
+    setEditor({ ...emptyEditor(), title: proposal.title, category: proposal.category, routeContext: proposal.routeContext ?? "", keywords: proposal.keywords, content: proposal.content, sourceProposalId: proposal.id });
     setKeywordDraft("");
     setNotice({ tone: "success", text: "Brouillon chargé. Relis-le puis enregistre seulement s’il est exact." });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -250,13 +264,16 @@ export function AssistantAdminClient({
     }
   }
 
+  const visibleProposals = proposals.filter((proposal) => proposalFilter === "all" || proposal.status === proposalFilter);
+  const pendingProposalCount = proposals.filter((proposal) => proposal.status === "pending").length;
+
   return (
     <div className="assistant-admin-page">
       {notice ? <p className={`assistant-admin-notice assistant-admin-notice--${notice.tone}`} role="status">{notice.text}</p> : null}
       <nav className="assistant-admin-tabs" aria-label="Sections du centre d’aide" role="tablist">
         <button type="button" role="tab" aria-selected={activeSection === "articles"} className={activeSection === "articles" ? "is-active" : ""} onClick={() => setActiveSection("articles")}>Articles <span>{articles.length}</span></button>
-        <button type="button" role="tab" aria-selected={activeSection === "questions"} className={activeSection === "questions" ? "is-active" : ""} onClick={() => setActiveSection("questions")}>Questions sans réponse <span>{questions.filter((question) => !question.resolved).length}</span></button>
-        <button type="button" role="tab" aria-selected={activeSection === "proposals"} className={activeSection === "proposals" ? "is-active" : ""} onClick={() => setActiveSection("proposals")}>Propositions <span>{initialProposals.length}</span></button>
+        <button type="button" role="tab" aria-selected={activeSection === "questions"} className={activeSection === "questions" ? "is-active" : ""} onClick={() => setActiveSection("questions")}>Questions sans réponse <span>{questionCounts.open}</span></button>
+        <button type="button" role="tab" aria-selected={activeSection === "proposals"} className={activeSection === "proposals" ? "is-active" : ""} onClick={() => setActiveSection("proposals")}>Propositions <span>{pendingProposalCount}</span></button>
       </nav>
 
       {activeSection === "articles" ? <div className="assistant-admin-layout">
@@ -304,8 +321,8 @@ export function AssistantAdminClient({
       </GlassCard> : null}
 
       {activeSection === "proposals" ? <GlassCard className="assistant-admin-proposals-card">
-        <div className="assistant-admin-section-head"><div><p className="fit-section-title__eyebrow">Brouillons à vérifier</p><h2>Propositions de première base</h2><p className="muted">{initialProposals.length} propositions issues des fonctions connues de Traknio. Elles ne sont jamais enregistrées automatiquement.</p></div></div>
-        <div className="assistant-admin-proposal-list">{initialProposals.map((proposal) => <article key={proposal.id}><div><strong>{proposal.title}</strong><small>{proposal.category} · {routeLabel(proposal.routeContext)}</small><p>{proposal.content}</p></div><button type="button" className="ghost-btn" onClick={() => applyProposal(proposal)}>Utiliser comme brouillon</button></article>)}</div>
+        <div className="assistant-admin-section-head"><div><p className="fit-section-title__eyebrow">Brouillons à vérifier</p><h2>Propositions de première base</h2><p className="muted">{pendingProposalCount} proposition{pendingProposalCount > 1 ? "s" : ""} à traiter sur {proposals.length}. Elles ne sont jamais enregistrées automatiquement.</p></div><select className="input assistant-admin-question-filter" value={proposalFilter} onChange={(event) => setProposalFilter(event.target.value as ProposalFilter)} aria-label="Filtrer les propositions"><option value="pending">À traiter</option><option value="processed">Traitées</option><option value="all">Toutes</option></select></div>
+        {visibleProposals.length === 0 ? <p className="muted">Aucune proposition dans cet état.</p> : <div className="assistant-admin-proposal-list">{visibleProposals.map((proposal) => <article key={proposal.id}><div><strong>{proposal.title}</strong><small>{proposal.category} · {routeLabel(proposal.routeContext)}{proposal.status === "processed" ? " · Traitée" : ""}</small><p>{proposal.content}</p></div>{proposal.status === "pending" ? <button type="button" className="ghost-btn" onClick={() => applyProposal(proposal)}>Utiliser comme brouillon</button> : <StatBadge tone="success">Traitée</StatBadge>}</article>)}</div>}
       </GlassCard> : null}
     </div>
   );

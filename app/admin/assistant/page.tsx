@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { AssistantAdminClient } from "@/src/components/assistant/assistant-admin-client";
 import { isTraknioAdminEmail } from "@/src/server/assistant/admin-access";
-import { getAssistantAdminArticles, getAssistantUnansweredQuestions } from "@/src/server/assistant/admin-service";
+import { getAssistantAdminArticles, getAssistantUnansweredQuestionCounts, getAssistantUnansweredQuestions } from "@/src/server/assistant/admin-service";
 import { getAuthenticatedUserProfile } from "@/src/server/fitness-queries";
 import { privatePageMetadata } from "@/src/lib/private-page-metadata";
 
@@ -14,9 +14,10 @@ export default async function AssistantAdministrationPage() {
   if (!profile) redirect("/login?callbackUrl=/admin/assistant");
   if (!isTraknioAdminEmail(profile.email)) notFound();
 
-  const [articleData, unansweredQuestions] = await Promise.all([
+  const [articleData, unansweredQuestions, unansweredQuestionCounts] = await Promise.all([
     getAssistantAdminArticles(),
     getAssistantUnansweredQuestions("open"),
+    getAssistantUnansweredQuestionCounts(),
   ]);
 
   return (
@@ -31,6 +32,7 @@ export default async function AssistantAdministrationPage() {
         initialCategories={articleData.categories}
         initialProposals={articleData.proposals}
         initialQuestions={unansweredQuestions}
+        initialQuestionCounts={unansweredQuestionCounts}
       />
     </section>
   );

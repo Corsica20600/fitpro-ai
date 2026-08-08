@@ -132,6 +132,10 @@ enum CoachWeeklyReportStatus {
   FAILED
 }
 
+enum AssistantProposalStatus {
+  PROCESSED
+}
+
 enum CoachWeeklyReportFeedback {
   USEFUL
   NOT_USEFUL
@@ -233,6 +237,17 @@ model KnowledgeArticle {
 
   @@index([active, routeContext])
   @@index([category, active])
+}
+
+model AssistantArticleProposalProgress {
+  id          String                  @id @default(cuid())
+  proposalId  String                  @unique
+  status      AssistantProposalStatus @default(PROCESSED)
+  articleId   String?                 @unique
+  processedAt DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@index([status, processedAt])
 }
 
 model AssistantUnansweredQuestion {

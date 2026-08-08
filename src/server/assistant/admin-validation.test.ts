@@ -27,3 +27,17 @@ test("valide uniquement un booléen pour le statut traité d’une question", ()
   assert.equal(parseResolvedInput({ resolved: true }), true);
   assert.equal(parseResolvedInput({ resolved: "true" }), null);
 });
+
+test("conserve l’identifiant d’une proposition source lors de la création d’un article", () => {
+  const result = parseAssistantArticleInput({
+    title: "Créer un exercice",
+    category: "EXERCICES",
+    content: "Ouvre Mes exercices puis ajoute un exercice.",
+    keywords: ["créer", "exercice"],
+    routeContext: "/exercises",
+    active: true,
+    sourceProposalId: "exercises-custom",
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) assert.equal(result.value.sourceProposalId, "exercises-custom");
+});
