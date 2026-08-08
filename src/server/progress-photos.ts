@@ -22,6 +22,27 @@ function logProgressPhotoPipeline(stage: string, details: Record<string, unknown
   console.info("PROGRESS_PHOTO_PIPELINE", { stage, ...details });
 }
 
+function getProgressPhotoFailureReason(error: unknown) {
+  if (!(error instanceof Error)) return "unknown";
+  if ([
+    "BLOB_STORE_NOT_CONFIGURED",
+    "BLOB_OIDC_NOT_CONFIGURED",
+    "INVALID_PHOTO_VIEW",
+    "INVALID_PHOTO_SIZE",
+    "INVALID_PHOTO_MIME",
+    "INVALID_PHOTO_SIGNATURE",
+    "INVALID_PHOTO_DATE",
+  ].includes(error.message)) {
+    return error.message;
+  }
+
+  // Keep production diagnostics useful without recording provider messages or file metadata.
+  if (error.name.startsWith("Blob")) return error.name;
+  if (error.name === "PrismaClientKnownRequestError") return "PRISMA_KNOWN_REQUEST_ERROR";
+  if (error.name === "PrismaClientUnknownRequestError") return "PRISMA_UNKNOWN_REQUEST_ERROR";
+  return error.name || "unexpected";
+}
+
 async function getPrivateBlobOidcOptions(): Promise<BlobOidcOptions> {
   const storeId = process.env.BLOB_STORE_ID?.trim();
   if (!storeId) throw new Error("BLOB_STORE_NOT_CONFIGURED");
@@ -164,6 +185,11 @@ export async function createProgressPhoto(
     return toProgressPhotoItem(photo);
   } catch (error) {
     logProgressPhotoPipeline("server_pipeline_failed", { stage, code: error instanceof Error ? error.message : "unknown" });
+    console.error("PROGRESS_PHOTO_PIPELINE_FAILED", {
+      operation: "create",
+      stage,
+      reason: getProgressPhotoFailureReason(error),
+    });
     if (uploadedBlobPath && oidc) {
       try {
         await deleteBlobIfPresent(uploadedBlobPath, oidc);
