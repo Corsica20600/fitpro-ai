@@ -178,7 +178,10 @@ export async function createProgressPhoto(
 
     stage = "blob_upload";
     oidc = await getPrivateBlobOidcOptions();
-    const blob = await put(`progress-photos/${randomUUID()}.webp`, optimized.data, {
+    // sharp can return a Buffer backed by SharedArrayBuffer, which undici rejects as a fetch body.
+    const uploadBytes = new Uint8Array(optimized.data.byteLength);
+    uploadBytes.set(optimized.data);
+    const blob = await put(`progress-photos/${randomUUID()}.webp`, uploadBytes.buffer, {
       ...oidc,
       access: "private",
       addRandomSuffix: false,
