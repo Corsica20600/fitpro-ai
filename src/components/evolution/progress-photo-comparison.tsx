@@ -2,6 +2,7 @@
 
 import { useState, type CSSProperties } from "react";
 import { GlassCard } from "@/src/components/ui/glass-card";
+import { BrandSelect } from "@/src/components/ui/brand-select";
 import {
   canCompareProgressPhotos,
   createProgressPhotoComparison,
@@ -67,17 +68,11 @@ export function ProgressPhotoComparison({ photos, measurements, viewLabels, isOp
           <div className="evolution-comparison-selectors">
             <label>
               <span className="field-label">Photo Avant</span>
-              <select className="input" value={beforeId} onChange={(event) => selectBefore(event.target.value)}>
-                <option value="">Choisir une photo</option>
-                {photos.filter((photo) => comparableViews.has(photo.view)).map((photo) => <option key={photo.id} value={photo.id}>{viewLabels[photo.view]} · {formatDate(photo.recordedAt)}</option>)}
-              </select>
+              <BrandSelect value={beforeId} placeholder="Choisir une photo" options={photos.filter((photo) => comparableViews.has(photo.view)).map((photo) => ({ value: photo.id, label: `${viewLabels[photo.view]} · ${formatDate(photo.recordedAt)}` }))} onValueChange={selectBefore} />
             </label>
             <label>
               <span className="field-label">Photo Maintenant</span>
-              <select className="input" value={afterId} disabled={!before} onChange={(event) => setAfterId(event.target.value)}>
-                <option value="">Choisir une photo</option>
-                {candidates.map((photo) => <option key={photo.id} value={photo.id}>{formatDate(photo.recordedAt)}</option>)}
-              </select>
+              <BrandSelect value={afterId} disabled={!before} placeholder="Choisir une photo" options={candidates.map((photo) => ({ value: photo.id, label: formatDate(photo.recordedAt) }))} onValueChange={setAfterId} />
             </label>
           </div>
 

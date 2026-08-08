@@ -1853,6 +1853,8 @@ h4,
 }
 .evolution-photo-picker input { width: 100%; color: var(--fit-text-muted); font: inherit; font-size: .8rem; }
 .evolution-photo-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.evolution-photo-controls .brand-select,
+.evolution-photo-controls .traknio-date-picker { width: 100%; }
 .evolution-photo-preview {
   width: min(100%, 280px);
   max-height: 340px;
@@ -1884,6 +1886,7 @@ h4,
 .evolution-comparison-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .evolution-comparison-selectors label { min-width: 0; }
 .evolution-comparison-selectors .input { width: 100%; }
+.evolution-comparison-selectors .brand-select { width: 100%; }
 .evolution-comparison-mode { display: inline-flex; align-self: start; padding: 4px; border: 1px solid rgba(118, 161, 232, .24); border-radius: 14px; background: rgba(5, 13, 26, .48); }
 .evolution-comparison-mode button { min-height: 32px; padding: 6px 10px; border: 0; border-radius: 10px; color: var(--fit-text-muted); background: transparent; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
 .evolution-comparison-mode button.is-active { color: #fff; background: linear-gradient(135deg, rgba(30, 88, 255, .9), rgba(117, 60, 255, .85)); box-shadow: 0 5px 14px rgba(30, 88, 255, .25); }
@@ -5234,6 +5237,12 @@ textarea::placeholder {
   transform: rotate(180deg);
 }
 
+.brand-select__trigger:disabled,
+.traknio-date-picker__trigger:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
 .brand-select__menu {
   position: absolute;
   left: 0;
@@ -5382,6 +5391,117 @@ summary:focus-visible {
   max-width: 100%;
   min-width: 0;
 }
+
+.traknio-date-picker {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  font-family: var(--font-exo-2), "Segoe UI", sans-serif;
+}
+
+.traknio-date-picker.is-open { z-index: 80; }
+
+.traknio-date-picker__trigger {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 224, 255, .34);
+  border-radius: 16px;
+  color: #f7f9ff;
+  background:
+    radial-gradient(110% 130% at 12% 0%, rgba(122, 60, 255, .2), transparent 58%),
+    linear-gradient(180deg, rgba(8, 19, 42, .96), rgba(3, 9, 20, .98));
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(232, 245, 255, .08), 0 12px 24px rgba(0, 0, 0, .28);
+}
+
+.traknio-date-picker.is-open .traknio-date-picker__trigger {
+  border-color: rgba(193, 60, 255, .82);
+  box-shadow: inset 0 1px 0 rgba(232, 245, 255, .1), 0 0 0 3px rgba(193, 60, 255, .11), 0 18px 34px rgba(0, 0, 0, .42);
+}
+
+.traknio-date-picker__popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  min-width: 284px;
+  padding: 10px;
+  border: 1px solid rgba(193, 60, 255, .64);
+  border-radius: 18px;
+  color: #eaf4ff;
+  background:
+    radial-gradient(110% 90% at 50% 0%, rgba(88, 58, 255, .34), transparent 62%),
+    linear-gradient(180deg, rgba(12, 21, 52, .99), rgba(3, 8, 22, .99));
+  box-shadow: inset 0 1px 0 rgba(232, 245, 255, .12), 0 24px 48px rgba(0, 0, 0, .62), 0 0 28px rgba(122, 60, 255, .2);
+}
+
+.traknio-date-picker__head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.traknio-date-picker__head strong {
+  color: #fff;
+  font-size: .86rem;
+  text-transform: capitalize;
+}
+
+.traknio-date-picker__head button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(0, 224, 255, .28);
+  border-radius: 10px;
+  color: var(--brand-cyan);
+  background: rgba(4, 13, 31, .68);
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.traknio-date-picker__weekdays,
+.traknio-date-picker__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.traknio-date-picker__weekdays {
+  margin-bottom: 3px;
+  color: #8ea3c6;
+  font-size: .65rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.traknio-date-picker__days button {
+  min-width: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #dceaff;
+  background: transparent;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.traknio-date-picker__days button.is-outside { color: #576a8d; }
+.traknio-date-picker__days button:hover,
+.traknio-date-picker__days button:focus-visible { border-color: rgba(0, 224, 255, .48); background: rgba(30, 88, 255, .2); }
+.traknio-date-picker__days button.is-selected { border-color: rgba(208, 190, 255, .76); color: #fff; background: linear-gradient(135deg, #1E58FF, #C13CFF); box-shadow: 0 0 14px rgba(122, 60, 255, .46); }
 
 .traknio-assistant {
   position: fixed;

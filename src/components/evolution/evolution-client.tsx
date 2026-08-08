@@ -6,6 +6,8 @@ import { ProgressChart } from "@/src/components/progress/progress-chart";
 import { ProgressPhotoComparison } from "@/src/components/evolution/progress-photo-comparison";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
+import { BrandSelect } from "@/src/components/ui/brand-select";
+import { TraknioDatePicker } from "@/src/components/ui/traknio-date-picker";
 import { calculateBodyFatPercentage } from "@/src/lib/body-measurements";
 import { StatBadge } from "@/src/components/ui/stat-badge";
 import {
@@ -198,6 +200,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
   const [measurementMenuId, setMeasurementMenuId] = useState<string | null>(null);
   const [draftWeightKg, setDraftWeightKg] = useState("");
   const [draftFatMassKg, setDraftFatMassKg] = useState("");
+  const [measurementDate, setMeasurementDate] = useState(todayInputValue());
   const measurementSubmissionInFlight = useRef(false);
   const photoUploadInFlight = useRef(false);
 
@@ -256,6 +259,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
         currentWeightKg: measurement.weightKg ?? current.currentWeightKg,
       }));
       form.reset();
+      setMeasurementDate(todayInputValue());
       setDraftWeightKg("");
       setDraftFatMassKg("");
       setFormOpen(false);
@@ -423,7 +427,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
         {formOpen ? (
           <form className="evolution-form" onSubmit={submitMeasurement}>
             <div className="form-grid evolution-form-top">
-              <label><span className="field-label">Date du relevé</span><input className="input" name="recordedAt" type="date" defaultValue={todayInputValue()} required /></label>
+              <label><span className="field-label">Date du relevé</span><TraknioDatePicker name="recordedAt" value={measurementDate} onValueChange={setMeasurementDate} /></label>
               <label><span className="field-label">Taille (cm)</span><input className="input" name="heightCm" type="number" min="80" max="250" step="1" defaultValue={overview.profile.heightCm ?? ""} /></label>
             </div>
             {FIELD_GROUPS.map((group) => (
@@ -487,13 +491,11 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
           <div className="form-grid evolution-photo-controls">
             <label>
               <span className="field-label">Orientation</span>
-              <select className="input" value={photoView} onChange={(event) => setPhotoView(event.target.value as ProgressPhotoView)}>
-                {PHOTO_VIEWS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-              </select>
+              <BrandSelect options={PHOTO_VIEWS} value={photoView} onValueChange={(value) => setPhotoView(value as ProgressPhotoView)} />
             </label>
             <label>
               <span className="field-label">Date</span>
-              <input className="input" type="date" value={photoDate} onChange={(event) => setPhotoDate(event.target.value)} required />
+              <TraknioDatePicker value={photoDate} onValueChange={setPhotoDate} />
             </label>
           </div>
           {photoPreviewUrl ? (

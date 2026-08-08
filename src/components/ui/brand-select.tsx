@@ -15,6 +15,7 @@ type BrandSelectProps = {
   defaultValue?: string;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
   onValueChange?: (value: string) => void;
 };
 
@@ -26,6 +27,7 @@ export function BrandSelect({
   defaultValue,
   placeholder = "Selectionner",
   className = "",
+  disabled = false,
   onValueChange,
 }: BrandSelectProps) {
   const generatedId = useId();
@@ -54,6 +56,7 @@ export function BrandSelect({
         className="brand-select__trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => setOpen((current) => !current)}
       >
         <span>{selectedOption?.label ?? placeholder}</span>
