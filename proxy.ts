@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-const apiRoutes = ["/api/account", "/api/assistant", "/api/coach", "/api/health", "/api/programs", "/api/workout"];
+const apiRoutes = ["/api/account", "/api/admin", "/api/assistant", "/api/coach", "/api/health", "/api/programs", "/api/workout"];
 const tokenProtectedApiRoutes = ["/api/health/connect/sync", "/api/health/samsung/sync"];
 
 function isApiRoute(pathname: string) {
@@ -45,8 +45,10 @@ export const config = {
     "/programs/:path*",
     "/progress/:path*",
     "/settings/:path*",
+    "/admin/:path*",
     "/workout/:path*",
     "/api/account/:path*",
+    "/api/admin/:path*",
     "/api/assistant/:path*",
     "/api/coach/:path*",
     "/api/health/:path*",
