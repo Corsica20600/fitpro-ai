@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Image from "next/image";
 import { ProgressChart } from "@/src/components/progress/progress-chart";
+import { ProgressPhotoComparison } from "@/src/components/evolution/progress-photo-comparison";
 import { GlassCard } from "@/src/components/ui/glass-card";
 import { PrimaryButton } from "@/src/components/ui/primary-button";
 import { calculateBodyFatPercentage } from "@/src/lib/body-measurements";
@@ -191,6 +192,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
   const [photoDate, setPhotoDate] = useState(todayInputValue());
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [expandedMeasurementId, setExpandedMeasurementId] = useState<string | null>(null);
   const [measurementMenuId, setMeasurementMenuId] = useState<string | null>(null);
@@ -472,7 +474,10 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
           <h2>Galerie privée</h2>
           <p className="muted">{overview.galleryCount > 0 ? `${overview.galleryCount} photo${overview.galleryCount > 1 ? "s" : ""} enregistrée${overview.galleryCount > 1 ? "s" : ""}.` : "Ajoute des vues face, profil, dos ou libres. Elles restent accessibles uniquement depuis ton compte."}</p>
         </div>
-        <StatBadge tone="violet">Privée</StatBadge>
+        <div className="evolution-gallery-actions">
+          {overview.photos.length > 1 ? <button type="button" className="ghost-btn evolution-compare-trigger" onClick={() => setComparisonOpen(true)}>Comparer</button> : null}
+          <StatBadge tone="violet">Privée</StatBadge>
+        </div>
 
         <form className="evolution-photo-form" onSubmit={uploadPhoto}>
           <label className="evolution-photo-picker">
@@ -517,6 +522,14 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
           </div>
         ) : null}
       </GlassCard>
+
+      <ProgressPhotoComparison
+        photos={overview.photos}
+        measurements={overview.measurements}
+        viewLabels={Object.fromEntries(PHOTO_VIEWS.map((item) => [item.value, item.label])) as Record<ProgressPhotoView, string>}
+        isOpen={comparisonOpen}
+        onOpenChange={setComparisonOpen}
+      />
 
       {overview.measurements.length > 0 ? (
         <GlassCard className="evolution-history-card">
