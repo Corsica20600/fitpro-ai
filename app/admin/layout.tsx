@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
         </Link>
         <div className="admin-web-header__actions">
           <span>Administration privée</span>
-          <Link href="/dashboard" className="ghost-btn">Retour à Traknio</Link>
+          <Link href="/" className="ghost-btn">Retour à Traknio</Link>
         </div>
       </header>
       <main className="admin-web-main">{children}</main>
