@@ -18,7 +18,7 @@
         android:theme="@style/Theme.TraknioWear">
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="true" />
+            android:value="false" />
 
         <uses-library
             android:name="com.google.android.wearable"
