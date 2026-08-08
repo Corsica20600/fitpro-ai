@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { BRAND } from "@/src/lib/brand";
 import { PublicHeader } from "./public-header";
@@ -180,10 +179,6 @@ function PhoneShot({
 export default async function HomePage() {
   const session = await auth().catch(() => null);
 
-  if (session?.user?.email) {
-    redirect("/dashboard");
-  }
-
   const softwareJsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -208,7 +203,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
       />
       <main className="trk-public">
-        <PublicHeader />
+        <PublicHeader isAuthenticated={Boolean(session?.user?.email)} />
 
         <section className="trk-hero" aria-labelledby="hero-title">
           <div className="trk-hero__copy">

@@ -495,7 +495,7 @@ export function EvolutionClient({ initialOverview, avatarUrl }: EvolutionClientP
             </label>
             <label>
               <span className="field-label">Date</span>
-              <TraknioDatePicker value={photoDate} onValueChange={setPhotoDate} />
+              <TraknioDatePicker className="evolution-photo-date-picker" value={photoDate} onValueChange={setPhotoDate} />
             </label>
           </div>
           {photoPreviewUrl ? (

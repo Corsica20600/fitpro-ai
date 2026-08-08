@@ -12,7 +12,7 @@ const navLinks = [
   { href: "/#faq", label: "FAQ" },
 ] as const;
 
-export function PublicHeader() {
+export function PublicHeader({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -45,9 +45,9 @@ export function PublicHeader() {
           ))}
         </div>
 
-        <span className="trk-header__cta trk-header__cta--disabled" aria-disabled="true">
-          Bientôt disponible
-        </span>
+        <Link className="trk-header__cta" href={isAuthenticated ? "/dashboard" : "/login"}>
+          {isAuthenticated ? "Ouvrir Traknio" : "Se connecter"}
+        </Link>
 
         <button
           className="trk-menu-button"
@@ -68,7 +68,9 @@ export function PublicHeader() {
             {link.label}
           </a>
         ))}
-        <span aria-disabled="true">Bientôt disponible</span>
+        <Link href={isAuthenticated ? "/dashboard" : "/login"} onClick={() => setIsOpen(false)}>
+          {isAuthenticated ? "Ouvrir Traknio" : "Se connecter"}
+        </Link>
       </div>
     </header>
   );
